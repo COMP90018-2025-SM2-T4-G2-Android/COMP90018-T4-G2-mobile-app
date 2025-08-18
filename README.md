@@ -1,6 +1,7 @@
 # COMP90018-T4-G2-mobile-app
 
 ## Repo Structure (Suggestion)
+View in Code mode
 
 mobile-computing-app/<br>
  ├── app/                  # Android Studio project root<br>
