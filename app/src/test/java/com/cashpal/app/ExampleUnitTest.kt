@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.cashpal.app
 
 import org.junit.Test
 
@@ -15,3 +15,5 @@ class ExampleUnitTest {
         assertEquals(4, 2 + 2)
     }
 }
+
+
