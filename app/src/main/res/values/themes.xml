@@ -3,7 +3,16 @@
     <style name="Base.Theme.CashPal" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Splash on Android 12+ -->
+        <item name="windowSplashScreenBackground">@color/splash_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/transparent</item>
+        <item name="windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+        <item name="windowSplashScreenAnimationDuration">0</item>
+        <!-- Launch window background that shows your wordmark until first draw -->
+        <item name="android:windowBackground">@drawable/splash_bg</item>
     </style>
+    <style name="Theme.CashPal" parent="Base.Theme.CashPal"/>
 
-    <style name="Theme.CashPal" parent="Base.Theme.CashPal" />
+
+
 </resources>
