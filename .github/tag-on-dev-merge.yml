@@ -1,0 +1,71 @@
+name: Tag on Merge to Dev
+run-name: ${{ github.actor }} is running ${{ github.workflow }}
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write  # needed to push tags
+
+jobs:
+  tag:
+    # Only run when the PR was merged, and its base is dev
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'dev' &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-tag')
+    runs-on: ubuntu-latest
+
+    env:
+      TAG_PREFIX: v  # change to taste (e.g., "dev-", "build-")
+      INITIAL_VERSION: 0.0.1  # first tag if none exists yet
+
+    steps:
+      - name: Checkout (full history for tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Determine next tag (semver patch bump)
+        id: ver
+        shell: bash
+        run: |
+          # Get latest tag matching the chosen prefix (e.g., dev-v1.2.3)
+          latest=$(git tag --list "${TAG_PREFIX}[0-9]*" --sort=-v:refname | head -n1 || true)
+
+          if [[ -z "$latest" ]]; then
+            next="${TAG_PREFIX}${INITIAL_VERSION}"
+          else
+            base="${latest#${TAG_PREFIX}}"
+            IFS='.' read -r MAJ MIN PAT <<< "$base"
+            if [[ -z "$MAJ" || -z "$MIN" || -z "$PAT" ]]; then
+              echo "Latest tag '$latest' doesn't look like semver; aborting." >&2
+              exit 1
+            fi
+            next="${TAG_PREFIX}${MAJ}.${MIN}.$((PAT+1))"
+          fi
+
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag on the merge commit
+        env:
+          NEXT: ${{ steps.ver.outputs.next }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          echo "Tagging ${MERGE_SHA} with ${NEXT}"
+          git tag -a "$NEXT" "$MERGE_SHA" -m "Auto tag for PR #${{ github.event.pull_request.number }} -> dev"
+          git push origin "$NEXT"
+
+      - name: Summary
+        run: |
+          echo "Created tag: ${{ steps.ver.outputs.next }}"

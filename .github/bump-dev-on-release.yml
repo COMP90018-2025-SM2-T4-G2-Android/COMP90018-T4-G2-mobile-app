@@ -1,0 +1,88 @@
+name: Bump Development Version on Release
+
+on:
+  release:
+    # types: [published]  # run when a release is published
+
+permissions:
+  contents: write  # needed to create tags
+
+jobs:
+  bump-dev-version:
+    # Skip for prereleases; remove this line if you want prereleases to bump dev too
+    if: github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+    env:
+      DEV_PREFIX: v
+      # Where the new dev seed tag should point:
+      #   - "dev" to point at the current dev head (recommended)
+      #   - or the release's commit by using target_commitish below
+      TARGET_REF: origin/dev
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ensure dev branch exists locally
+        run: |
+          git fetch origin +refs/heads/dev:refs/remotes/origin/dev || true
+
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Compute next dev version from release tag
+        id: calc
+        shell: bash
+        run: |
+          rel_tag="${{ github.event.release.tag_name }}"
+          base="$rel_tag"
+          # New standard: tags are strictly 'vMAJOR.MINOR.PATCH' (e.g., v1.2.3)
+          base="${base#v}"
+
+          # Validate and parse MAJOR.MINOR.PATCH strictly
+          if [[ "$base" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJ="${BASH_REMATCH[1]}"
+            MIN="${BASH_REMATCH[2]}"
+            PAT="${BASH_REMATCH[3]}"
+          else
+            echo "Release tag '$rel_tag' is not in the form vMAJOR.MINOR.PATCH (got '$base')." >&2
+            exit 1
+          fi
+
+          NEXT_DEV="${DEV_PREFIX}${MAJ}.$((MIN+1)).0"   # bump MINOR; reset PATCH
+          echo "next_dev=$NEXT_DEV" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if dev seed already exists
+        id: exists
+        shell: bash
+        run: |
+          if git rev-parse -q --verify "refs/tags/${{ steps.calc.outputs.next_dev }}" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create dev seed tag
+        if: steps.exists.outputs.exists == 'false'
+        env:
+          NEXT_DEV: ${{ steps.calc.outputs.next_dev }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Resolve target reference, prefer origin/dev but fall back to the release's target commit
+          target_ref="${{ env.TARGET_REF }}"
+          if ! git rev-parse -q --verify "${target_ref}^{commit}" >/dev/null; then
+            echo "WARN: '${target_ref}' not found. Falling back to release target '${{ github.event.release.target_commitish }}'."
+            target_ref="${{ github.event.release.target_commitish }}"
+          fi
+
+          target_sha=$(git rev-parse "$target_ref")
+
+          echo "Tagging $target_sha with $NEXT_DEV"
+          git tag -a "$NEXT_DEV" "$target_sha" -m "Seed next dev cycle from release ${{ github.event.release.tag_name }}"
+          git push origin "$NEXT_DEV"
+
+      - name: Summary
+        run: |
+          echo "Next seed tag: ${{ steps.calc.outputs.next_dev }}"

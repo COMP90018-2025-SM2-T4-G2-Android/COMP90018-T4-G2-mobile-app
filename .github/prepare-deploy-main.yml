@@ -1,0 +1,78 @@
+name: Deploy to Main
+run-name: ${{ github.actor }} is running ${{ github.workflow }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      VERSION:
+        description: "Version to deploy"
+        required: true
+        type: string
+  # schedule:
+  #   - cron: '0 3 * * *'  # every day at 03:00 UTC, adjust as needed
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      ENVIRONMENT: ${{ steps.set-env.outputs.ENVIRONMENT }}
+      VERSION: ${{ github.event.inputs.VERSION }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.VERSION }}
+      
+      - name: Set Environment Information
+        id: set-env
+        run: |
+          echo "ENVIRONMENT=prod" >> $GITHUB_OUTPUT
+
+  create-deployment--pr:
+    runs-on: ubuntu-latest
+    needs: setup
+    defaults:
+      run:
+        shell: bash
+    permissions:
+      pull-requests: write
+      contents: write
+      id-token: write
+      pages: write
+    env:
+      ENVIRONMENT: ${{ needs.setup.outputs.ENVIRONMENT }}
+      SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
+      VERSION: ${{ needs.setup.outputs.VERSION }}
+    concurrency:
+      group: ${{ github.workflow }}-${{ needs.setup.outputs.ENVIRONMENT}}
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Fetch All tags
+        run: git fetch --tags
+
+      - name: Create Branch from Tag
+        if: success() && env.ENVIRONMENT == 'prod'
+        id: create-branch-from-tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEW_TAG="${{ env.VERSION }}"
+          # Create a new branch name based on the tag
+          git checkout -b Latest-"${NEW_TAG}" "${NEW_TAG}"
+          git push origin Latest-"${NEW_TAG}"
+
+      - name: Create Deployment PR
+        if: success() && env.ENVIRONMENT == 'prod'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_TAG: ${{ env.VERSION }}
+
+        run: |
+          NEW_TAG="${{ env.VERSION }}"
+          gh pr create --title "Run Deploy for version ${NEW_TAG} to main" \
+            --body "This PR was automatically created by GitHub Actions to deploy versionn ${NEW_TAG} to the main branch." --head "Latest-${NEW_TAG}" --base main

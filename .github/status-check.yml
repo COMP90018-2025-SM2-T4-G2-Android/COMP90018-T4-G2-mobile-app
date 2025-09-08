@@ -1,0 +1,27 @@
+name: Perform Status Check
+run-name: ${{ github.actor }} is running ${{ github.workflow }}
+
+on:
+  workflow_call:
+    inputs:
+      results:
+        description: 'Comma-separated list of job results to check'
+        required: true
+        type: string
+
+jobs:
+  status-check:
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Failure Status
+        if: ${{ contains(inputs.results, 'failure') }}
+        run: |
+          echo "One or more jobs have failed."
+          exit 1
+      - name: Check for Success Status
+        run: |
+          echo "All jobs succeeded."
+          exit 0
