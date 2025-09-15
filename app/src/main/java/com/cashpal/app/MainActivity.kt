@@ -97,8 +97,9 @@ class MainActivity : AppCompatActivity() {
     
     private fun setupClickListeners() {
         viewAllText.setOnClickListener {
-            Toast.makeText(this, "View All clicked - Navigate to full transaction history", Toast.LENGTH_SHORT).show()
-            // TODO: Navigate to full transaction history screen
+            // Navigate to History page
+            showFragment(HistoryFragment())
+            updateBottomNavigationSelection(R.id.nav_history)
         }
     }
     
@@ -153,7 +154,7 @@ class MainActivity : AppCompatActivity() {
         val linearLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = android.view.Gravity.CENTER
-            setPadding(32, 32, 32, 32)
+            setPadding(24, 24, 24, 24) // Reduced padding for bigger buttons
         }
         
         val iconImage = ImageView(this).apply {
@@ -164,14 +165,17 @@ class MainActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
             setColorFilter(ContextCompat.getColor(this@MainActivity, android.R.color.black))
+            // Set specific size for icons
+            layoutParams.width = 32.dpToPx()
+            layoutParams.height = 32.dpToPx()
         }
         
         val titleText = TextView(this).apply {
             text = action.title
-            textSize = 12f
+            textSize = 11f // Slightly smaller text
             setTextColor(getColor(android.R.color.black))
             gravity = android.view.Gravity.CENTER
-            setPadding(0, 16, 0, 0)
+            setPadding(0, 12, 0, 0) // Reduced padding
         }
         
         linearLayout.addView(iconImage)
@@ -350,5 +354,9 @@ class MainActivity : AppCompatActivity() {
     
     private fun updateBottomNavigationSelection(selectedItemId: Int) {
         bottomNavigationView.selectedItemId = selectedItemId
+    }
+    
+    private fun Int.dpToPx(): Int {
+        return (this * resources.displayMetrics.density).toInt()
     }
 }
