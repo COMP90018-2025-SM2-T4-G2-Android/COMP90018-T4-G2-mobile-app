@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- ✅ Permission must be before <application> -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- ✅ Tell Play Store: Camera is nice-to-have, but not required -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -26,7 +32,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="true" />
+
+
+
     </application>
-
-
 </manifest>

@@ -66,4 +66,16 @@
         android:layout_marginEnd="24dp"
         android:layout_marginTop="24dp"/>
 
+    <Button
+        android:id="@+id/btnScan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:backgroundTint="@color/purple_500"
+        android:text="Scan QR to Pay"
+        android:textColor="@android:color/white"
+        tools:layout_editor_absoluteX="133dp"
+        tools:layout_editor_absoluteY="234dp" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>
