@@ -1,8 +1,10 @@
 package com.cashpal.app
 
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -10,8 +12,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
 import com.cashpal.app.data.AppData
 import com.cashpal.app.data.DataRepository
+import com.cashpal.app.fragments.HistoryFragment
+import com.cashpal.app.fragments.MoreFragment
+import com.cashpal.app.fragments.PayFragment
+import com.cashpal.app.fragments.ScanFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
 
@@ -25,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var quickActionsContainer: LinearLayout
     private lateinit var transactionsContainer: LinearLayout
     private lateinit var viewAllText: TextView
+    private lateinit var scrollView: ScrollView
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +48,7 @@ class MainActivity : AppCompatActivity() {
         setupBottomNavigation()
         setupClickListeners()
         loadDataFromJSON()
+        showHomeContent() // Show home content by default
     }
     
     private fun initializeViews() {
@@ -51,6 +60,7 @@ class MainActivity : AppCompatActivity() {
         quickActionsContainer = findViewById(R.id.quickActionsContainer)
         transactionsContainer = findViewById(R.id.transactionsContainer)
         viewAllText = findViewById(R.id.viewAllText)
+        scrollView = findViewById(R.id.scrollView)
     }
     
     private fun setupBottomNavigation() {
@@ -59,23 +69,23 @@ class MainActivity : AppCompatActivity() {
         bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
-                    Toast.makeText(this, "Home selected", Toast.LENGTH_SHORT).show()
+                    showHomeContent()
                     true
                 }
                 R.id.nav_pay -> {
-                    Toast.makeText(this, "Pay selected", Toast.LENGTH_SHORT).show()
+                    showFragment(PayFragment())
                     true
                 }
                 R.id.nav_scan -> {
-                    Toast.makeText(this, "Scan selected", Toast.LENGTH_SHORT).show()
+                    showFragment(ScanFragment())
                     true
                 }
                 R.id.nav_history -> {
-                    Toast.makeText(this, "History selected", Toast.LENGTH_SHORT).show()
+                    showFragment(HistoryFragment())
                     true
                 }
                 R.id.nav_more -> {
-                    Toast.makeText(this, "More selected", Toast.LENGTH_SHORT).show()
+                    showFragment(MoreFragment())
                     true
                 }
                 else -> false
@@ -315,6 +325,24 @@ class MainActivity : AppCompatActivity() {
             "ic_shopping_cart" -> R.drawable.ic_shopping_cart
             "ic_online_store" -> R.drawable.ic_online_store
             else -> R.drawable.ic_person // Default fallback
+        }
+    }
+    
+    private fun showFragment(fragment: Fragment) {
+        scrollView.visibility = View.GONE
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .commit()
+    }
+    
+    private fun showHomeContent() {
+        scrollView.visibility = View.VISIBLE
+        // Clear any existing fragments
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+        if (fragment != null) {
+            supportFragmentManager.beginTransaction()
+                .remove(fragment)
+                .commit()
         }
     }
 }
