@@ -4,4 +4,11 @@
     <string name="balance_label">Current balance</string>
     <string name="deposit">Deposit $10</string>
     <string name="withdraw">Withdraw $10</string>
+    
+    <!-- Navigation items -->
+    <string name="nav_home">Home</string>
+    <string name="nav_pay">Pay</string>
+    <string name="nav_scan">Scan</string>
+    <string name="nav_history">History</string>
+    <string name="nav_more">More</string>
 </resources>
