@@ -42,15 +42,6 @@
                 android:layout_marginBottom="24dp">
 
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/you_sent"
-                    android:textSize="16sp"
-                    android:textColor="#6C757D"
-                    android:textStyle="bold"/>
-
-                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/account_title"
@@ -116,7 +107,7 @@
                                 android:id="@+id/monthlyChange"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/monthly_change"
+                                android:text="+12.5%"
                                 android:textSize="16sp"
                                 android:textColor="#28A745"
                                 android:textStyle="bold"/>
@@ -141,7 +132,7 @@
                                 android:id="@+id/pendingAmount"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/pending_amount"
+                                android:text="$45.20"
                                 android:textSize="16sp"
                                 android:textColor="#FFC107"
                                 android:textStyle="bold"/>
@@ -166,7 +157,7 @@
                                 android:id="@+id/reservedAmount"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/reserved_amount"
+                                android:text="$0.00"
                                 android:textSize="16sp"
                                 android:textColor="#6C757D"
                                 android:textStyle="bold"/>
