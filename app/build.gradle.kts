@@ -51,6 +51,9 @@ dependencies {
     // Navigation
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
+    
+    // JSON parsing
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // AI Feature
     // Firebase BoM

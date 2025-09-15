@@ -11,4 +11,35 @@
     <string name="nav_scan">Scan</string>
     <string name="nav_history">History</string>
     <string name="nav_more">More</string>
+    
+    <!-- Front Page Content -->
+    <string name="you_sent">You sent</string>
+    <string name="available_balance">Available Balance</string>
+    <string name="balance_amount">$1,234.56</string>
+    <string name="this_month">This Month</string>
+    <string name="monthly_change">+12.5%</string>
+    <string name="pending">Pending</string>
+    <string name="pending_amount">$45.20</string>
+    <string name="reserved">Reserved</string>
+    <string name="reserved_amount">$0.00</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="send_money">Send Money</string>
+    <string name="qr_pay">QR Pay</string>
+    <string name="nfc_pay">NFC Pay</string>
+    <string name="add_money">Add Money</string>
+    <string name="recent_activity">Recent Activity</string>
+    <string name="view_all">View All</string>
+    <string name="coffee_shop">Coffee Shop</string>
+    <string name="time_2min">2 min ago</string>
+    <string name="amount_4_50">$4.50</string>
+    <string name="completed">completed</string>
+    <string name="john_doe">John Doe</string>
+    <string name="time_1hour">1 hour ago</string>
+    <string name="amount_25_00">+$25.00</string>
+    <string name="online_store">Online Store</string>
+    <string name="time_3hours">3 hours ago</string>
+    <string name="amount_89_99">$89.99</string>
+    <string name="sarah_wilson">Sarah Wilson</string>
+    <string name="time_1day">1 day ago</string>
+    <string name="amount_15_00">+$15.00</string>
 </resources>
