@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var transactionsContainer: LinearLayout
     private lateinit var viewAllText: TextView
     private lateinit var scrollView: ScrollView
+    private lateinit var bottomNavigationView: BottomNavigationView
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,11 +62,10 @@ class MainActivity : AppCompatActivity() {
         transactionsContainer = findViewById(R.id.transactionsContainer)
         viewAllText = findViewById(R.id.viewAllText)
         scrollView = findViewById(R.id.scrollView)
+        bottomNavigationView = findViewById(R.id.bottomNavigationView)
     }
     
     private fun setupBottomNavigation() {
-        val bottomNavigationView: BottomNavigationView = findViewById(R.id.bottomNavigationView)
-        
         bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
@@ -184,12 +184,14 @@ class MainActivity : AppCompatActivity() {
     private fun handleQuickActionClick(action: com.cashpal.app.data.QuickAction) {
         when (action.id) {
             "send_money" -> {
-                Toast.makeText(this, "Send Money clicked", Toast.LENGTH_SHORT).show()
-                // TODO: Navigate to send money screen
+                // Navigate to Pay page
+                showFragment(PayFragment())
+                updateBottomNavigationSelection(R.id.nav_pay)
             }
             "qr_pay" -> {
-                Toast.makeText(this, "QR Pay clicked", Toast.LENGTH_SHORT).show()
-                // TODO: Open QR scanner
+                // Navigate to Scan page
+                showFragment(ScanFragment())
+                updateBottomNavigationSelection(R.id.nav_scan)
             }
             "nfc_pay" -> {
                 Toast.makeText(this, "NFC Pay clicked", Toast.LENGTH_SHORT).show()
@@ -344,5 +346,9 @@ class MainActivity : AppCompatActivity() {
                 .remove(fragment)
                 .commit()
         }
+    }
+    
+    private fun updateBottomNavigationSelection(selectedItemId: Int) {
+        bottomNavigationView.selectedItemId = selectedItemId
     }
 }
