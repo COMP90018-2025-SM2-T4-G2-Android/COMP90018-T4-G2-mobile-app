@@ -1,0 +1,68 @@
+{
+  "balanceInfo": {
+    "availableBalance": "$12341234.56",
+    "thisMonthChange": "+12.5%",
+    "pendingAmount": "$45.20",
+    "reservedAmount": "$0.00"
+  },
+  "quickActions": [
+    {
+      "id": "send_money",
+      "title": "Send Money",
+      "icon": "ic_send_money"
+    },
+    {
+      "id": "qr_pay",
+      "title": "QR Pay",
+      "icon": "ic_qr_pay"
+    },
+    {
+      "id": "nfc_pay",
+      "title": "NFC Pay",
+      "icon": "ic_nfc_pay"
+    },
+    {
+      "id": "add_money",
+      "title": "Add Money",
+      "icon": "ic_add_money"
+    }
+  ],
+  "recentTransactions": [
+    {
+      "id": "txn_001",
+      "merchant": "Coffee Shop",
+      "amount": "$4.50",
+      "timeAgo": "2 min ago",
+      "status": "completed",
+      "icon": "ic_coffee_shop",
+      "isIncoming": false
+    },
+    {
+      "id": "txn_002",
+      "merchant": "John Doe",
+      "amount": "+$25.00",
+      "timeAgo": "1 hour ago",
+      "status": "completed",
+      "icon": "ic_person",
+      "isIncoming": true
+    },
+    {
+      "id": "txn_003",
+      "merchant": "Online Store",
+      "amount": "$89.99",
+      "timeAgo": "3 hours ago",
+      "status": "completed",
+      "icon": "ic_shopping_cart",
+      "isIncoming": false
+    },
+    {
+      "id": "txn_004",
+      "merchant": "Sarah Wilson",
+      "amount": "+$15.00",
+      "timeAgo": "1 day ago",
+      "status": "completed",
+      "icon": "ic_person",
+      "isIncoming": true
+    }
+  ]
+}
