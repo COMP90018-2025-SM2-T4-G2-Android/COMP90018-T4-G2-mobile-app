@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         scrollView = findViewById(R.id.scrollView)
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
     }
-    
+    //commen
     private fun setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
