@@ -185,7 +185,34 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="32dp"/>
+                android:layout_marginBottom="32dp">
+
+                <!-- Send Money -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSendMoney"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Send"
+                    app:icon="@drawable/ic_send_money"
+                    app:iconGravity="top"
+                    android:textSize="12sp"/>
+
+                <!-- Scan QR -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnScan"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Scan QR"
+                    app:icon="@drawable/ic_scan"
+                    app:iconGravity="top"
+                    app:iconPadding="8dp"
+                    app:iconSize="24dp"/>
+
+            </LinearLayout>
 
             <!-- Recent Activity Section -->
             <LinearLayout
@@ -234,10 +261,11 @@
         android:elevation="8dp"
         android:fitsSystemWindows="true"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:menu="@menu/bottom_nav_menu"
         app:labelVisibilityMode="labeled"
         app:itemIconSize="24dp" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

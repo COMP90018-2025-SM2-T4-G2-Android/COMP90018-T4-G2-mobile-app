@@ -61,4 +61,14 @@ dependencies {
     // Firebase AI Logic client SDK
     implementation("com.google.firebase:firebase-ai")
     implementation("com.google.firebase:firebase-analytics")
+    // CameraX
+    implementation("androidx.camera:camera-core:1.3.3")
+    implementation("androidx.camera:camera-camera2:1.3.3")
+    implementation("androidx.camera:camera-lifecycle:1.3.3")
+    implementation("androidx.camera:camera-view:1.3.3")
+
+    // ML Kit Barcode Scanning
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+
+
 }
