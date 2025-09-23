@@ -1,53 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
-    app:cardBackgroundColor="@android:color/white">
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
 
     <LinearLayout
+        android:id="@+id/container_transaction"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:gravity="center_vertical">
 
-        <ImageView
-            android:id="@+id/icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:tint="@android:color/black"
-            android:layout_marginEnd="16dp"
-            android:src="@drawable/ic_person" />
+        <!-- Avatar Circle -->
+        <TextView
+            android:id="@+id/tv_avatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:text="CS"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:background="@drawable/avatar_background"/>
 
+        <!-- Text Info -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
 
             <TextView
-                android:id="@+id/merchant"
+                android:id="@+id/tv_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Merchant"
-                android:textStyle="bold"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
+                android:text="Coffee Shop"
+                android:textColor="@color/foreground"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/time"
+                android:id="@+id/tv_reference"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="2h ago"
-                android:textColor="@android:color/darker_gray"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp" />
+                android:text="Order #12345"
+                android:textColor="@color/muted_foreground"
+                android:textSize="12sp"/>
+
+            <TextView
+                android:id="@+id/tv_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2024-01-15"
+                android:textColor="@color/muted_foreground"
+                android:textSize="12sp"/>
         </LinearLayout>
 
+        <!-- Amount + Status -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -55,25 +69,21 @@
             android:gravity="end">
 
             <TextView
-                android:id="@+id/amount"
+                android:id="@+id/tv_amount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="$0.00"
-                android:textStyle="bold"
-                android:textSize="16sp" />
+                android:text="-$4.50"
+                android:textColor="@color/sent_color"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
 
             <TextView
-                android:id="@+id/status"
+                android:id="@+id/tv_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Completed"
-                android:textColor="@android:color/holo_green_dark"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp" />
+                android:text="completed"
+                android:textColor="@color/received_color"
+                android:textSize="12sp"/>
         </LinearLayout>
-
     </LinearLayout>
-
-</com.google.android.material.card.MaterialCardView>
-
-
+</androidx.cardview.widget.CardView>
