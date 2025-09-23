@@ -1,150 +1,190 @@
 package com.cashpal.app.fragments
 
-import android.content.Context
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
+import android.view.animation.Animation
+import android.view.animation.TranslateAnimation
+import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.cashpal.app.R
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.cashpal.app.adapters.RecentScanAdapter
+import com.cashpal.app.models.RecentScan
+
+
+
 
 class ScanFragment : Fragment() {
 
+    private lateinit var startScanButton: Button
+    private lateinit var qrOption: LinearLayout
+    private lateinit var vendorOption: LinearLayout
+    private lateinit var recentScans: RecyclerView
     private lateinit var previewView: PreviewView
+    private lateinit var scanningLine: View
+
     private lateinit var cameraExecutor: ExecutorService
-    private var handledResult = false
-
-    private var camera: Camera? = null
-    private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-    private var torchEnabled = false
-
-    private lateinit var btnFlash: ImageButton
-    private lateinit var btnSwitchCamera: ImageButton
+    private var hasScanned = false  // prevent multiple triggers
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_scan, container, false)
-
-        previewView = view.findViewById(R.id.previewView)
-        btnFlash = view.findViewById(R.id.btnFlash)
-        btnSwitchCamera = view.findViewById(R.id.btnSwitchCamera)
-
-        btnFlash.setOnClickListener { toggleFlash() }
-        btnSwitchCamera.setOnClickListener { switchCamera() }
-
-        return view
+        return inflater.inflate(R.layout.fragment_scan, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Bind views
+        startScanButton = view.findViewById(R.id.btn_start_scanning)
+        qrOption = view.findViewById(R.id.btn_qr_code)
+        vendorOption = view.findViewById(R.id.btn_vendor_code)
+        recentScans = view.findViewById(R.id.rv_recent_scans)
+        previewView = view.findViewById(R.id.previewView)
+        scanningLine = view.findViewById(R.id.scanningLine)
+
         cameraExecutor = Executors.newSingleThreadExecutor()
-        startCamera(requireContext())
+
+        // Start camera on button click
+        startScanButton.setOnClickListener {
+            startCamera()
+        }
+
+        qrOption.setOnClickListener {
+            Toast.makeText(requireContext(), "QR Code option clicked", Toast.LENGTH_SHORT).show()
+        }
+
+        vendorOption.setOnClickListener {
+            Toast.makeText(requireContext(), "Vendor Code option clicked", Toast.LENGTH_SHORT).show()
+        }
+
+        // RecyclerView setup
+// Generate dummy list with 20 items for testing scroll
+        val sampleScans = List(20) { i ->
+            RecentScan(
+                vendor = "Vendor #$i",
+                location = "Melbourne",
+                time = "10:${i}0 AM",
+                amount = "$${(i + 1) * 5}.00"
+            )
+        }
+
+        recentScans.layoutManager = LinearLayoutManager(requireContext())
+        recentScans.adapter = RecentScanAdapter(sampleScans) { scan ->
+            Toast.makeText(requireContext(), "Scan Again: ${scan.vendor}", Toast.LENGTH_SHORT).show()
+        }
+
+
+
+        // Animate scanning line
+        startScanningLineAnimation()
+    }
+
+    private fun startCamera() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+
+        cameraProviderFuture.addListener({
+            val cameraProvider = cameraProviderFuture.get()
+
+            val preview = Preview.Builder()
+                .build()
+                .also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
+                }
+
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            val imageAnalysis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+                .also {
+                    it.setAnalyzer(cameraExecutor, QRCodeAnalyzerMLKit { qrText ->
+                        if (!hasScanned) {
+                            hasScanned = true
+                            requireActivity().runOnUiThread {
+                                Toast.makeText(requireContext(), "QR Scanned: $qrText", Toast.LENGTH_LONG).show()
+                                // TODO: navigate or trigger payment with qrText
+                            }
+                        }
+                    })
+                }
+
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    viewLifecycleOwner,
+                    cameraSelector,
+                    preview,
+                    imageAnalysis
+                )
+            } catch (exc: Exception) {
+                exc.printStackTrace()
+            }
+
+        }, ContextCompat.getMainExecutor(requireContext()))
+    }
+
+    private fun startScanningLineAnimation() {
+        val animation = TranslateAnimation(
+            0f, 0f,
+            -200f, 200f // adjust based on frame height
+        )
+        animation.duration = 2000
+        animation.repeatMode = Animation.REVERSE
+        animation.repeatCount = Animation.INFINITE
+        scanningLine.startAnimation(animation)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         cameraExecutor.shutdown()
     }
+}
 
-    private fun startCamera(context: Context) {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-        cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
-            bindCameraUseCases(context, cameraProvider)
-        }, ContextCompat.getMainExecutor(context))
-    }
+/**
+ * Analyzer that uses ML Kit BarcodeScanner to detect QR codes
+ */
+class QRCodeAnalyzerMLKit(
+    private val onQRCodeScanned: (String) -> Unit
+) : ImageAnalysis.Analyzer {
 
-    private fun bindCameraUseCases(context: Context, cameraProvider: ProcessCameraProvider) {
-        val preview = Preview.Builder().build().also {
-            it.setSurfaceProvider(previewView.surfaceProvider)
-        }
+    private val scanner = BarcodeScanning.getClient()
 
-        // ✅ Only scan QR codes
-        val options = BarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE) // ✅ no "format ="
-            .build()
-        val barcodeScanner = BarcodeScanning.getClient(options)
-
-        val analysis = ImageAnalysis.Builder()
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST) // ✅ important
-            .build()
-            .also {
-                it.setAnalyzer(cameraExecutor) { imageProxy ->
-                    processImageProxy(barcodeScanner, imageProxy)
-                }
-            }
-
-        try {
-            cameraProvider.unbindAll()
-            camera = cameraProvider.bindToLifecycle(
-                viewLifecycleOwner,
-                cameraSelector,
-                preview,
-                analysis
-            )
-        } catch (exc: Exception) {
-            Log.e("ScanFragment", "Camera binding failed", exc)
-        }
-    }
-
-    private fun toggleFlash() {
-        camera?.let {
-            if (it.cameraInfo.hasFlashUnit()) {
-                torchEnabled = !torchEnabled
-                it.cameraControl.enableTorch(torchEnabled)
-                Toast.makeText(requireContext(), if (torchEnabled) "Flash ON" else "Flash OFF", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(requireContext(), "No flash available", Toast.LENGTH_SHORT).show()
-            }
-        } ?: Toast.makeText(requireContext(), "Camera not ready yet", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun switchCamera() {
-        cameraSelector =
-            if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
-                CameraSelector.DEFAULT_FRONT_CAMERA
-            else
-                CameraSelector.DEFAULT_BACK_CAMERA
-
-        startCamera(requireContext())
-        Toast.makeText(requireContext(), "Switched Camera", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun processImageProxy(scanner: com.google.mlkit.vision.barcode.BarcodeScanner, imageProxy: ImageProxy) {
+    @SuppressLint("UnsafeOptInUsageError")
+    override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         if (mediaImage != null) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+
             scanner.process(image)
                 .addOnSuccessListener { barcodes ->
-                    if (barcodes.isNotEmpty()) {
-                        val qrValue = barcodes[0].rawValue ?: ""
-                        Log.d("ScanFragment", "QR Code Detected: $qrValue")
-                        Toast.makeText(requireContext(), "QR Code: $qrValue", Toast.LENGTH_LONG).show()
-                        // reset after scan so you can scan again
-                        handledResult = false
+                    for (barcode in barcodes) {
+                        if (barcode.format == Barcode.FORMAT_QR_CODE) {
+                            barcode.rawValue?.let { onQRCodeScanned(it) }
+                        }
                     }
                 }
                 .addOnFailureListener { e ->
-                    Log.e("ScanFragment", "Scan failed", e)
+                    e.printStackTrace()
                 }
                 .addOnCompleteListener {
-                    imageProxy.close() // ✅ Always close!
+                    imageProxy.close()
                 }
         } else {
             imageProxy.close()

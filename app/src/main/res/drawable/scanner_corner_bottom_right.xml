@@ -1,0 +1,5 @@
+<rotate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fromDegrees="180"
+    android:pivotX="50%"
+    android:pivotY="50%"
+    android:drawable="@drawable/scanner_corner_top_left" />
