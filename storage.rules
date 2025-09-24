@@ -1,0 +1,25 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Profile images
+    match /profile_images/{userId}.jpg {
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // QR codes
+    match /qr_codes/{userId}/{allPaths=**} {
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Receipt images
+    match /receipts/{userId}/{allPaths=**} {
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Documents (for verification, etc.)
+    match /documents/{userId}/{allPaths=**} {
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
