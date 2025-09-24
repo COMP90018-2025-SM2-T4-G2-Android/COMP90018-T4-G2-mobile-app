@@ -1,260 +1,226 @@
 package com.cashpal.app.fragments
 
-import android.content.Context
-import android.net.Uri
+import android.app.DatePickerDialog
 import android.os.Bundle
 import android.os.Environment
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.content.FileProvider
-import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cashpal.app.R
-import com.cashpal.app.data.DataRepository
-import com.cashpal.app.data.Transaction
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
-import com.google.android.material.textfield.TextInputEditText
+import com.cashpal.app.adapters.TransactionHistoryAdapter
+import com.cashpal.app.models.TransactionHistory
+import com.google.android.material.tabs.TabLayout
 import java.io.File
-import java.io.FileOutputStream
-import java.text.NumberFormat
-import java.util.Locale
+import java.io.FileWriter
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
 
 class HistoryFragment : Fragment() {
 
-    private lateinit var repository: DataRepository
-    private lateinit var listView: RecyclerView
-    private lateinit var adapter: TransactionsAdapter
-    private lateinit var searchInput: TextInputEditText
-    private lateinit var chipGroup: ChipGroup
-    private lateinit var chipAll: Chip
-    private lateinit var chipSent: Chip
-    private lateinit var chipReceived: Chip
-    private lateinit var totalSentView: TextView
-    private lateinit var totalReceivedView: TextView
-    private lateinit var downloadButton: MaterialButton
-    private lateinit var statusDropdown: com.google.android.material.textfield.MaterialAutoCompleteTextView
+    private lateinit var searchEditText: EditText
+    private lateinit var tabLayout: TabLayout
+    private lateinit var transactionsRecyclerView: RecyclerView
+    private lateinit var totalSentTextView: TextView
+    private lateinit var totalReceivedTextView: TextView
 
-    private var allTransactions: List<Transaction> = emptyList()
-    private var filteredTransactions: List<Transaction> = emptyList()
+    private lateinit var transactionAdapter: TransactionHistoryAdapter
+    private var allTransactions = listOf<TransactionHistory>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_history, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_history, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        repository = DataRepository(requireContext())
-        bindViews(view)
-        setupList()
-        loadData()
-        setupInteractions()
+
+        initViews()
+        setupData()
+        setupSearch()
+        setupTabs()
+        setupButtons()
     }
 
-    private fun bindViews(root: View) {
-        listView = root.findViewById(R.id.transactionsList)
-        searchInput = root.findViewById(R.id.searchInput)
-        chipGroup = root.findViewById(R.id.filterGroup)
-        chipAll = root.findViewById(R.id.chipAll)
-        chipSent = root.findViewById(R.id.chipSent)
-        chipReceived = root.findViewById(R.id.chipReceived)
-        totalSentView = root.findViewById(R.id.totalSent)
-        totalReceivedView = root.findViewById(R.id.totalReceived)
-        downloadButton = root.findViewById(R.id.downloadButton)
-        statusDropdown = root.findViewById(R.id.statusDropdown)
+    private fun initViews() {
+        searchEditText = requireView().findViewById(R.id.et_search)
+        tabLayout = requireView().findViewById(R.id.tab_layout)
+        transactionsRecyclerView = requireView().findViewById(R.id.rv_transactions)
+        totalSentTextView = requireView().findViewById(R.id.tv_total_sent)
+        totalReceivedTextView = requireView().findViewById(R.id.tv_total_received)
+
+        transactionsRecyclerView.layoutManager = LinearLayoutManager(context)
     }
 
-    private fun setupList() {
-        adapter = TransactionsAdapter(requireContext())
-        listView.layoutManager = LinearLayoutManager(requireContext())
-        listView.adapter = adapter
+    private fun setupData() {
+        allTransactions = listOf(
+            TransactionHistory("Coffee Shop", "Order #12345", "-$4.50", "completed", "2024-01-15", "sent"),
+            TransactionHistory("John Doe", "Split dinner bill", "+$25.00", "completed", "2024-01-14", "received"),
+            TransactionHistory("Online Store", "Order #67890", "-$89.99", "pending", "2024-01-13", "sent"),
+            TransactionHistory("Sarah Wilson", "Movie tickets", "+$15.00", "completed", "2024-01-12", "received"),
+            TransactionHistory("Gas Station", "Fuel purchase", "-$45.67", "completed", "2024-01-11", "sent"),
+            TransactionHistory("Freelance Client", "Project payment", "+$350.00", "completed", "2024-01-10", "received")
+        )
+
+        transactionAdapter = TransactionHistoryAdapter(allTransactions) {}
+        transactionsRecyclerView.adapter = transactionAdapter
+
+        calculateTotals()
+        filterTransactions("all", "")
     }
 
-    private fun loadData() {
-        val data = repository.loadAppData()
-        allTransactions = data?.recentTransactions ?: emptyList()
-        filteredTransactions = allTransactions
-        applyFiltersAndSearch()
-        updateTotals()
-    }
-
-    private fun setupInteractions() {
-        searchInput.addTextChangedListener { applyFiltersAndSearch() }
-        chipGroup.setOnCheckedStateChangeListener { _, _ -> applyFiltersAndSearch() }
-        downloadButton.setOnClickListener { exportCsvAndShare() }
-        setupStatusDropdown()
-    }
-
-    private fun setupStatusDropdown() {
-        val items = listOf("All", "Completed", "Failed", "Pending")
-        (statusDropdown.adapter as? android.widget.ArrayAdapter<String>) ?: run {
-            statusDropdown.setAdapter(android.widget.ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, items))
-        }
-        statusDropdown.setText("All", false)
-        statusDropdown.setOnItemClickListener { _, _, _, _ -> applyFiltersAndSearch() }
-    }
-
-    private fun applyFiltersAndSearch() {
-        val query = (searchInput.text?.toString() ?: "").trim().lowercase(Locale.getDefault())
-        val selectedId = chipGroup.checkedChipId
-        val mode: FilterMode = when (selectedId) {
-            R.id.chipSent -> FilterMode.SENT
-            R.id.chipReceived -> FilterMode.RECEIVED
-            else -> FilterMode.ALL
-        }
-
-        val selectedStatus = statusDropdown.text?.toString()?.lowercase(Locale.getDefault()) ?: "all"
-        filteredTransactions = allTransactions.filter { t ->
-            val matchesMode = when (mode) {
-                FilterMode.ALL -> true
-                FilterMode.SENT -> !t.isIncoming
-                FilterMode.RECEIVED -> t.isIncoming
+    private fun setupSearch() {
+        searchEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val selectedTab = when (tabLayout.selectedTabPosition) {
+                    1 -> "sent"
+                    2 -> "received"
+                    else -> "all"
+                }
+                filterTransactions(selectedTab, s.toString())
             }
-            val matchesStatus = when (selectedStatus) {
-                "completed" -> t.status.equals("Completed", true)
-                "failed" -> t.status.equals("Failed", true)
-                "pending" -> t.status.equals("Pending", true)
-                else -> true
+        })
+    }
+
+    private fun setupTabs() {
+        tabLayout.addTab(tabLayout.newTab().setText("All"))
+        tabLayout.addTab(tabLayout.newTab().setText("Sent"))
+        tabLayout.addTab(tabLayout.newTab().setText("Received"))
+
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                val tabType = when (tab?.position) {
+                    1 -> "sent"
+                    2 -> "received"
+                    else -> "all"
+                }
+                filterTransactions(tabType, searchEditText.text.toString())
             }
-            val matchesQuery = if (query.isEmpty()) true else {
-                t.merchant.lowercase(Locale.getDefault()).contains(query) ||
-                    t.amount.lowercase(Locale.getDefault()).contains(query) ||
-                    t.status.lowercase(Locale.getDefault()).contains(query)
+
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+            override fun onTabReselected(tab: TabLayout.Tab?) {}
+        })
+    }
+
+    private fun setupButtons() {
+        // Filter by State (Success/Fail)
+// Filter button handles both state + date
+        requireView().findViewById<View>(R.id.btn_filter_state).setOnClickListener {
+            showFilterOptionsDialog()
+        }
+
+    }
+
+    /** ---------------- FILTERS ---------------- */
+    private fun showFilterOptionsDialog() {
+        val options = arrayOf("Filter by State", "Filter by Date")
+        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        builder.setTitle("Choose Filter")
+        builder.setItems(options) { _, which ->
+            when (which) {
+                0 -> showStateFilterDialog()
+                1 -> showDateFilterDialog()
             }
-            matchesMode && matchesStatus && matchesQuery
         }
-        adapter.submitList(filteredTransactions)
+        builder.show()
     }
 
-    private fun updateTotals() {
-        var sentCents = 0
-        var receivedCents = 0
-        allTransactions.forEach { t ->
-            val amountCents = parseCurrencyToCents(t.amount)
-            if (t.isIncoming) receivedCents += amountCents else sentCents += amountCents
-        }
-        totalSentView.text = formatCents(sentCents)
-        totalReceivedView.text = formatCents(receivedCents)
+    private fun showStateFilterDialog() {
+        val states = arrayOf("All", "Success", "Fail")
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Filter by State")
+            .setItems(states) { _, which ->
+                val selectedState = states[which].lowercase()
+                filterTransactionsByState(selectedState)
+            }
+            .show()
     }
 
-    private fun parseCurrencyToCents(s: String): Int {
-        val cleaned = s.replace(Regex("[^0-9.-]"), "")
-        val value = cleaned.toDoubleOrNull() ?: 0.0
-        return (value * 100).toInt()
+    private fun showDateFilterDialog() {
+        val calendar = Calendar.getInstance()
+        DatePickerDialog(
+            requireContext(),
+            { _, year, month, dayOfMonth ->
+                val selectedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
+                filterTransactionsByDate(selectedDate)
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).show()
     }
 
-    private fun formatCents(cents: Int): String {
-        val nf = NumberFormat.getCurrencyInstance(Locale.US)
-        return nf.format(cents / 100.0)
+    private fun filterTransactionsByState(state: String) {
+        val filtered = when (state) {
+            "success" -> allTransactions.filter { it.status == "completed" }
+            "fail" -> allTransactions.filter { it.status == "pending" || it.status == "failed" }
+            else -> allTransactions
+        }
+        transactionAdapter.updateTransactions(filtered)
     }
 
-    private fun exportCsvAndShare() {
-        if (allTransactions.isEmpty()) {
-            Toast.makeText(requireContext(), "No transactions to export", Toast.LENGTH_SHORT).show()
-            return
+    private fun filterTransactionsByDate(date: String) {
+        val filtered = allTransactions.filter { it.date == date }
+        transactionAdapter.updateTransactions(filtered)
+    }
+
+    /** ---------------- SEARCH + TABS ---------------- */
+
+    private fun filterTransactions(type: String, query: String) {
+        val filtered = allTransactions.filter { transaction ->
+            val matchesSearch = transaction.name.contains(query, ignoreCase = true) ||
+                    transaction.reference.contains(query, ignoreCase = true)
+            val matchesType = (type == "all" || transaction.type == type)
+            matchesSearch && matchesType
         }
-        val header = "id,merchant,amount,timeAgo,status,isIncoming\n"
-        val rows = allTransactions.joinToString("\n") { t ->
-            listOf(
-                escapeCsv(t.id),
-                escapeCsv(t.merchant),
-                escapeCsv(t.amount),
-                escapeCsv(t.timeAgo),
-                escapeCsv(t.status),
-                t.isIncoming.toString()
-            ).joinToString(",")
-        }
-        val csv = header + rows
+        transactionAdapter.updateTransactions(filtered)
+    }
+
+    /** ---------------- EXPORT ---------------- */
+
+    private fun exportTransactionsToCSV() {
         try {
-            val file = createExportFile(requireContext(), "transactions.csv")
-            FileOutputStream(file).use { it.write(csv.toByteArray()) }
-            val uri: Uri = FileProvider.getUriForFile(
-                requireContext(),
-                requireContext().packageName + ".provider",
-                file
-            )
-            val share = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = "text/csv"
-                putExtra(android.content.Intent.EXTRA_STREAM, uri)
-                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            val fileName = "transactions_${System.currentTimeMillis()}.csv"
+            val downloadsDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            val file = File(downloadsDir, fileName)
+
+            FileWriter(file).use { writer ->
+                writer.append("Name,Reference,Amount,Status,Date,Type\n")
+                for (transaction in allTransactions) {
+                    writer.append("${transaction.name},${transaction.reference},${transaction.amount},${transaction.status},${transaction.date},${transaction.type}\n")
+                }
             }
-            startActivity(android.content.Intent.createChooser(share, "Export transactions"))
-        } catch (e: Exception) {
+
+            Toast.makeText(requireContext(), "CSV saved: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+        } catch (e: IOException) {
             e.printStackTrace()
-            Toast.makeText(requireContext(), "Export failed", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Failed to export CSV", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun createExportFile(context: Context, name: String): File {
-        val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) ?: context.filesDir
-        if (!dir.exists()) dir.mkdirs()
-        return File(dir, name)
-    }
+    /** ---------------- TOTALS ---------------- */
 
-    private fun escapeCsv(s: String): String {
-        val needsQuotes = s.contains(',') || s.contains('"') || s.contains('\n')
-        var out = s.replace("\"", "\"\"")
-        if (needsQuotes) out = "\"$out\""
-        return out
-    }
+    private fun calculateTotals() {
+        val totalSent = allTransactions
+            .filter { it.type == "sent" && it.status == "completed" }
+            .sumOf { it.amount.removePrefix("-$").toDoubleOrNull() ?: 0.0 }
 
-    private enum class FilterMode { ALL, SENT, RECEIVED }
+        val totalReceived = allTransactions
+            .filter { it.type == "received" && it.status == "completed" }
+            .sumOf { it.amount.removePrefix("+$").toDoubleOrNull() ?: 0.0 }
 
-    private class TransactionsAdapter(private val context: Context) : RecyclerView.Adapter<TransactionsAdapter.VH>() {
-        private var items: List<Transaction> = emptyList()
-
-        fun submitList(list: List<Transaction>) {
-            items = list
-            notifyDataSetChanged()
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val view = LayoutInflater.from(context).inflate(R.layout.item_transaction, parent, false)
-            return VH(view)
-        }
-
-        override fun getItemCount(): Int = items.size
-
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            val item = items[position]
-            holder.merchant.text = item.merchant
-            holder.time.text = item.timeAgo
-            holder.amount.text = item.amount
-            holder.status.text = item.status
-            val amountColor = if (item.isIncoming) android.R.color.holo_green_dark else android.R.color.holo_red_dark
-            holder.amount.setTextColor(holder.itemView.resources.getColor(amountColor, null))
-            val iconRes = when (item.icon) {
-                "ic_send_money" -> R.drawable.ic_send_money
-                "ic_qr_pay" -> R.drawable.ic_qr_pay
-                "ic_nfc_pay" -> R.drawable.ic_nfc_pay
-                "ic_add_money" -> R.drawable.ic_add_money
-                "ic_coffee_shop" -> R.drawable.ic_coffee_shop
-                "ic_person" -> R.drawable.ic_person
-                "ic_shopping_cart" -> R.drawable.ic_shopping_cart
-                "ic_online_store" -> R.drawable.ic_online_store
-                else -> R.drawable.ic_person
-            }
-            holder.icon.setImageResource(iconRes)
-        }
-
-        class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            val icon: ImageView = itemView.findViewById(R.id.icon)
-            val merchant: TextView = itemView.findViewById(R.id.merchant)
-            val time: TextView = itemView.findViewById(R.id.time)
-            val amount: TextView = itemView.findViewById(R.id.amount)
-            val status: TextView = itemView.findViewById(R.id.status)
-        }
+        totalSentTextView.text = "$%.2f".format(totalSent)
+        totalReceivedTextView.text = "$%.2f".format(totalReceived)
     }
 }
-

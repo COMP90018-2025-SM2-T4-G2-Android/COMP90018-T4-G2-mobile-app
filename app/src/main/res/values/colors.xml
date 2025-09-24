@@ -1,7 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="splash_bg">#F4F3FF</color>
+<!-- CashPal Brand Colors -->
+<color name="primary">#6C5CE7</color>
+<color name="primary_variant">#5B4FCF</color>
+<color name="primary_container">#E8E6FF</color>
+<color name="on_primary">#FFFFFF</color>
+<color name="on_primary_container">#1A1B2E</color>
+<color name="splash_bg">#F4F3FF</color>
+
+
+<color name="secondary">#F1F2F6</color>
+<color name="secondary_variant">#2D3A5F</color>
+<color name="on_secondary">#1A1B2E</color>
+
+<color name="background">#F0F0FF</color>
+<color name="surface">#FFFFFF</color>
+
+<color name="on_background">#1A1B2E</color>
+<color name="on_surface">#1A1B2E</color>
+
+<color name="card">#FFFFFF</color>
+<color name="foreground">#1A1B2E</color>
+<color name="muted_foreground">#6C7293</color>
+
+<color name="success">#00B894</color>
+<color name="warning">#E17055</color>
+<color name="error">#FF6B7A</color>
+<color name="accent">#FDCB6E</color>
+
+<!-- Transaction Colors -->
+<color name="sent_color">#EF4444</color>
+<color name="received_color">#22C55E</color>
+<color name="sent_background">#FEF2F2</color>
+<color name="received_background">#F0FDF4</color>
+
+<!-- Scanner Colors -->
+<color name="scanner_background">#1F2937</color>
+
+<!-- Switch Colors -->
+<color name="switch_thumb_color">@color/primary</color>
+<color name="switch_track_color">#DDD6FE</color>
+
+<!-- Material Design Colors -->
+<color name="purple_200">#BBDEFB</color>
+<color name="purple_500">#6C5CE7</color>
+<color name="purple_700">#5B4FCF</color>
+<color name="teal_200">#03DAC5</color>
+<color name="teal_700">#018786</color>
+<color name="black">#FF000000</color>
+<color name="white">#FFFFFFFF</color>
+
+
+
+    <!-- Bottom Navigation Colors -->
+<color name="bottom_nav_selected">#6C5CE7</color>
+<color name="bottom_nav_unselected">#6C7293</color>
+<color name="border">#CCCCCC</color> <!-- light gray -->
+<color name= "hint_text">#A0A3B1</color>
+    <color name="app_background">#FAFAFA</color>
 
 </resources>

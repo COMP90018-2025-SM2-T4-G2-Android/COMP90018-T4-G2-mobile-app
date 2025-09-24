@@ -1,0 +1,11 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Slightly transparent dark overlay -->
+    <solid android:color="#AA000000"/>
+    <!-- AA = ~67% opacity -->
+
+    <!-- Optional rounded corners -->
+    <corners android:radius="16dp"/>
+
+</shape>
