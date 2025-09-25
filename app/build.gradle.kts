@@ -79,7 +79,10 @@ dependencies {
 
     // ML Kit Barcode Scanning
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
-    
+
+    // ZXing core library for QR code generation
+    implementation("com.google.zxing:core:3.5.0")
+
     // Coroutines for Firebase
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")

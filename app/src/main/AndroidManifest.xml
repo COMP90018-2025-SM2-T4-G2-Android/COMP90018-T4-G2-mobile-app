@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -34,7 +35,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.provider"
+            android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -59,7 +60,7 @@
             android:exported="false"
             android:theme="@style/Theme.CashPal" />
 
-        <!-- Your custom splash as the launcher -->
+        <!-- Splash screen -->
         <activity
             android:name=".SplashActivity"
             android:exported="false"
@@ -68,7 +69,8 @@
         <!-- Normal main screen -->
         <activity
             android:name=".MainActivity"
-            android:exported="false" />
+            android:exported="true"
+            android:launchMode="singleTop" />
 
         <!-- Debug seeding activity -->
         <activity
