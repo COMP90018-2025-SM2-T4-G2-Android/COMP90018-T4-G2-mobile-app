@@ -27,8 +27,6 @@ import com.cashpal.app.adapters.RecentScanAdapter
 import com.cashpal.app.models.RecentScan
 
 
-
-
 class ScanFragment : Fragment() {
 
     private lateinit var startScanButton: Button
@@ -67,7 +65,7 @@ class ScanFragment : Fragment() {
         }
 
         qrOption.setOnClickListener {
-            Toast.makeText(requireContext(), "QR Code option clicked", Toast.LENGTH_SHORT).show()
+            openPersonalQR()
         }
 
         vendorOption.setOnClickListener {
@@ -140,6 +138,13 @@ class ScanFragment : Fragment() {
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
+    private fun openPersonalQR() {
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, PersonalQRFragment())
+            .addToBackStack("personal_qr")
+            .commit()
+    }
+
     private fun startScanningLineAnimation() {
         val animation = TranslateAnimation(
             0f, 0f,
@@ -190,4 +195,7 @@ class QRCodeAnalyzerMLKit(
             imageProxy.close()
         }
     }
+
+
+
 }
