@@ -23,6 +23,20 @@ import java.io.FileWriter
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
+import android.widget.Button
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import androidx.activity.result.contract.ActivityResultContracts
+import android.annotation.SuppressLint
+import android.content.ContentValues
+import android.content.Intent
+import android.net.Uri
+import androidx.core.content.FileProvider
+import android.media.MediaScannerConnection
+import android.os.Build
+import android.provider.MediaStore
+import androidx.annotation.RequiresApi
+
 
 class HistoryFragment : Fragment() {
 
@@ -34,6 +48,16 @@ class HistoryFragment : Fragment() {
 
     private lateinit var transactionAdapter: TransactionHistoryAdapter
     private var allTransactions = listOf<TransactionHistory>()
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                Toast.makeText(requireContext(), "Permission granted!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "Permission denied. Cannot save CSV.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,7 +73,20 @@ class HistoryFragment : Fragment() {
         setupSearch()
         setupTabs()
         setupButtons()
+
+
+        val downloadCsvButton: Button = view.findViewById(R.id.btn_download_csv)
+
+        downloadCsvButton.setOnClickListener {
+            if (allTransactions.isNotEmpty()) {
+                exportTransactionsToCSV(allTransactions)
+            } else {
+                Toast.makeText(requireContext(), "No transactions to export", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
+
+
 
     private fun initViews() {
         searchEditText = requireView().findViewById(R.id.et_search)
@@ -189,25 +226,58 @@ class HistoryFragment : Fragment() {
 
     /** ---------------- EXPORT ---------------- */
 
-    private fun exportTransactionsToCSV() {
-        try {
-            val fileName = "transactions_${System.currentTimeMillis()}.csv"
-            val downloadsDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            val file = File(downloadsDir, fileName)
+    @SuppressLint("Range")
+    private fun exportTransactionsToCSV(transactions: List<TransactionHistory>) {
+        val fileName = "transactions_${System.currentTimeMillis()}.csv"
 
-            FileWriter(file).use { writer ->
-                writer.append("Name,Reference,Amount,Status,Date,Type\n")
-                for (transaction in allTransactions) {
-                    writer.append("${transaction.name},${transaction.reference},${transaction.amount},${transaction.status},${transaction.date},${transaction.type}\n")
+        val csvContent = StringBuilder()
+        csvContent.append("Name,Reference,Amount,Status,Date,Type\n")
+        for (tx in transactions) {
+            csvContent.append("${tx.name},${tx.reference},${tx.amount},${tx.status},${tx.date},${tx.type}\n")
+        }
+
+        val resolver = requireContext().contentResolver
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+            put(MediaStore.Downloads.MIME_TYPE, "text/csv") // CSV mime type
+            put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+        }
+
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+
+        if (uri != null) {
+            resolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(csvContent.toString().toByteArray())
+                outputStream.flush()
+            }
+
+            Toast.makeText(requireContext(), "CSV saved to Downloads/$fileName", Toast.LENGTH_SHORT).show()
+
+            // Try to open with CSV viewer
+            val csvIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "text/csv")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            try {
+                startActivity(csvIntent)
+            } catch (e: Exception) {
+                // Fallback: open as plain text
+                val textIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "text/plain")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                try {
+                    startActivity(textIntent)
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "File saved but cannot be opened on this device", Toast.LENGTH_LONG).show()
                 }
             }
 
-            Toast.makeText(requireContext(), "CSV saved: ${file.absolutePath}", Toast.LENGTH_LONG).show()
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Toast.makeText(requireContext(), "Failed to export CSV", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(requireContext(), "Failed to save CSV", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     /** ---------------- TOTALS ---------------- */
 
