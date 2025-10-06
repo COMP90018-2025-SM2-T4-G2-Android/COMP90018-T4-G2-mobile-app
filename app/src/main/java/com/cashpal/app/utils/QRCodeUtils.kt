@@ -1,6 +1,7 @@
 package com.cashpal.app.utils
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
@@ -8,7 +9,12 @@ import com.google.zxing.common.BitMatrix
 
 object QRCodeUtils {
 
-    fun generateQRCode(content: String, size: Int = 512): Bitmap? {
+    fun generateQRCode(
+        content: String,
+        size: Int = 512,
+        foregroundColor: Int = Color.BLACK,    // Default black
+        backgroundColor: Int = Color.WHITE     // Default white
+    ): Bitmap? {
         return try {
             val hints = mapOf(
                 EncodeHintType.MARGIN to 1
@@ -28,8 +34,8 @@ object QRCodeUtils {
 
             for (y in 0 until height) {
                 for (x in 0 until width) {
-                    val isBlack = bitMatrix[x, y]
-                    pixels[y * width + x] = if (isBlack) 0xFF000000.toInt() else 0xFFFFFFFF.toInt()
+                    val isFilled = bitMatrix[x, y]
+                    pixels[y * width + x] = if (isFilled) foregroundColor else backgroundColor
                 }
             }
 
