@@ -116,10 +116,21 @@ class ScanFragment : Fragment() {
                         if (!hasScanned) {
                             hasScanned = true
                             requireActivity().runOnUiThread {
-                                Toast.makeText(requireContext(), "QR Scanned: $qrText", Toast.LENGTH_LONG).show()
-                                // TODO: navigate or trigger payment with qrText
+                                // Navigate to the Scan Result Fragment
+                                val bundle = Bundle().apply {
+                                    putString("qrData", qrText)
+                                }
+                                val resultFragment = ScanResultFragment().apply {
+                                    arguments = bundle
+                                }
+
+                                parentFragmentManager.beginTransaction()
+                                    .replace(R.id.fragmentContainer, resultFragment)
+                                    .addToBackStack("scan_result")
+                                    .commit()
                             }
                         }
+
                     })
                 }
 
