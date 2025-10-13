@@ -132,25 +132,201 @@
                     android:paddingHorizontal="20dp"
                     android:paddingBottom="16dp">
 
-                    <include layout="@layout/menu_item_basic"
+                    <!-- Profile -->
+                    <LinearLayout
                         android:id="@+id/item_profile"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/menu_item_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp">
 
-                    <include layout="@layout/menu_item_with_badge"
+                        <LinearLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/menu_icon_background"
+                            android:gravity="center">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_person"
+                                app:tint="@color/primary" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Profile"
+                            android:textColor="@color/foreground"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/muted_foreground" />
+
+                    </LinearLayout>
+
+                    <!-- Verification -->
+                    <LinearLayout
                         android:id="@+id/item_verification"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/menu_item_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp">
 
-                    <include layout="@layout/menu_item_basic"
+                        <LinearLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/menu_icon_background"
+                            android:gravity="center">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_check_circle"
+                                app:tint="@color/primary" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Verification"
+                            android:textColor="@color/foreground"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Verify"
+                            android:textColor="@color/primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:background="@drawable/badge_background"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:layout_marginEnd="8dp" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/muted_foreground" />
+
+                    </LinearLayout>
+
+                    <!-- Payment Methods -->
+                    <LinearLayout
                         android:id="@+id/item_payment_methods"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/menu_item_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp">
 
-                    <include layout="@layout/menu_item_basic"
+                        <LinearLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/menu_icon_background"
+                            android:gravity="center">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_credit_card"
+                                app:tint="@color/primary" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Payment Methods"
+                            android:textColor="@color/foreground"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/muted_foreground" />
+
+                    </LinearLayout>
+
+                    <!-- Security -->
+                    <LinearLayout
                         android:id="@+id/item_security"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/menu_item_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/menu_icon_background"
+                            android:gravity="center">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_shield"
+                                app:tint="@color/primary" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Security"
+                            android:textColor="@color/foreground"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/muted_foreground" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
@@ -197,15 +373,109 @@
                     android:paddingHorizontal="20dp"
                     android:paddingBottom="16dp">
 
-                    <include layout="@layout/menu_item_with_badge"
+                    <!-- NFC Settings -->
+                    <LinearLayout
                         android:id="@+id/item_nfc_settings"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/menu_item_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp">
 
-                    <include layout="@layout/menu_item_basic"
+                        <LinearLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/menu_icon_background"
+                            android:gravity="center">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_nfc_pay"
+                                app:tint="@color/primary" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="NFC Settings"
+                            android:textColor="@color/foreground"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Beta"
+                            android:textColor="@color/primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:background="@drawable/badge_background"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:layout_marginEnd="8dp" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/muted_foreground" />
+
+                    </LinearLayout>
+
+                    <!-- QR Settings -->
+                    <LinearLayout
                         android:id="@+id/item_qr_settings"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/menu_item_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/menu_icon_background"
+                            android:gravity="center">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_qr_scanner"
+                                app:tint="@color/primary" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="QR Settings"
+                            android:textColor="@color/foreground"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/muted_foreground" />
+
+                    </LinearLayout>
 
                     <!-- Biometric Authentication (Inlined for direct switch access) -->
                     <LinearLayout
@@ -382,10 +652,59 @@
 
                     </LinearLayout>
 
-                    <include layout="@layout/menu_item_with_value"
+                    <!-- Language -->
+                    <LinearLayout
                         android:id="@+id/item_language"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/menu_item_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/menu_icon_background"
+                            android:gravity="center">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_globe"
+                                app:tint="@color/primary" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Language"
+                            android:textColor="@color/foreground"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="English"
+                            android:textColor="@color/muted_foreground"
+                            android:textSize="14sp"
+                            android:layout_marginEnd="8dp" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/muted_foreground" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
@@ -432,15 +751,97 @@
                     android:paddingHorizontal="20dp"
                     android:paddingBottom="16dp">
 
-                    <include layout="@layout/menu_item_basic"
+                    <!-- Help Center -->
+                    <LinearLayout
                         android:id="@+id/item_help_center"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/menu_item_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp">
 
-                    <include layout="@layout/menu_item_basic"
+                        <LinearLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/menu_icon_background"
+                            android:gravity="center">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_help_circle"
+                                app:tint="@color/primary" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Help Center"
+                            android:textColor="@color/foreground"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/muted_foreground" />
+
+                    </LinearLayout>
+
+                    <!-- Contact Support -->
+                    <LinearLayout
                         android:id="@+id/item_contact_support"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/menu_item_background"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/menu_icon_background"
+                            android:gravity="center">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_mail"
+                                app:tint="@color/primary" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Contact Support"
+                            android:textColor="@color/foreground"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_forward"
+                            app:tint="@color/muted_foreground" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
@@ -486,10 +887,50 @@
                     android:paddingHorizontal="20dp"
                     android:paddingBottom="16dp">
 
-                    <include layout="@layout/menu_item_with_value"
+                    <!-- App Version -->
+                    <LinearLayout
                         android:id="@+id/item_app_version"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/menu_item_background"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/menu_icon_background"
+                            android:gravity="center">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_info"
+                                app:tint="@color/primary" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="App Version"
+                            android:textColor="@color/foreground"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginStart="16dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="1.0.0"
+                            android:textColor="@color/muted_foreground"
+                            android:textSize="14sp"
+                            android:layout_marginEnd="8dp" />
+
+                    </LinearLayout>
 
                     <!-- Privacy Note -->
                     <LinearLayout
