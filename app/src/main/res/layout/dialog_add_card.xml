@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="@dimen/dialog_padding">
+        android:padding="24dp">
 
         <!-- Header -->
         <LinearLayout
@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="@dimen/spacing_sm">
+            android:layout_marginBottom="8dp">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -40,7 +40,7 @@
                     android:text="Scan or manually enter your card details"
                     android:textColor="@color/muted_foreground"
                     android:textSize="14sp"
-                    android:layout_marginTop="@dimen/spacing_xs" />
+                    android:layout_marginTop="4dp" />
 
             </LinearLayout>
 
@@ -60,39 +60,40 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@drawable/divider_background"
-            android:layout_marginVertical="16dp" />
+            android:background="@drawable/divider_line"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
 
         <!-- Scan Card Button -->
         <Button
             android:id="@+id/btn_scan_card"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height_large"
+            android:layout_height="56dp"
             android:text="Scan Card with Camera"
             android:textColor="@android:color/white"
             android:textSize="16sp"
             android:textStyle="bold"
             android:background="@drawable/edit_profile_button_background"
             android:drawableStart="@drawable/ic_camera"
-            android:drawablePadding="@dimen/spacing_sm"
+            android:drawablePadding="8dp"
             android:drawableTint="@android:color/white"
             android:gravity="center"
-            android:layout_marginBottom="@dimen/spacing_xl" />
+            android:layout_marginBottom="24dp" />
 
         <!-- Card Preview -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="200dp"
             app:cardBackgroundColor="@color/primary"
-            app:cardCornerRadius="@dimen/corner_large"
-            app:cardElevation="@dimen/elevation_level2"
-            android:layout_marginBottom="@dimen/spacing_xl">
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp"
+            android:layout_marginBottom="24dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:padding="@dimen/spacing_xl"
+                android:padding="24dp"
                 android:gravity="bottom">
 
                 <!-- Card Number Preview -->
@@ -105,7 +106,7 @@
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.1"
-                    android:layout_marginBottom="@dimen/spacing_lg" />
+                    android:layout_marginBottom="16dp" />
 
                 <!-- Expiry and CVV Row -->
                 <LinearLayout
@@ -141,7 +142,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginStart="@dimen/spacing_xl">
+                        android:layout_marginStart="24dp">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -191,21 +192,21 @@
                 android:inputType="number"
                 android:maxLength="19"
                 android:background="@drawable/edit_text_background"
-                android:paddingHorizontal="@dimen/spacing_lg"
+                android:paddingHorizontal="16dp"
                 android:textColor="@color/foreground"
                 android:textColorHint="@color/muted_foreground"
                 android:textSize="16sp"
                 android:drawableStart="@drawable/ic_credit_card"
-                android:drawablePadding="@dimen/spacing_md"
+                android:drawablePadding="12dp"
                 android:drawableTint="@color/primary"
-                android:layout_marginBottom="@dimen/spacing_lg" />
+                android:layout_marginBottom="16dp" />
 
             <!-- Expiry Date and CVV Row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="@dimen/spacing_lg">
+                android:layout_marginBottom="16dp">
 
                 <!-- Expiry Date -->
                 <LinearLayout
@@ -213,7 +214,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:layout_marginEnd="@dimen/spacing_sm">
+                    android:layout_marginEnd="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -232,7 +233,7 @@
                         android:inputType="number"
                         android:maxLength="5"
                         android:background="@drawable/edit_text_background"
-                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:paddingHorizontal="16dp"
                         android:textColor="@color/foreground"
                         android:textColorHint="@color/muted_foreground"
                         android:textSize="16sp" />
@@ -245,7 +246,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:layout_marginStart="@dimen/spacing_sm">
+                    android:layout_marginStart="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -264,7 +265,7 @@
                         android:inputType="numberPassword"
                         android:maxLength="4"
                         android:background="@drawable/edit_text_background"
-                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:paddingHorizontal="16dp"
                         android:textColor="@color/foreground"
                         android:textColorHint="@color/muted_foreground"
                         android:textSize="16sp" />
@@ -290,14 +291,14 @@
                 android:hint="John Doe"
                 android:inputType="textPersonName|textCapWords"
                 android:background="@drawable/edit_text_background"
-                android:paddingHorizontal="@dimen/spacing_lg"
+                android:paddingHorizontal="16dp"
                 android:textColor="@color/foreground"
                 android:textColorHint="@color/muted_foreground"
                 android:textSize="16sp"
                 android:drawableStart="@drawable/ic_person"
-                android:drawablePadding="@dimen/spacing_md"
+                android:drawablePadding="12dp"
                 android:drawableTint="@color/primary"
-                android:layout_marginBottom="@dimen/spacing_lg" />
+                android:layout_marginBottom="16dp" />
 
             <!-- Billing Address Section -->
             <TextView
@@ -307,8 +308,8 @@
                 android:textColor="@color/foreground"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:layout_marginTop="@dimen/spacing_sm"
-                android:layout_marginBottom="@dimen/spacing_lg" />
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp" />
 
             <!-- Street Address -->
             <TextView
@@ -327,21 +328,21 @@
                 android:hint="123 Main Street"
                 android:inputType="textPostalAddress"
                 android:background="@drawable/edit_text_background"
-                android:paddingHorizontal="@dimen/spacing_lg"
+                android:paddingHorizontal="16dp"
                 android:textColor="@color/foreground"
                 android:textColorHint="@color/muted_foreground"
                 android:textSize="16sp"
                 android:drawableStart="@drawable/ic_location"
-                android:drawablePadding="@dimen/spacing_md"
+                android:drawablePadding="12dp"
                 android:drawableTint="@color/primary"
-                android:layout_marginBottom="@dimen/spacing_lg" />
+                android:layout_marginBottom="16dp" />
 
             <!-- City and Postal Code Row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="@dimen/spacing_lg">
+                android:layout_marginBottom="16dp">
 
                 <!-- City -->
                 <LinearLayout
@@ -349,7 +350,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:layout_marginEnd="@dimen/spacing_sm">
+                    android:layout_marginEnd="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -367,7 +368,7 @@
                         android:hint="City"
                         android:inputType="textPostalAddress"
                         android:background="@drawable/edit_text_background"
-                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:paddingHorizontal="16dp"
                         android:textColor="@color/foreground"
                         android:textColorHint="@color/muted_foreground"
                         android:textSize="16sp" />
@@ -380,7 +381,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:layout_marginStart="@dimen/spacing_sm">
+                    android:layout_marginStart="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -398,7 +399,7 @@
                         android:hint="12345"
                         android:inputType="number"
                         android:background="@drawable/edit_text_background"
-                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:paddingHorizontal="16dp"
                         android:textColor="@color/foreground"
                         android:textColorHint="@color/muted_foreground"
                         android:textSize="16sp" />
@@ -412,7 +413,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="@dimen/spacing_xl">
+                android:layout_marginBottom="24dp">
 
                 <!-- State -->
                 <LinearLayout
@@ -420,7 +421,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:layout_marginEnd="@dimen/spacing_sm">
+                    android:layout_marginEnd="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -438,7 +439,7 @@
                         android:hint="State"
                         android:inputType="textPostalAddress"
                         android:background="@drawable/edit_text_background"
-                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:paddingHorizontal="16dp"
                         android:textColor="@color/foreground"
                         android:textColorHint="@color/muted_foreground"
                         android:textSize="16sp" />
@@ -451,7 +452,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:layout_marginStart="@dimen/spacing_sm">
+                    android:layout_marginStart="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -469,7 +470,7 @@
                         android:hint="Country"
                         android:inputType="textPostalAddress"
                         android:background="@drawable/edit_text_background"
-                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:paddingHorizontal="16dp"
                         android:textColor="@color/foreground"
                         android:textColorHint="@color/muted_foreground"
                         android:textSize="16sp" />
@@ -486,7 +487,7 @@
                 android:text="Set as primary payment method"
                 android:textColor="@color/foreground"
                 android:textSize="14sp"
-                android:layout_marginBottom="@dimen/spacing_xl"
+                android:layout_marginBottom="24dp"
                 android:buttonTint="@color/primary" />
 
         </LinearLayout>
@@ -502,27 +503,27 @@
             <Button
                 android:id="@+id/btn_cancel_add_card"
                 android:layout_width="0dp"
-                android:layout_height="@dimen/button_height_large"
+                android:layout_height="56dp"
                 android:layout_weight="1"
                 android:text="Cancel"
                 android:textColor="@color/foreground"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:background="@drawable/cancel_button_background"
-                android:layout_marginEnd="@dimen/spacing_sm" />
+                android:layout_marginEnd="8dp" />
 
             <!-- Add Card Button -->
             <Button
                 android:id="@+id/btn_save_card"
                 android:layout_width="0dp"
-                android:layout_height="@dimen/button_height_large"
+                android:layout_height="56dp"
                 android:layout_weight="1"
                 android:text="Add Card"
                 android:textColor="@android:color/white"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:background="@drawable/save_button_background"
-                android:layout_marginStart="@dimen/spacing_sm" />
+                android:layout_marginStart="8dp" />
 
         </LinearLayout>
 
