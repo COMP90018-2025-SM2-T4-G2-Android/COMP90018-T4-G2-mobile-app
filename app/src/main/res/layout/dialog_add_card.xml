@@ -60,7 +60,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@color/outline_variant"
+            android:background="@drawable/divider_line"
             android:layout_marginVertical="@dimen/spacing_lg" />
 
         <!-- Scan Card Button -->
