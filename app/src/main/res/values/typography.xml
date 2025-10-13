@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material 3 Typography Scale -->
+    
+    <!-- Display Styles - Largest text -->
+    <style name="TextAppearance.CashPal.DisplayLarge" parent="TextAppearance.Material3.DisplayLarge">
+        <item name="android:textSize">57sp</item>
+        <item name="android:lineHeight">64sp</item>
+        <item name="fontFamily">sans-serif</item>
+    </style>
+    
+    <style name="TextAppearance.CashPal.DisplayMedium" parent="TextAppearance.Material3.DisplayMedium">
+        <item name="android:textSize">45sp</item>
+        <item name="android:lineHeight">52sp</item>
+    </style>
+    
+    <style name="TextAppearance.CashPal.DisplaySmall" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="android:textSize">36sp</item>
+        <item name="android:lineHeight">44sp</item>
+    </style>
+    
+    <!-- Headline Styles - High-emphasis text -->
+    <style name="TextAppearance.CashPal.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:textSize">32sp</item>
+        <item name="android:lineHeight">40sp</item>
+    </style>
+    
+    <style name="TextAppearance.CashPal.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:textSize">28sp</item>
+        <item name="android:lineHeight">36sp</item>
+    </style>
+    
+    <style name="TextAppearance.CashPal.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:textSize">24sp</item>
+        <item name="android:lineHeight">32sp</item>
+    </style>
+    
+    <!-- Title Styles - Medium-emphasis -->
+    <style name="TextAppearance.CashPal.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textSize">22sp</item>
+        <item name="android:lineHeight">28sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    
+    <style name="TextAppearance.CashPal.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineHeight">24sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    
+    <style name="TextAppearance.CashPal.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineHeight">20sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    
+    <!-- Body Styles - Main content -->
+    <style name="TextAppearance.CashPal.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineHeight">24sp</item>
+    </style>
+    
+    <style name="TextAppearance.CashPal.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineHeight">20sp</item>
+    </style>
+    
+    <style name="TextAppearance.CashPal.BodySmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textSize">12sp</item>
+        <item name="android:lineHeight">16sp</item>
+    </style>
+    
+    <!-- Label Styles - Buttons, badges -->
+    <style name="TextAppearance.CashPal.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineHeight">20sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    
+    <style name="TextAppearance.CashPal.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">12sp</item>
+        <item name="android:lineHeight">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    
+    <style name="TextAppearance.CashPal.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">11sp</item>
+        <item name="android:lineHeight">16sp</item>
+    </style>
+</resources>
+
