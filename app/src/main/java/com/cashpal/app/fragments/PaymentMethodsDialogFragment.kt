@@ -116,7 +116,10 @@ class PaymentMethodsDialogFragment : DialogFragment() {
     
     private fun openAddCardDialog() {
         val addCardDialog = AddCardDialogFragment.newInstance()
-        addCardDialog.show(childFragmentManager, AddCardDialogFragment.TAG)
+        // Close current dialog first
+        dismiss()
+        // Show add card dialog using parent fragment manager
+        addCardDialog.show(parentFragmentManager, AddCardDialogFragment.TAG)
     }
     
     companion object {
