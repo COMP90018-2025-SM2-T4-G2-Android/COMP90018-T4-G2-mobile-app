@@ -53,7 +53,7 @@ class MoreFragment : Fragment() {
         }
         
         requireView().findViewById<View>(R.id.item_payment_methods)?.setOnClickListener {
-            showToast("Payment Methods")
+            showPaymentMethodsDialog()
         }
         
         requireView().findViewById<View>(R.id.item_security)?.setOnClickListener {
@@ -118,5 +118,10 @@ class MoreFragment : Fragment() {
     private fun showProfileDialog() {
         val profileDialog = ProfileDialogFragment.newInstance()
         profileDialog.show(childFragmentManager, ProfileDialogFragment.TAG)
+    }
+    
+    private fun showPaymentMethodsDialog() {
+        val paymentMethodsDialog = PaymentMethodsDialogFragment.newInstance()
+        paymentMethodsDialog.show(childFragmentManager, PaymentMethodsDialogFragment.TAG)
     }
 }
