@@ -51,7 +51,7 @@
                 android:src="@drawable/ic_close"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:padding="6dp"
-                android:contentDescription="@string/cd_close"
+                android:contentDescription="Close"
                 app:tint="@color/muted_foreground" />
 
         </LinearLayout>
@@ -60,8 +60,8 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@color/outline_variant"
-            android:layout_marginVertical="@dimen/spacing_lg" />
+            android:background="@drawable/divider_background"
+            android:layout_marginVertical="16dp" />
 
         <!-- Scan Card Button -->
         <Button
