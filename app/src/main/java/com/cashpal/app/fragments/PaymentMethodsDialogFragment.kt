@@ -100,8 +100,7 @@ class PaymentMethodsDialogFragment : DialogFragment() {
         
         // Add New Card
         btnAddNewCard.setOnClickListener {
-            showToast("Add new card - Coming soon!")
-            // TODO: Open add card dialog with card number, expiry, CVV fields
+            openAddCardDialog()
         }
         
         // Link Bank
@@ -113,6 +112,11 @@ class PaymentMethodsDialogFragment : DialogFragment() {
     
     private fun showToast(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun openAddCardDialog() {
+        val addCardDialog = AddCardDialogFragment.newInstance()
+        addCardDialog.show(childFragmentManager, AddCardDialogFragment.TAG)
     }
     
     companion object {
