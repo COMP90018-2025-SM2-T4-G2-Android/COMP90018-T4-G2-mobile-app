@@ -45,7 +45,7 @@ class MoreFragment : Fragment() {
         
         // Account Management
         requireView().findViewById<View>(R.id.item_profile)?.setOnClickListener {
-            showToast("Profile")
+            showProfileDialog()
         }
         
         requireView().findViewById<View>(R.id.item_verification)?.setOnClickListener {
@@ -113,5 +113,10 @@ class MoreFragment : Fragment() {
     
     private fun showToast(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun showProfileDialog() {
+        val profileDialog = ProfileDialogFragment.newInstance()
+        profileDialog.show(childFragmentManager, ProfileDialogFragment.TAG)
     }
 }
