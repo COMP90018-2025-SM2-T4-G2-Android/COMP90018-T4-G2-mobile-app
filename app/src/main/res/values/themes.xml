@@ -1,10 +1,53 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.CashPal" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <!-- Material 3 Base Theme -->
+    <style name="Theme.CashPal" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Primary colors -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorPrimaryContainer">@color/primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/on_primary_container</item>
+        
+        <!-- Secondary colors -->
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        <item name="colorSecondaryContainer">@color/secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/on_secondary_container</item>
+        
+        <!-- Surface colors -->
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+        
+        <!-- Background -->
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorOnBackground">@color/on_background</item>
+        
+        <!-- Error colors -->
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@android:color/white</item>
+        <item name="colorErrorContainer">@color/error_container</item>
+        <item name="colorOnErrorContainer">@color/on_error_container</item>
+        
+        <!-- Outline -->
+        <item name="colorOutline">@color/outline</item>
+        <item name="colorOutlineVariant">@color/outline_variant</item>
+        
+        <!-- Shape theming -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.CashPal.SmallComponent</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.CashPal.MediumComponent</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.CashPal.LargeComponent</item>
+        
+        <!-- Typography -->
+        <item name="textAppearanceDisplayLarge">@style/TextAppearance.CashPal.DisplayLarge</item>
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.CashPal.HeadlineLarge</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.CashPal.TitleLarge</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.CashPal.BodyLarge</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.CashPal.LabelLarge</item>
+        
+        <!-- Enable dynamic colors on Android 12+ -->
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
-    <style name="Theme.CashPal" parent="Base.Theme.CashPal"/>
 
     <!-- Splash screen theme -->
     <style name="Theme.CashPal.Splash" parent="Theme.CashPal">
@@ -26,6 +69,22 @@
     <style name="BottomNavTextInactive" parent="TextAppearance.Material3.LabelSmall">
         <item name="android:textSize">12sp</item>
         <item name="android:textStyle">normal</item>
+    </style>
+
+    <!-- Shape Appearances -->
+    <style name="ShapeAppearance.CashPal.SmallComponent" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/corner_small</item>
+    </style>
+    
+    <style name="ShapeAppearance.CashPal.MediumComponent" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/corner_medium</item>
+    </style>
+    
+    <style name="ShapeAppearance.CashPal.LargeComponent" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/corner_large</item>
     </style>
 
 </resources>
