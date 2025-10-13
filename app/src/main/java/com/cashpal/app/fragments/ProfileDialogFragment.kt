@@ -82,9 +82,7 @@ class ProfileDialogFragment : DialogFragment() {
         }
         
         btnEditProfile.setOnClickListener {
-            showToast("Edit profile - Coming soon!")
-            // TODO: Navigate to edit profile screen
-            dismiss()
+            openEditProfileDialog()
         }
     }
     
@@ -110,6 +108,21 @@ class ProfileDialogFragment : DialogFragment() {
     
     private fun showToast(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun openEditProfileDialog() {
+        val editProfileDialog = EditProfileDialogFragment.newInstance(
+            name = tvUserName.text.toString(),
+            email = tvEmail.text.toString(),
+            phone = tvPhone.text.toString(),
+            address = tvAddress.text.toString()
+        )
+        
+        // Dismiss current dialog first
+        dismiss()
+        
+        // Show edit profile dialog
+        editProfileDialog.show(parentFragmentManager, EditProfileDialogFragment.TAG)
     }
     
     companion object {
