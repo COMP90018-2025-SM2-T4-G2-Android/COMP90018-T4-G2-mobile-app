@@ -40,16 +40,15 @@ class AddCardDialogFragment : DialogFragment() {
     private lateinit var tvCardPreviewExpiry: TextView
     private lateinit var tvCardPreviewCvv: TextView
     
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        // Set normal dialog style
-        setStyle(STYLE_NORMAL, R.style.Theme_CashPal)
-    }
-    
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         return dialog
+    }
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setStyle(STYLE_NORMAL, R.style.Theme_CashPal)
     }
     
     override fun onCreateView(
@@ -70,14 +69,11 @@ class AddCardDialogFragment : DialogFragment() {
     
     override fun onStart() {
         super.onStart()
-        // Set dialog to take up full screen
-        dialog?.window?.apply {
-            setLayout(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            setBackgroundDrawableResource(android.R.color.transparent)
-        }
+        dialog?.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        dialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
     }
     
     private fun initViews(view: View) {
