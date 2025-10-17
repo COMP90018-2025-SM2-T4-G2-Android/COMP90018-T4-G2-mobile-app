@@ -1,0 +1,548 @@
+# Backend Setup Completion Plan
+
+## Issues to Address
+
+### 1. Firestore Indexes Configuration
+
+**File:** `firestore.indexes.json`
+
+Add composite indexes required for queries in `FirestoreService.kt`:
+
+- Contacts: `userId` + `isFrequent` (DESC) + `lastTransactionDate` (DESC)
+- Transactions: `fromUserId/toUserId` (composite) + `createdAt` (DESC)
+- Payment Requests: `fromUserId/toUserId` (composite) + `createdAt` (DESC)
+
+### 2. Fix Firestore Security Rules
+
+**File:** `firestore.rules`
+
+Fix logical issues in security rules:
+
+- Line 12-14: `resource.data` is null on read for non-existent docs
+- Line 30-35: Same issue for payment requests
+- Add proper read rules that check against request.resource for creation
+
+### 3. Update Default Currency to AUD
+
+**Files:**
+
+- `app/src/main/java/com/cashpal/app/models/User.kt` - Change `currency = "USD"` to `"AUD"` in User and UserPreferences
+- `app/src/main/java/com/cashpal/app/models/Transaction.kt` - Change `currency = "USD"` to `"AUD"`
+- `app/src/main/java/com/cashpal/app/models/PaymentRequest.kt` - Change `currency = "USD"` to `"AUD"`
+
+All new users, transactions, and payment requests will default to Australian Dollars.
+
+### 4. MainActivity Firebase Integration
+
+**File:** `app/src/main/java/com/cashpal/app/MainActivity.kt`
+
+Update to fetch data from Firebase with JSON fallback:
+
+- Add Firebase repository initialization
+- Create `loadUserProfile()` method to fetch user from Firestore
+- Create `loadUserTransactions()` method to fetch transactions from Firestore  
+- Keep `loadDataFromJSON()` as fallback when Firebase fails or no network
+- Update balance display to show Firebase user balance
+- Map Firebase `Transaction` model to display format
+- Add loading states during data fetch
+
+### 5. Mock Data Seeding Service
+
+**File:** `app/src/main/java/com/cashpal/app/debug/DebugSeedActivity.kt` (new file)
+
+Create debug-only activity to populate Firebase with test data:
+
+- Only included in debug build variant
+- UI with button to trigger seeding
+- Creates 3-5 mock users with initial balances ($100-$1000 AUD)
+- Creates mock contacts between users
+- Creates mock transactions (completed + pending)
+- Creates mock payment requests
+- Display seeding progress and results
+- Controlled by Firebase Remote Config flag `enable_debug_seeding`
+
+**Mock User Details:**
+
+- Email: test1@cashpal.com, test2@cashpal.com, etc.
+- Password: "test123456"
+- Display Name: Test User 1, Test User 2, etc.
+- Initial Balance: Random between $100-$1000 AUD
+- Currency: AUD
+
+**File:** `app/src/main/AndroidManifest.xml`
+
+Add debug activity (only in debug builds).
+
+### 6. Transaction Balance Update Logic
+
+**File:** `app/src/main/java/com/cashpal/app/repository/CashPalRepository.kt`
+
+Add client-side balance update methods:
+
+- `processTransaction()` method that creates transaction and updates both user balances atomically using Firestore batch writes
+- `acceptPaymentRequest()` method that processes payment request and creates transaction
+- Validation to ensure sufficient balance before processing
+- Rollback logic on failure
+
+### 7. Sign Out Functionality
+
+**File:** `app/src/main/java/com/cashpal/app/fragments/MoreFragment.kt`
+
+Add sign out option:
+
+- Add "Sign Out" button/item in UI
+- Implement sign out handler that calls repository
+- Navigate back to AuthActivity after sign out
+- Clear any cached user data
+
+**File:** `app/src/main/res/layout/fragment_more.xml`
+
+Add sign out button to layout if not present.
+
+### 8. Update DataRepository
+
+**File:** `app/src/main/java/com/cashpal/app/data/DataRepository.kt`
+
+Remove circular dependency with ServiceLocator:
+
+- Pass CashPalRepository as constructor parameter instead of accessing ServiceLocator
+- Update MainActivity to pass repository instance
+
+## Key Implementation Details
+
+- Firebase calls wrapped in try-catch with fallback to JSON
+- Loading indicators shown during async operations
+- Error messages displayed via Toast
+- All Firebase operations use Kotlin coroutines and Flow
+- Mock seeder accessible via debug menu, controlled by Remote Config
+- Client-side transactions use Firestore WriteBatch for atomicity
+- User model already includes balance field - properly tracked in Firestore
+- Default currency is AUD throughout the application
+
+
+----
+# Fix Firebase Authentication Setup Plan
+
+## Issue Diagnosis
+
+**Current Error:** "This operation is not allowed" when signing up/signing in
+
+**Root Cause:** Email/Password authentication provider not enabled in Firebase Console
+
+**Additional Issue:** Google Sign-In UI not implemented in AuthActivity
+
+## Step 1: Enable Email/Password Authentication in Firebase Console
+
+**MANUAL STEPS (You must do this):**
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select your project: `comp90018-t4-g2-mobile-a-de5f0`
+3. Navigate to: **Authentication** → **Sign-in method** tab
+4. Click on **Email/Password** provider
+5. Toggle **Enable** switch to ON
+6. Click **Save**
+
+## Step 2: Enable Google Sign-In (Optional but Recommended)
+
+**MANUAL STEPS in Firebase Console:**
+
+1. In the same **Sign-in method** tab
+2. Click on **Google** provider
+3. Toggle **Enable** switch to ON
+4. Enter **Project support email** (your email)
+5. Click **Save**
+
+## Step 3: Verify Firebase Configuration Files
+
+**Files to check:**
+
+- `app/google-services.json` - Ensure it matches your Firebase project
+- `app/build.gradle.kts` - Verify Google Services plugin is applied
+- `app/src/main/AndroidManifest.xml` - Check permissions are present
+
+**Expected Configuration:**
+
+- Project ID: `comp90018-t4-g2-mobile-a-de5f0`
+- API Key: `AIzaSyCMrBHI7LBmK3N2TcJn45GRl93f3egtIGQ`
+- Package Name: `com.cashpal.app`
+
+## Step 4: Add Google Sign-In to AuthActivity (Code Changes)
+
+**File:** `app/build.gradle.kts`
+
+- Add Google Sign-In dependency if not present
+- Verify Google Play Services Auth is included
+
+**File:** `app/src/main/java/com/cashpal/app/auth/AuthActivity.kt`
+
+- Add Google Sign-In button click handler
+- Implement `signInWithGoogle()` method
+- Handle Google Sign-In result in `onActivityResult()`
+
+**File:** `app/src/main/res/layout/activity_auth.xml`
+
+- Add Google Sign-In button below existing buttons
+- Style it with Google branding guidelines
+
+**File:** `app/src/main/java/com/cashpal/app/services/FirebaseAuthService.kt`
+
+- Already has `signInWithGoogle()` method - verify it's working
+
+## Step 5: Test Authentication Flow
+
+**Test Cases:**
+
+1. Sign up with email/password - should create user in Firebase Auth
+2. Sign in with existing email/password - should authenticate successfully
+3. Google Sign-In - should show Google account picker and authenticate
+4. User should be created in Firestore after successful auth
+5. Navigate to MainActivity after successful auth
+
+## Step 6: Verify Firestore Rules and Indexes
+
+**Check Firestore Rules:**
+
+- Ensure authenticated users can create their own user document
+- Verify rules allow reading user's own data
+
+**Deploy Rules and Indexes:**
+
+```bash
+firebase deploy --only firestore:rules
+firebase deploy --only firestore:indexes
+```
+
+## Key Files to Modify
+
+1. `app/src/main/java/com/cashpal/app/auth/AuthActivity.kt` - Add Google Sign-In
+2. `app/src/main/res/layout/activity_auth.xml` - Add Google Sign-In button
+3. `app/build.gradle.kts` - Add Google Sign-In dependencies if missing
+
+## Expected Outcome
+
+After completing these steps:
+
+- ✅ Email/Password sign-up and sign-in works
+- ✅ Google Sign-In button appears on login page
+- ✅ Google Sign-In authentication works
+- ✅ User data is stored in Firestore
+- ✅ Users can navigate to MainActivity after auth
+- ✅ Sign out functionality works properly
+
+## Notes
+
+- The current implementation already has the backend code for Google Sign-In in `FirebaseAuthService.kt`
+- You only need to add the UI and wire it up in `AuthActivity.kt`
+- Make sure to enable both auth providers in Firebase Console before testing
+- The error "operation not allowed" will disappear once you enable Email/Password in Firebase Console
+
+
+--- auth setup page proper display ---
+
+# Separate Sign-In and Sign-Up Pages Plan
+
+## Problem Analysis
+
+**Current Issue:**
+
+- AuthActivity combines both sign-in and sign-up on one page
+- Display Name field is visible even for sign-in users
+- Confusing UX with both buttons visible simultaneously
+
+**Desired Behavior:**
+
+- Main authentication page (SignInActivity) shows only:
+  - Email field
+  - Password field
+  - Sign In button
+  - Google Sign-In button
+  - Link to "Don't have an account? Sign Up"
+- Separate Sign-Up page (SignUpActivity) shows:
+  - Display Name field
+  - Email field
+  - Password field
+  - Sign Up button
+  - Link to "Already have an account? Sign In"
+
+## Implementation Steps
+
+### Step 1: Rename AuthActivity to SignInActivity
+
+**Files to modify:**
+
+- `app/src/main/java/com/cashpal/app/auth/AuthActivity.kt` → Rename to `SignInActivity.kt`
+- `app/src/main/res/layout/activity_auth.xml` → Rename to `activity_sign_in.xml`
+- `app/src/main/AndroidManifest.xml` → Update activity declaration
+
+**Changes in SignInActivity.kt:**
+
+- Remove `etDisplayName` references
+- Remove `btnSignUp` button and its click listener
+- Keep only sign-in and Google sign-in functionality
+- Add navigation to SignUpActivity when "Sign Up" link is clicked
+
+**Changes in activity_sign_in.xml:**
+
+- Remove Display Name field
+- Remove "Sign Up" button
+- Add "Don't have an account? Sign Up" clickable text at the bottom
+- Keep Email, Password, Sign In button, and Google Sign-In button
+
+### Step 2: Create SignUpActivity
+
+**New files to create:**
+
+- `app/src/main/java/com/cashpal/app/auth/SignUpActivity.kt`
+- `app/src/main/res/layout/activity_sign_up.xml`
+
+**SignUpActivity.kt implementation:**
+
+- Include Display Name, Email, and Password fields
+- Single "Sign Up" button
+- Google Sign-In button (optional, as Google handles both sign-in and sign-up)
+- Navigation back to SignInActivity with "Already have an account? Sign In" link
+- Validate all fields before sign-up
+- On successful sign-up, navigate to MainActivity
+
+**activity_sign_up.xml design:**
+
+- Display Name field (required for sign-up)
+- Email field
+- Password field
+- Sign Up button (primary)
+- Optional: Google Sign-In button
+- "Already have an account? Sign In" clickable text
+- Same visual style as sign-in page
+
+### Step 3: Update AndroidManifest.xml
+
+**Changes:**
+
+- Rename `.auth.AuthActivity` to `.auth.SignInActivity`
+- Add new `.auth.SignUpActivity` (not exported)
+- Ensure SignInActivity remains the launcher activity
+
+### Step 4: Update Navigation Flow
+
+**SignInActivity:**
+
+- When user clicks "Sign Up" link → Navigate to SignUpActivity
+- After successful sign-in → Navigate to MainActivity
+- After successful Google sign-in → Navigate to MainActivity
+
+**SignUpActivity:**
+
+- When user clicks "Sign In" link → Navigate back to SignInActivity (finish current)
+- After successful sign-up → Navigate to MainActivity
+- After successful Google sign-in → Navigate to MainActivity (Google handles both)
+
+### Step 5: Improve UX/UI
+
+**Enhancements:**
+
+- Add proper loading states during authentication
+- Show password strength indicator on Sign Up page
+- Add "Forgot Password?" link on Sign In page (future enhancement)
+- Ensure proper keyboard handling (Next → Next → Done)
+- Add form validation with helpful error messages
+
+## File Structure After Changes
+
+```
+app/src/main/java/com/cashpal/app/auth/
+├── SignInActivity.kt (renamed from AuthActivity.kt)
+└── SignUpActivity.kt (new)
+
+app/src/main/res/layout/
+├── activity_sign_in.xml (renamed from activity_auth.xml)
+└── activity_sign_up.xml (new)
+```
+
+## Expected User Flow
+
+1. **App Launch** → SignInActivity (launcher)
+2. **User without account** → Clicks "Sign Up" → SignUpActivity
+3. **User enters details** → Clicks "Sign Up" → Account created → MainActivity
+4. **User with account** → Enters credentials → Clicks "Sign In" → MainActivity
+5. **User wants Google** → Clicks "Continue with Google" → Google picker → MainActivity
+6. **User on wrong page** → Clicks "Sign In/Sign Up" link → Switches pages
+
+## Key Benefits
+
+- Cleaner, more intuitive UI
+- Separate concerns (sign-in vs sign-up)
+- Standard authentication flow (matches most apps)
+- Reduces cognitive load for users
+- Easier to maintain and extend
+- Better form validation per context
+
+## Testing Checklist
+
+After implementation:
+
+- [ ] Sign In with email/password works
+- [ ] Sign Up with email/password creates new user
+- [ ] Google Sign-In works from both pages
+- [ ] Navigation between Sign In and Sign Up works
+- [ ] Display Name is only required on Sign Up page
+- [ ] Form validation works correctly on both pages
+- [ ] Loading states show during authentication
+- [ ] Success messages appear after authentication
+- [ ] Error messages are clear and helpful
+- [ ] Back button behaves correctly
+- [ ] Keyboard navigation works smoothly
+
+
+--- Change layout of the auth--
+# Separate Sign-In and Sign-Up Pages Plan
+
+## Problem Analysis
+
+**Current Issue:**
+
+- AuthActivity combines both sign-in and sign-up on one page
+- Display Name field is visible even for sign-in users
+- Confusing UX with both buttons visible simultaneously
+
+**Desired Behavior:**
+
+- Main authentication page (SignInActivity) shows only:
+  - Email field
+  - Password field
+  - Sign In button
+  - Google Sign-In button
+  - Link to "Don't have an account? Sign Up"
+- Separate Sign-Up page (SignUpActivity) shows:
+  - Display Name field
+  - Email field
+  - Password field
+  - Sign Up button
+  - Link to "Already have an account? Sign In"
+
+## Implementation Steps
+
+### Step 1: Rename AuthActivity to SignInActivity
+
+**Files to modify:**
+
+- `app/src/main/java/com/cashpal/app/auth/AuthActivity.kt` → Rename to `SignInActivity.kt`
+- `app/src/main/res/layout/activity_auth.xml` → Rename to `activity_sign_in.xml`
+- `app/src/main/AndroidManifest.xml` → Update activity declaration
+
+**Changes in SignInActivity.kt:**
+
+- Remove `etDisplayName` references
+- Remove `btnSignUp` button and its click listener
+- Keep only sign-in and Google sign-in functionality
+- Add navigation to SignUpActivity when "Sign Up" link is clicked
+
+**Changes in activity_sign_in.xml:**
+
+- Remove Display Name field
+- Remove "Sign Up" button
+- Add "Don't have an account? Sign Up" clickable text at the bottom
+- Keep Email, Password, Sign In button, and Google Sign-In button
+
+### Step 2: Create SignUpActivity
+
+**New files to create:**
+
+- `app/src/main/java/com/cashpal/app/auth/SignUpActivity.kt`
+- `app/src/main/res/layout/activity_sign_up.xml`
+
+**SignUpActivity.kt implementation:**
+
+- Include Display Name, Email, and Password fields
+- Single "Sign Up" button
+- Google Sign-In button (optional, as Google handles both sign-in and sign-up)
+- Navigation back to SignInActivity with "Already have an account? Sign In" link
+- Validate all fields before sign-up
+- On successful sign-up, navigate to MainActivity
+
+**activity_sign_up.xml design:**
+
+- Display Name field (required for sign-up)
+- Email field
+- Password field
+- Sign Up button (primary)
+- Optional: Google Sign-In button
+- "Already have an account? Sign In" clickable text
+- Same visual style as sign-in page
+
+### Step 3: Update AndroidManifest.xml
+
+**Changes:**
+
+- Rename `.auth.AuthActivity` to `.auth.SignInActivity`
+- Add new `.auth.SignUpActivity` (not exported)
+- Ensure SignInActivity remains the launcher activity
+
+### Step 4: Update Navigation Flow
+
+**SignInActivity:**
+
+- When user clicks "Sign Up" link → Navigate to SignUpActivity
+- After successful sign-in → Navigate to MainActivity
+- After successful Google sign-in → Navigate to MainActivity
+
+**SignUpActivity:**
+
+- When user clicks "Sign In" link → Navigate back to SignInActivity (finish current)
+- After successful sign-up → Navigate to MainActivity
+- After successful Google sign-in → Navigate to MainActivity (Google handles both)
+
+### Step 5: Improve UX/UI
+
+**Enhancements:**
+
+- Add proper loading states during authentication
+- Show password strength indicator on Sign Up page
+- Add "Forgot Password?" link on Sign In page (future enhancement)
+- Ensure proper keyboard handling (Next → Next → Done)
+- Add form validation with helpful error messages
+
+## File Structure After Changes
+
+```
+app/src/main/java/com/cashpal/app/auth/
+├── SignInActivity.kt (renamed from AuthActivity.kt)
+└── SignUpActivity.kt (new)
+
+app/src/main/res/layout/
+├── activity_sign_in.xml (renamed from activity_auth.xml)
+└── activity_sign_up.xml (new)
+```
+
+## Expected User Flow
+
+1. **App Launch** → SignInActivity (launcher)
+2. **User without account** → Clicks "Sign Up" → SignUpActivity
+3. **User enters details** → Clicks "Sign Up" → Account created → MainActivity
+4. **User with account** → Enters credentials → Clicks "Sign In" → MainActivity
+5. **User wants Google** → Clicks "Continue with Google" → Google picker → MainActivity
+6. **User on wrong page** → Clicks "Sign In/Sign Up" link → Switches pages
+
+## Key Benefits
+
+- Cleaner, more intuitive UI
+- Separate concerns (sign-in vs sign-up)
+- Standard authentication flow (matches most apps)
+- Reduces cognitive load for users
+- Easier to maintain and extend
+- Better form validation per context
+
+## Testing Checklist
+
+After implementation:
+
+- [ ] Sign In with email/password works
+- [ ] Sign Up with email/password creates new user
+- [ ] Google Sign-In works from both pages
+- [ ] Navigation between Sign In and Sign Up works
+- [ ] Display Name is only required on Sign Up page
+- [ ] Form validation works correctly on both pages
+- [ ] Loading states show during authentication
+- [ ] Success messages appear after authentication
+- [ ] Error messages are clear and helpful
+- [ ] Back button behaves correctly
+- [ ] Keyboard navigation works smoothly

@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "1004446119655",
-    "project_id": "comp90018-t4-g2-mobile-app",
-    "storage_bucket": "comp90018-t4-g2-mobile-app.firebasestorage.app"
+    "project_number": "860245071011",
+    "project_id": "comp90018-t4-g2-mobile-a-de5f0",
+    "storage_bucket": "comp90018-t4-g2-mobile-a-de5f0.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1004446119655:android:d7f774bd2cb30e94619442",
+        "mobilesdk_app_id": "1:860245071011:android:6bfee18d4ec8bcaf6ddb16",
         "android_client_info": {
           "package_name": "com.cashpal.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "860245071011-k3o5jdbr0likidgc3nskb1nev928udhj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cashpal.app",
+            "certificate_hash": "635bc7d3f059906b857e9a8632c8684b8cb091d8"
+          }
+        },
+        {
+          "client_id": "860245071011-d7q3s0om7mdq6povpifaeprau9hq9a9b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyD_JB4sMThFURfnDdTlkKyffdBFyHrKa4Q"
+          "current_key": "AIzaSyCMrBHI7LBmK3N2TcJn45GRl93f3egtIGQ"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "860245071011-d7q3s0om7mdq6povpifaeprau9hq9a9b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

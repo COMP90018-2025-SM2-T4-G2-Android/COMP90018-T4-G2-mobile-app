@@ -4,8 +4,12 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.IOException
+import com.cashpal.app.repository.CashPalRepository
 
-class DataRepository(private val context: Context) {
+class DataRepository(
+    private val context: Context,
+    private val firebaseRepository: CashPalRepository
+) {
     
     private val gson = Gson()
     
@@ -32,4 +36,11 @@ class DataRepository(private val context: Context) {
             null
         }
     }
+    
+    // Firebase integration methods
+    fun getFirebaseRepository() = firebaseRepository
+    
+    fun isUserSignedIn(): Boolean = firebaseRepository.isUserSignedIn()
+    
+    fun getCurrentUserId(): String? = firebaseRepository.getCurrentUser()?.uid
 }

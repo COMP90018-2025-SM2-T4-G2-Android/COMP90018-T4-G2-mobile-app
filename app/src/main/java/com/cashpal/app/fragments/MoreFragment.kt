@@ -1,5 +1,6 @@
 package com.cashpal.app.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,13 +8,21 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.cashpal.app.R
+import com.cashpal.app.auth.BiometricAuthManager
+import com.cashpal.app.auth.SignInActivity
+import com.cashpal.app.di.ServiceLocator
+import com.cashpal.app.utils.BiometricPreferences
+import kotlinx.coroutines.launch
 
 class MoreFragment : Fragment() {
     
     private lateinit var biometricSwitch: SwitchCompat
     private lateinit var notificationsSwitch: SwitchCompat
     private lateinit var darkModeSwitch: SwitchCompat
+    private lateinit var biometricManager: BiometricAuthManager
+    private lateinit var biometricPreferences: BiometricPreferences
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -25,6 +34,10 @@ class MoreFragment : Fragment() {
     
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        // Initialize biometric components
+        biometricManager = BiometricAuthManager(requireActivity(), requireContext())
+        biometricPreferences = BiometricPreferences(requireContext())
         
         initViews()
         setupClickListeners()
@@ -85,21 +98,48 @@ class MoreFragment : Fragment() {
         
         // App Info - App Version is non-clickable
         
+        // Demo Mode Toggle
+        requireView().findViewById<View>(R.id.card_demo_mode)?.setOnClickListener {
+            toggleDemoMode()
+        }
+        
         // Sign Out
         requireView().findViewById<View>(R.id.btn_sign_out)?.setOnClickListener {
-            showToast("Sign Out")
+            signOut()
         }
     }
     
     private fun setupSwitches() {
-        // Set default states
-        biometricSwitch.isChecked = true
+        // Check biometric availability
+        val isBiometricAvailable = biometricManager.isBiometricAvailable()
+        biometricSwitch.isEnabled = isBiometricAvailable
+        
+        if (!isBiometricAvailable) {
+            biometricSwitch.isChecked = false
+            biometricSwitch.alpha = 0.5f
+        } else {
+            // Set current state from preferences
+            biometricSwitch.isChecked = biometricPreferences.isBiometricEnabled()
+        }
+        
+        // Set other default states
         notificationsSwitch.isChecked = true
         darkModeSwitch.isChecked = false
         
-        // Handle switch state changes
+        // Handle biometric switch state changes
         biometricSwitch.setOnCheckedChangeListener { _, isChecked ->
-            showToast("Biometric Authentication: ${if (isChecked) "Enabled" else "Disabled"}")
+            if (isBiometricAvailable) {
+                biometricPreferences.setBiometricEnabled(isChecked)
+                showToast("Biometric Authentication: ${if (isChecked) "Enabled" else "Disabled"}")
+                
+                if (!isChecked) {
+                    // Clear biometric data when disabled
+                    biometricPreferences.clearBiometricData()
+                }
+            } else {
+                showToast("Biometric authentication not available on this device")
+                biometricSwitch.isChecked = false
+            }
         }
         
         notificationsSwitch.setOnCheckedChangeListener { _, isChecked ->
@@ -123,5 +163,49 @@ class MoreFragment : Fragment() {
     private fun showPaymentMethodsDialog() {
         val paymentMethodsDialog = PaymentMethodsDialogFragment.newInstance()
         paymentMethodsDialog.show(childFragmentManager, PaymentMethodsDialogFragment.TAG)
+    }
+    
+    private fun toggleDemoMode() {
+        val currentDemoMode = biometricPreferences.isDemoMode()
+        biometricPreferences.setDemoMode(!currentDemoMode)
+        
+        val message = if (!currentDemoMode) {
+            "Demo mode enabled! Sample data will be shown."
+        } else {
+            "Demo mode disabled! Real data will be shown."
+        }
+        
+        showToast(message)
+        
+        // Restart the app to apply changes
+        val intent = requireActivity().packageManager.getLaunchIntentForPackage(requireActivity().packageName)
+        if (intent != null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            intent.putExtra("demo_mode", !currentDemoMode)
+            startActivity(intent)
+            requireActivity().finish()
+        } else {
+            showToast("Failed to restart app")
+        }
+    }
+    
+    private fun signOut() {
+        lifecycleScope.launch {
+            try {
+                val repository = ServiceLocator.getRepository()
+                repository.signOut()
+                
+                // Navigate to AuthActivity and clear the back stack
+                        val intent = Intent(requireContext(), SignInActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                
+                // Finish the current activity (MainActivity)
+                requireActivity().finish()
+                
+            } catch (e: Exception) {
+                showToast("Failed to sign out: ${e.message}")
+            }
+        }
     }
 }
