@@ -593,11 +593,15 @@ class MainActivity : AppCompatActivity() {
     
     private fun showDemoModeBanner() {
         val demoBanner = MaterialCardView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+            id = View.generateViewId()
+            layoutParams = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams(
+                androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.MATCH_PARENT,
+                androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.WRAP_CONTENT
             ).apply {
                 setMargins(16, 16, 16, 8)
+                topToTop = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
+                startToStart = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
+                endToEnd = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
             }
             setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, android.R.color.holo_orange_light))
             radius = 12f
@@ -612,10 +616,18 @@ class MainActivity : AppCompatActivity() {
             })
         }
         
-        // Add banner to the top of the main container
-        val mainContainer = findViewById<LinearLayout>(R.id.main)
+        // Add banner to the main container and update constraints
+        val mainContainer = findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.main)
         if (mainContainer != null) {
-            mainContainer.addView(demoBanner, 0)
+            mainContainer.addView(demoBanner)
+            
+            // Update the fragment container to be below the banner
+            val fragmentContainer = findViewById<androidx.fragment.app.FragmentContainerView>(R.id.fragmentContainer)
+            if (fragmentContainer != null) {
+                val layoutParams = fragmentContainer.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
+                layoutParams.topToBottom = demoBanner.id
+                fragmentContainer.layoutParams = layoutParams
+            }
         }
     }
 }
