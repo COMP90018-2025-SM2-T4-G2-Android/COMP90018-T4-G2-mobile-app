@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accessibility Content Descriptions -->
+    
+    <!-- Common Actions -->
+    <string name="cd_close">Close</string>
+    <string name="cd_edit">Edit</string>
+    <string name="cd_delete">Delete</string>
+    <string name="cd_remove">Remove</string>
+    <string name="cd_add">Add</string>
+    <string name="cd_save">Save</string>
+    <string name="cd_cancel">Cancel</string>
+    
+    <!-- Profile -->
+    <string name="cd_profile_photo">Profile photo</string>
+    <string name="cd_change_profile_photo">Change profile photo</string>
+    <string name="cd_upload_photo">Upload photo from gallery</string>
+    <string name="cd_take_photo">Take photo with camera</string>
+    <string name="cd_close_profile">Close profile dialog</string>
+    <string name="cd_edit_profile">Edit profile information</string>
+    
+    <!-- Payment Methods -->
+    <string name="cd_close_payment_methods">Close payment methods</string>
+    <string name="cd_visa_card">Visa card ending in 4321</string>
+    <string name="cd_mastercard">Mastercard ending in 7890</string>
+    <string name="cd_edit_card">Edit card details</string>
+    <string name="cd_remove_card">Remove card</string>
+    <string name="cd_set_primary_card">Set as primary card</string>
+    <string name="cd_add_new_card">Add new payment card</string>
+    <string name="cd_link_bank_account">Link bank account</string>
+    <string name="cd_primary_card">Primary payment card</string>
+    
+    <!-- Icons -->
+    <string name="cd_mail_icon">Email</string>
+    <string name="cd_phone_icon">Phone number</string>
+    <string name="cd_location_icon">Address</string>
+    <string name="cd_person_icon">User profile</string>
+    <string name="cd_card_icon">Payment card</string>
+    <string name="cd_bank_icon">Bank</string>
+    <string name="cd_shield_icon">Security</string>
+    <string name="cd_notification_icon">Notifications</string>
+    <string name="cd_moon_icon">Dark mode</string>
+    <string name="cd_globe_icon">Language</string>
+    <string name="cd_help_icon">Help</string>
+    <string name="cd_info_icon">Information</string>
+    <string name="cd_bot_icon">AI assistant</string>
+    
+    <!-- Navigation -->
+    <string name="cd_navigate_forward">Navigate forward</string>
+    <string name="cd_navigate_back">Navigate back</string>
+    
+    <!-- Status -->
+    <string name="cd_success_badge">Success</string>
+    <string name="cd_error_badge">Error</string>
+    <string name="cd_warning_badge">Warning</string>
+    <string name="cd_new_badge">New feature</string>
+    
+    <!-- Touch Target Hints -->
+    <string name="cd_button_hint">Double tap to activate</string>
+    <string name="cd_toggle_hint">Double tap to toggle</string>
+</resources>
+

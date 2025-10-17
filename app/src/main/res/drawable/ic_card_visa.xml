@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="32dp"
+    android:viewportWidth="48"
+    android:viewportHeight="32">
+    <!-- Visa logo representation -->
+    <path
+        android:fillColor="#1A1F71"
+        android:pathData="M18,8 L22,24 L26,8 L30,8 L24,24 L20,24 L14,8 Z" />
+    <path
+        android:fillColor="#1A1F71"
+        android:pathData="M30,8 L34,8 L34,24 L30,24 Z" />
+    <path
+        android:fillColor="#1A1F71"
+        android:pathData="M36,8 L40,8 C42,8 44,9 44,12 C44,15 42,16 40,16 L38,16 L38,24 L34,24 L34,8 L36,8 M38,12 L38,14 L39,14 C40,14 40,13 40,13 C40,12 40,12 39,12 L38,12 Z" />
+</vector>
+

@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/profile_dialog_background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/dialog_padding">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="@dimen/spacing_sm">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add New Card"
+                    android:textColor="@color/foreground"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Scan or manually enter your card details"
+                    android:textColor="@color/muted_foreground"
+                    android:textSize="14sp"
+                    android:layout_marginTop="@dimen/spacing_xs" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/btn_close_add_card"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_close"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:padding="6dp"
+                android:contentDescription="@string/cd_close"
+                app:tint="@color/muted_foreground" />
+
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@drawable/divider_line"
+            android:layout_marginVertical="@dimen/spacing_lg" />
+
+        <!-- Scan Card Button -->
+        <Button
+            android:id="@+id/btn_scan_card"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height_large"
+            android:text="Scan Card with Camera"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:background="@drawable/edit_profile_button_background"
+            android:drawableStart="@drawable/ic_camera"
+            android:drawablePadding="@dimen/spacing_sm"
+            android:drawableTint="@android:color/white"
+            android:gravity="center"
+            android:layout_marginBottom="@dimen/spacing_xl" />
+
+        <!-- Card Preview -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:cardBackgroundColor="@color/primary"
+            app:cardCornerRadius="@dimen/corner_large"
+            app:cardElevation="@dimen/elevation_level2"
+            android:layout_marginBottom="@dimen/spacing_xl">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="@dimen/spacing_xl"
+                android:gravity="bottom">
+
+                <!-- Card Number Preview -->
+                <TextView
+                    android:id="@+id/tv_card_preview_number"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="•••• •••• •••• ••••"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="@dimen/spacing_lg" />
+
+                <!-- Expiry and CVV Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="VALID THRU"
+                            android:textColor="#CCFFFFFF"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:id="@+id/tv_card_preview_expiry"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="MM/YY"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginStart="@dimen/spacing_xl">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="CVV"
+                            android:textColor="#CCFFFFFF"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:id="@+id/tv_card_preview_cvv"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="•••"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Card Details Form -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Card Number -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Card Number"
+                android:textColor="@color/foreground"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/spacing_sm" />
+
+            <EditText
+                android:id="@+id/et_card_number"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:hint="1234 5678 9012 3456"
+                android:inputType="number"
+                android:maxLength="19"
+                android:background="@drawable/edit_text_background"
+                android:paddingHorizontal="@dimen/spacing_lg"
+                android:textColor="@color/foreground"
+                android:textColorHint="@color/muted_foreground"
+                android:textSize="16sp"
+                android:drawableStart="@drawable/ic_credit_card"
+                android:drawablePadding="@dimen/spacing_md"
+                android:drawableTint="@color/primary"
+                android:layout_marginBottom="@dimen/spacing_lg" />
+
+            <!-- Expiry Date and CVV Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="@dimen/spacing_lg">
+
+                <!-- Expiry Date -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="@dimen/spacing_sm">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Expiry Date"
+                        android:textColor="@color/foreground"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="@dimen/spacing_sm" />
+
+                    <EditText
+                        android:id="@+id/et_expiry_date"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:hint="MM/YY"
+                        android:inputType="number"
+                        android:maxLength="5"
+                        android:background="@drawable/edit_text_background"
+                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:textColor="@color/foreground"
+                        android:textColorHint="@color/muted_foreground"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+                <!-- CVV -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/spacing_sm">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="CVV"
+                        android:textColor="@color/foreground"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="@dimen/spacing_sm" />
+
+                    <EditText
+                        android:id="@+id/et_cvv"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:hint="123"
+                        android:inputType="numberPassword"
+                        android:maxLength="4"
+                        android:background="@drawable/edit_text_background"
+                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:textColor="@color/foreground"
+                        android:textColorHint="@color/muted_foreground"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Cardholder Name -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cardholder Name"
+                android:textColor="@color/foreground"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/spacing_sm" />
+
+            <EditText
+                android:id="@+id/et_cardholder_name"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:hint="John Doe"
+                android:inputType="textPersonName|textCapWords"
+                android:background="@drawable/edit_text_background"
+                android:paddingHorizontal="@dimen/spacing_lg"
+                android:textColor="@color/foreground"
+                android:textColorHint="@color/muted_foreground"
+                android:textSize="16sp"
+                android:drawableStart="@drawable/ic_person"
+                android:drawablePadding="@dimen/spacing_md"
+                android:drawableTint="@color/primary"
+                android:layout_marginBottom="@dimen/spacing_lg" />
+
+            <!-- Billing Address Section -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Billing Address"
+                android:textColor="@color/foreground"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginTop="@dimen/spacing_sm"
+                android:layout_marginBottom="@dimen/spacing_lg" />
+
+            <!-- Street Address -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Street Address"
+                android:textColor="@color/foreground"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/spacing_sm" />
+
+            <EditText
+                android:id="@+id/et_billing_address"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:hint="123 Main Street"
+                android:inputType="textPostalAddress"
+                android:background="@drawable/edit_text_background"
+                android:paddingHorizontal="@dimen/spacing_lg"
+                android:textColor="@color/foreground"
+                android:textColorHint="@color/muted_foreground"
+                android:textSize="16sp"
+                android:drawableStart="@drawable/ic_location"
+                android:drawablePadding="@dimen/spacing_md"
+                android:drawableTint="@color/primary"
+                android:layout_marginBottom="@dimen/spacing_lg" />
+
+            <!-- City and Postal Code Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="@dimen/spacing_lg">
+
+                <!-- City -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="@dimen/spacing_sm">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="City"
+                        android:textColor="@color/foreground"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="@dimen/spacing_sm" />
+
+                    <EditText
+                        android:id="@+id/et_city"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:hint="City"
+                        android:inputType="textPostalAddress"
+                        android:background="@drawable/edit_text_background"
+                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:textColor="@color/foreground"
+                        android:textColorHint="@color/muted_foreground"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+                <!-- Postal Code -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/spacing_sm">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Postal Code"
+                        android:textColor="@color/foreground"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="@dimen/spacing_sm" />
+
+                    <EditText
+                        android:id="@+id/et_postal_code"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:hint="12345"
+                        android:inputType="number"
+                        android:background="@drawable/edit_text_background"
+                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:textColor="@color/foreground"
+                        android:textColorHint="@color/muted_foreground"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- State and Country Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="@dimen/spacing_xl">
+
+                <!-- State -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="@dimen/spacing_sm">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="State"
+                        android:textColor="@color/foreground"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="@dimen/spacing_sm" />
+
+                    <EditText
+                        android:id="@+id/et_state"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:hint="State"
+                        android:inputType="textPostalAddress"
+                        android:background="@drawable/edit_text_background"
+                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:textColor="@color/foreground"
+                        android:textColorHint="@color/muted_foreground"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+                <!-- Country -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="@dimen/spacing_sm">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Country"
+                        android:textColor="@color/foreground"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="@dimen/spacing_sm" />
+
+                    <EditText
+                        android:id="@+id/et_country"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:hint="Country"
+                        android:inputType="textPostalAddress"
+                        android:background="@drawable/edit_text_background"
+                        android:paddingHorizontal="@dimen/spacing_lg"
+                        android:textColor="@color/foreground"
+                        android:textColorHint="@color/muted_foreground"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Set as Primary Checkbox -->
+            <CheckBox
+                android:id="@+id/cb_set_as_primary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Set as primary payment method"
+                android:textColor="@color/foreground"
+                android:textSize="14sp"
+                android:layout_marginBottom="@dimen/spacing_xl"
+                android:buttonTint="@color/primary" />
+
+        </LinearLayout>
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <!-- Cancel Button -->
+            <Button
+                android:id="@+id/btn_cancel_add_card"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/button_height_large"
+                android:layout_weight="1"
+                android:text="Cancel"
+                android:textColor="@color/foreground"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:background="@drawable/cancel_button_background"
+                android:layout_marginEnd="@dimen/spacing_sm" />
+
+            <!-- Add Card Button -->
+            <Button
+                android:id="@+id/btn_save_card"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/button_height_large"
+                android:layout_weight="1"
+                android:text="Add Card"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:background="@drawable/save_button_background"
+                android:layout_marginStart="@dimen/spacing_sm" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
+
