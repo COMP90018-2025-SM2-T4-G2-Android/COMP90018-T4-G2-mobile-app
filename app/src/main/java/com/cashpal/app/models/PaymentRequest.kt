@@ -7,7 +7,7 @@ data class PaymentRequest(
     val fromUserId: String = "",
     val toUserId: String = "",
     val amount: Double = 0.0,
-    val currency: String = "USD",
+    val currency: String = "AUD",
     val description: String = "",
     val status: PaymentRequestStatus = PaymentRequestStatus.PENDING,
     val expiresAt: Timestamp? = null,

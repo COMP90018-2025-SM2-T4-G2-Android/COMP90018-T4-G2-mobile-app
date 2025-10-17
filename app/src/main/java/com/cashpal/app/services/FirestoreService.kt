@@ -209,4 +209,56 @@ class FirestoreService {
                 callback(balance)
             }
     }
+    
+    // Payment Request Operations
+    suspend fun getPaymentRequest(requestId: String): Result<com.cashpal.app.models.PaymentRequest?> {
+        return try {
+            val document = db.collection("paymentRequests").document(requestId).get().await()
+            if (document.exists()) {
+                val paymentRequest = document.toObject(com.cashpal.app.models.PaymentRequest::class.java)
+                Result.success(paymentRequest)
+            } else {
+                Result.success(null)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    // Atomic Transaction Processing with Balance Updates
+    suspend fun processTransactionWithBalanceUpdate(
+        transaction: com.cashpal.app.models.Transaction,
+        fromUserBalance: Double,
+        toUserBalance: Double
+    ): Result<String> {
+        return try {
+            val batch = db.batch()
+            
+            // Create transaction document
+            val transactionRef = db.collection("transactions").document()
+            val transactionWithId = transaction.copy(id = transactionRef.id)
+            batch.set(transactionRef, transactionWithId)
+            
+            // Update sender balance
+            val fromUserRef = db.collection("users").document(transaction.fromUserId)
+            batch.update(fromUserRef, mapOf(
+                "balance" to fromUserBalance,
+                "updatedAt" to com.google.firebase.Timestamp.now()
+            ))
+            
+            // Update receiver balance
+            val toUserRef = db.collection("users").document(transaction.toUserId)
+            batch.update(toUserRef, mapOf(
+                "balance" to toUserBalance,
+                "updatedAt" to com.google.firebase.Timestamp.now()
+            ))
+            
+            // Commit the batch
+            batch.commit().await()
+            
+            Result.success(transactionWithId.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

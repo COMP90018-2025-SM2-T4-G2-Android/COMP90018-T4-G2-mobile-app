@@ -10,7 +10,7 @@ data class User(
     val phoneNumber: String? = null,
     val avatarUrl: String? = null,
     val balance: Double = 0.0,
-    val currency: String = "USD",
+    val currency: String = "AUD",
     val isVerified: Boolean = false,
     val createdAt: Timestamp = Timestamp.now(),
     val updatedAt: Timestamp = Timestamp.now(),
@@ -21,6 +21,6 @@ data class UserPreferences(
     val theme: String = "light", // light, dark, system
     val notifications: Boolean = true,
     val biometricAuth: Boolean = false,
-    val currency: String = "USD",
+    val currency: String = "AUD",
     val language: String = "en"
 )

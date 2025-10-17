@@ -58,6 +58,12 @@
         <activity
             android:name=".MainActivity"
             android:exported="false" />
+
+        <!-- Debug seeding activity -->
+        <activity
+            android:name=".debug.DebugSeedActivity"
+            android:exported="false"
+            tools:node="remove" />
     </application>
 
 

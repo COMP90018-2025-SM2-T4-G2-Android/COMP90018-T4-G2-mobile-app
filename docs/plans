@@ -1,0 +1,120 @@
+# Backend Setup Completion Plan
+
+## Issues to Address
+
+### 1. Firestore Indexes Configuration
+
+**File:** `firestore.indexes.json`
+
+Add composite indexes required for queries in `FirestoreService.kt`:
+
+- Contacts: `userId` + `isFrequent` (DESC) + `lastTransactionDate` (DESC)
+- Transactions: `fromUserId/toUserId` (composite) + `createdAt` (DESC)
+- Payment Requests: `fromUserId/toUserId` (composite) + `createdAt` (DESC)
+
+### 2. Fix Firestore Security Rules
+
+**File:** `firestore.rules`
+
+Fix logical issues in security rules:
+
+- Line 12-14: `resource.data` is null on read for non-existent docs
+- Line 30-35: Same issue for payment requests
+- Add proper read rules that check against request.resource for creation
+
+### 3. Update Default Currency to AUD
+
+**Files:**
+
+- `app/src/main/java/com/cashpal/app/models/User.kt` - Change `currency = "USD"` to `"AUD"` in User and UserPreferences
+- `app/src/main/java/com/cashpal/app/models/Transaction.kt` - Change `currency = "USD"` to `"AUD"`
+- `app/src/main/java/com/cashpal/app/models/PaymentRequest.kt` - Change `currency = "USD"` to `"AUD"`
+
+All new users, transactions, and payment requests will default to Australian Dollars.
+
+### 4. MainActivity Firebase Integration
+
+**File:** `app/src/main/java/com/cashpal/app/MainActivity.kt`
+
+Update to fetch data from Firebase with JSON fallback:
+
+- Add Firebase repository initialization
+- Create `loadUserProfile()` method to fetch user from Firestore
+- Create `loadUserTransactions()` method to fetch transactions from Firestore  
+- Keep `loadDataFromJSON()` as fallback when Firebase fails or no network
+- Update balance display to show Firebase user balance
+- Map Firebase `Transaction` model to display format
+- Add loading states during data fetch
+
+### 5. Mock Data Seeding Service
+
+**File:** `app/src/main/java/com/cashpal/app/debug/DebugSeedActivity.kt` (new file)
+
+Create debug-only activity to populate Firebase with test data:
+
+- Only included in debug build variant
+- UI with button to trigger seeding
+- Creates 3-5 mock users with initial balances ($100-$1000 AUD)
+- Creates mock contacts between users
+- Creates mock transactions (completed + pending)
+- Creates mock payment requests
+- Display seeding progress and results
+- Controlled by Firebase Remote Config flag `enable_debug_seeding`
+
+**Mock User Details:**
+
+- Email: test1@cashpal.com, test2@cashpal.com, etc.
+- Password: "test123456"
+- Display Name: Test User 1, Test User 2, etc.
+- Initial Balance: Random between $100-$1000 AUD
+- Currency: AUD
+
+**File:** `app/src/main/AndroidManifest.xml`
+
+Add debug activity (only in debug builds).
+
+### 6. Transaction Balance Update Logic
+
+**File:** `app/src/main/java/com/cashpal/app/repository/CashPalRepository.kt`
+
+Add client-side balance update methods:
+
+- `processTransaction()` method that creates transaction and updates both user balances atomically using Firestore batch writes
+- `acceptPaymentRequest()` method that processes payment request and creates transaction
+- Validation to ensure sufficient balance before processing
+- Rollback logic on failure
+
+### 7. Sign Out Functionality
+
+**File:** `app/src/main/java/com/cashpal/app/fragments/MoreFragment.kt`
+
+Add sign out option:
+
+- Add "Sign Out" button/item in UI
+- Implement sign out handler that calls repository
+- Navigate back to AuthActivity after sign out
+- Clear any cached user data
+
+**File:** `app/src/main/res/layout/fragment_more.xml`
+
+Add sign out button to layout if not present.
+
+### 8. Update DataRepository
+
+**File:** `app/src/main/java/com/cashpal/app/data/DataRepository.kt`
+
+Remove circular dependency with ServiceLocator:
+
+- Pass CashPalRepository as constructor parameter instead of accessing ServiceLocator
+- Update MainActivity to pass repository instance
+
+## Key Implementation Details
+
+- Firebase calls wrapped in try-catch with fallback to JSON
+- Loading indicators shown during async operations
+- Error messages displayed via Toast
+- All Firebase operations use Kotlin coroutines and Flow
+- Mock seeder accessible via debug menu, controlled by Remote Config
+- Client-side transactions use Firestore WriteBatch for atomicity
+- User model already includes balance field - properly tracked in Firestore
+- Default currency is AUD throughout the application

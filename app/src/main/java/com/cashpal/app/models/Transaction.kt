@@ -7,7 +7,7 @@ data class Transaction(
     val fromUserId: String = "",
     val toUserId: String = "",
     val amount: Double = 0.0,
-    val currency: String = "USD",
+    val currency: String = "AUD",
     val description: String = "",
     val category: TransactionCategory = TransactionCategory.OTHER,
     val status: TransactionStatus = TransactionStatus.PENDING,

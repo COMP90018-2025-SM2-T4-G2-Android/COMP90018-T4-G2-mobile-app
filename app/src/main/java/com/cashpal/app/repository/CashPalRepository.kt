@@ -61,6 +61,15 @@ class CashPalRepository(
     }
     
     // User Profile Management
+    suspend fun createUser(user: com.cashpal.app.models.User) = flow {
+        try {
+            val result = firestoreService.createUser(user)
+            emit(result)
+        } catch (e: Exception) {
+            emit(Result.failure(e))
+        }
+    }
+    
     suspend fun getUserProfile(userId: String) = flow {
         try {
             val result = firestoreService.getUser(userId)
@@ -204,6 +213,103 @@ class CashPalRepository(
         try {
             val result = storageService.uploadQRCode(userId, qrCodeUri)
             emit(result)
+        } catch (e: Exception) {
+            emit(Result.failure(e))
+        }
+    }
+    
+    // Transaction Processing with Balance Updates
+    suspend fun processTransaction(
+        fromUserId: String,
+        toUserId: String,
+        amount: Double,
+        description: String,
+        category: com.cashpal.app.models.TransactionCategory = com.cashpal.app.models.TransactionCategory.OTHER
+    ) = flow {
+        try {
+            // Get both users' current balances
+            val fromUserResult = firestoreService.getUser(fromUserId)
+            val toUserResult = firestoreService.getUser(toUserId)
+            
+            if (fromUserResult.isFailure || toUserResult.isFailure) {
+                emit(Result.failure(Exception("Failed to get user information")))
+                return@flow
+            }
+            
+            val fromUser = fromUserResult.getOrNull()
+            val toUser = toUserResult.getOrNull()
+            
+            if (fromUser == null || toUser == null) {
+                emit(Result.failure(Exception("User not found")))
+                return@flow
+            }
+            
+            // Check if sender has sufficient balance
+            if (fromUser.balance < amount) {
+                emit(Result.failure(Exception("Insufficient balance")))
+                return@flow
+            }
+            
+            // Create transaction
+            val transaction = com.cashpal.app.models.Transaction(
+                fromUserId = fromUserId,
+                toUserId = toUserId,
+                amount = amount,
+                currency = fromUser.currency,
+                description = description,
+                category = category,
+                status = com.cashpal.app.models.TransactionStatus.COMPLETED,
+                type = com.cashpal.app.models.TransactionType.TRANSFER,
+                createdAt = com.google.firebase.Timestamp.now(),
+                completedAt = com.google.firebase.Timestamp.now()
+            )
+            
+            // Process transaction with atomic balance updates
+            val result = firestoreService.processTransactionWithBalanceUpdate(
+                transaction = transaction,
+                fromUserBalance = fromUser.balance - amount,
+                toUserBalance = toUser.balance + amount
+            )
+            
+            emit(result)
+            
+        } catch (e: Exception) {
+            emit(Result.failure(e))
+        }
+    }
+    
+    suspend fun acceptPaymentRequest(requestId: String) = flow {
+        try {
+            // Get payment request
+            val requestResult = firestoreService.getPaymentRequest(requestId)
+            if (requestResult.isFailure) {
+                emit(Result.failure(Exception("Payment request not found")))
+                return@flow
+            }
+            
+            val paymentRequest = requestResult.getOrNull()
+            if (paymentRequest == null || paymentRequest.status != com.cashpal.app.models.PaymentRequestStatus.PENDING) {
+                emit(Result.failure(Exception("Invalid payment request")))
+                return@flow
+            }
+            
+            // Process the transaction
+            processTransaction(
+                fromUserId = paymentRequest.fromUserId,
+                toUserId = paymentRequest.toUserId,
+                amount = paymentRequest.amount,
+                description = paymentRequest.description
+            ).collect { transactionResult ->
+                if (transactionResult.isSuccess) {
+                    // Update payment request status
+                    updatePaymentRequestStatus(requestId, com.cashpal.app.models.PaymentRequestStatus.ACCEPTED).collect { updateResult ->
+                        emit(updateResult)
+                    }
+                } else {
+                    emit(transactionResult)
+                }
+            }
+            
         } catch (e: Exception) {
             emit(Result.failure(e))
         }

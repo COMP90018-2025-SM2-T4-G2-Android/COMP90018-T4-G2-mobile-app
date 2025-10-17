@@ -9,9 +9,15 @@ service cloud.firestore {
     
     // Transactions collection
     match /transactions/{transactionId} {
-      allow read, write: if request.auth != null && 
+      // For read operations, check if user is involved in the transaction
+      allow read: if request.auth != null && 
         (request.auth.uid == resource.data.fromUserId || 
          request.auth.uid == resource.data.toUserId);
+      // For write operations (update/delete), check if user is involved in the transaction
+      allow write: if request.auth != null && 
+        (request.auth.uid == resource.data.fromUserId || 
+         request.auth.uid == resource.data.toUserId);
+      // For create operations, check if user is involved in the new transaction
       allow create: if request.auth != null && 
         (request.auth.uid == request.resource.data.fromUserId || 
          request.auth.uid == request.resource.data.toUserId);
@@ -19,17 +25,25 @@ service cloud.firestore {
     
     // Contacts collection
     match /contacts/{contactId} {
-      allow read, write, delete: if request.auth != null && 
+      // For read/update/delete operations, check if user owns the contact
+      allow read, update, delete: if request.auth != null && 
         request.auth.uid == resource.data.userId;
+      // For create operations, check if user owns the new contact
       allow create: if request.auth != null && 
         request.auth.uid == request.resource.data.userId;
     }
     
     // Payment Requests collection
     match /paymentRequests/{requestId} {
-      allow read, write: if request.auth != null && 
+      // For read operations, check if user is involved in the payment request
+      allow read: if request.auth != null && 
         (request.auth.uid == resource.data.fromUserId || 
          request.auth.uid == resource.data.toUserId);
+      // For write operations (update/delete), check if user is involved in the payment request
+      allow write: if request.auth != null && 
+        (request.auth.uid == resource.data.fromUserId || 
+         request.auth.uid == resource.data.toUserId);
+      // For create operations, check if user is involved in the new payment request
       allow create: if request.auth != null && 
         (request.auth.uid == request.resource.data.fromUserId || 
          request.auth.uid == request.resource.data.toUserId);
@@ -37,8 +51,10 @@ service cloud.firestore {
     
     // Contact Groups collection
     match /contactGroups/{groupId} {
-      allow read, write, delete: if request.auth != null && 
+      // For read/update/delete operations, check if user owns the contact group
+      allow read, update, delete: if request.auth != null && 
         request.auth.uid == resource.data.userId;
+      // For create operations, check if user owns the new contact group
       allow create: if request.auth != null && 
         request.auth.uid == request.resource.data.userId;
     }

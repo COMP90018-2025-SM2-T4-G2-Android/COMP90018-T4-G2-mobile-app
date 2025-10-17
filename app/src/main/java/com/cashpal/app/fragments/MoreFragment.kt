@@ -1,5 +1,6 @@
 package com.cashpal.app.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,7 +8,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.cashpal.app.R
+import com.cashpal.app.auth.AuthActivity
+import com.cashpal.app.di.ServiceLocator
+import kotlinx.coroutines.launch
 
 class MoreFragment : Fragment() {
     
@@ -87,7 +92,7 @@ class MoreFragment : Fragment() {
         
         // Sign Out
         requireView().findViewById<View>(R.id.btn_sign_out)?.setOnClickListener {
-            showToast("Sign Out")
+            signOut()
         }
     }
     
@@ -123,5 +128,25 @@ class MoreFragment : Fragment() {
     private fun showPaymentMethodsDialog() {
         val paymentMethodsDialog = PaymentMethodsDialogFragment.newInstance()
         paymentMethodsDialog.show(childFragmentManager, PaymentMethodsDialogFragment.TAG)
+    }
+    
+    private fun signOut() {
+        lifecycleScope.launch {
+            try {
+                val repository = ServiceLocator.getRepository()
+                repository.signOut()
+                
+                // Navigate to AuthActivity and clear the back stack
+                val intent = Intent(requireContext(), AuthActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                
+                // Finish the current activity (MainActivity)
+                requireActivity().finish()
+                
+            } catch (e: Exception) {
+                showToast("Failed to sign out: ${e.message}")
+            }
+        }
     }
 }
