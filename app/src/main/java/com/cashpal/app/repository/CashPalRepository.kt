@@ -71,34 +71,42 @@ class CashPalRepository(
     
     fun signInWithGoogle(activity: android.app.Activity, onIntentReady: (android.content.Intent) -> Unit) {
         try {
-            // Get Google Sign-In client
+            // Get Google Sign-In client with proper configuration
+            val webClientId = activity.getString(com.cashpal.app.R.string.default_web_client_id)
             val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(activity.getString(com.cashpal.app.R.string.default_web_client_id))
+                .requestIdToken(webClientId)
                 .requestEmail()
+                .requestProfile()
                 .build()
             
             val googleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(activity, gso)
             
-            // Launch Google Sign-In intent
-            val signInIntent = googleSignInClient.signInIntent
-            onIntentReady(signInIntent)
+            // Sign out any existing user first to ensure clean state
+            googleSignInClient.signOut().addOnCompleteListener {
+                // Launch Google Sign-In intent
+                val signInIntent = googleSignInClient.signInIntent
+                onIntentReady(signInIntent)
+            }
         } catch (e: Exception) {
-            // Handle error if needed
+            android.util.Log.e("CashPalRepository", "Google Sign-In setup failed", e)
         }
     }
     
     suspend fun handleGoogleSignInResult(data: android.content.Intent) = flow {
         try {
+            android.util.Log.d("CashPalRepository", "Handling Google Sign-In result")
             val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(data)
             val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
             
+            android.util.Log.d("CashPalRepository", "Google account retrieved: ${account?.email}")
             val idToken = account?.idToken
             if (idToken != null) {
+                android.util.Log.d("CashPalRepository", "ID token received, authenticating with Firebase")
                 val authResult = authService.signInWithGoogle(idToken).await()
                 val user = authResult.user
                 
                 if (user != null) {
-                    // Create user in Firestore if doesn't exist
+                    android.util.Log.d("CashPalRepository", "Firebase user created: ${user.uid}")
                     val userModel = com.cashpal.app.models.User(
                         id = user.uid,
                         email = user.email ?: "",
@@ -114,20 +122,25 @@ class CashPalRepository(
                     
                     // Try to create user in Firestore, but don't fail if it already exists
                     try {
-                        // Just attempt to create user, ignore result
+                        android.util.Log.d("CashPalRepository", "Creating user in Firestore")
                         firestoreService.createUser(userModel)
+                        android.util.Log.d("CashPalRepository", "User created successfully in Firestore")
                     } catch (e: Exception) {
+                        android.util.Log.w("CashPalRepository", "User might already exist in Firestore", e)
                         // User might already exist, continue anyway
                     }
                     
                     emit(Result.success(userModel))
                 } else {
+                    android.util.Log.e("CashPalRepository", "Failed to get user from Firebase auth result")
                     emit(Result.failure(Exception("Failed to get user from Google Sign-In")))
                 }
             } else {
+                android.util.Log.e("CashPalRepository", "Failed to get ID token from Google account")
                 emit(Result.failure(Exception("Failed to get ID token from Google Sign-In")))
             }
         } catch (e: Exception) {
+            android.util.Log.e("CashPalRepository", "Google Sign-In result handling failed", e)
             emit(Result.failure(e))
         }
     }

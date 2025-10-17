@@ -23,6 +23,7 @@ import com.cashpal.app.fragments.MoreFragment
 import com.cashpal.app.fragments.PayFragment
 import com.cashpal.app.fragments.ScanFragment
 import com.cashpal.app.utils.BiometricPreferences
+import com.cashpal.app.utils.GooglePlayServicesUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
 
@@ -59,6 +60,9 @@ class MainActivity : AppCompatActivity() {
         if (isDemoMode) {
             showDemoModeBanner()
         }
+
+        // Check Google Play Services status
+        GooglePlayServicesUtils.logGooglePlayServicesStatus(this)
 
         initializeViews()
         setupBottomNavigation()
@@ -131,6 +135,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadFirebaseData() {
         val currentUserId = dataRepository.getCurrentUserId()
         if (currentUserId == null) {
+            android.util.Log.w("MainActivity", "User not found, falling back to JSON data")
             Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show()
             loadDataFromJSON()
             return
@@ -138,15 +143,22 @@ class MainActivity : AppCompatActivity() {
         
         lifecycleScope.launch {
             try {
+                android.util.Log.d("MainActivity", "Loading Firebase data for user: $currentUserId")
+                
                 // Load user profile
                 firebaseRepository.getUserProfile(currentUserId).collect { userResult ->
                     userResult.fold(
                         onSuccess = { user ->
                             user?.let {
+                                android.util.Log.d("MainActivity", "User profile loaded: ${it.email}, balance: ${it.balance} ${it.currency}")
                                 populateBalanceFromFirebase(it)
+                            } ?: run {
+                                android.util.Log.w("MainActivity", "User profile is null")
+                                loadDataFromJSON()
                             }
                         },
                         onFailure = { error ->
+                            android.util.Log.e("MainActivity", "Failed to load user profile", error)
                             Toast.makeText(this@MainActivity, "Failed to load user data: ${error.message}", Toast.LENGTH_SHORT).show()
                             loadDataFromJSON()
                         }
@@ -191,6 +203,7 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun populateBalanceFromFirebase(user: com.cashpal.app.models.User) {
+        android.util.Log.d("MainActivity", "Populating balance from Firebase: ${user.balance} ${user.currency}")
         balanceValue.text = "$${String.format("%.2f", user.balance)} ${user.currency}"
         monthlyChange.text = "+$0.00" // TODO: Calculate monthly change from transactions
         pendingAmount.text = "$0.00" // TODO: Calculate pending amount from pending transactions
