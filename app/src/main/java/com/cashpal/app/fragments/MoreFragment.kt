@@ -10,8 +10,10 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.cashpal.app.R
+import com.cashpal.app.auth.BiometricAuthManager
 import com.cashpal.app.auth.SignInActivity
 import com.cashpal.app.di.ServiceLocator
+import com.cashpal.app.utils.BiometricPreferences
 import kotlinx.coroutines.launch
 
 class MoreFragment : Fragment() {
@@ -19,6 +21,8 @@ class MoreFragment : Fragment() {
     private lateinit var biometricSwitch: SwitchCompat
     private lateinit var notificationsSwitch: SwitchCompat
     private lateinit var darkModeSwitch: SwitchCompat
+    private lateinit var biometricManager: BiometricAuthManager
+    private lateinit var biometricPreferences: BiometricPreferences
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -30,6 +34,10 @@ class MoreFragment : Fragment() {
     
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        // Initialize biometric components
+        biometricManager = BiometricAuthManager(requireActivity(), requireContext())
+        biometricPreferences = BiometricPreferences(requireContext())
         
         initViews()
         setupClickListeners()
@@ -97,14 +105,36 @@ class MoreFragment : Fragment() {
     }
     
     private fun setupSwitches() {
-        // Set default states
-        biometricSwitch.isChecked = true
+        // Check biometric availability
+        val isBiometricAvailable = biometricManager.isBiometricAvailable()
+        biometricSwitch.isEnabled = isBiometricAvailable
+        
+        if (!isBiometricAvailable) {
+            biometricSwitch.isChecked = false
+            biometricSwitch.alpha = 0.5f
+        } else {
+            // Set current state from preferences
+            biometricSwitch.isChecked = biometricPreferences.isBiometricEnabled()
+        }
+        
+        // Set other default states
         notificationsSwitch.isChecked = true
         darkModeSwitch.isChecked = false
         
-        // Handle switch state changes
+        // Handle biometric switch state changes
         biometricSwitch.setOnCheckedChangeListener { _, isChecked ->
-            showToast("Biometric Authentication: ${if (isChecked) "Enabled" else "Disabled"}")
+            if (isBiometricAvailable) {
+                biometricPreferences.setBiometricEnabled(isChecked)
+                showToast("Biometric Authentication: ${if (isChecked) "Enabled" else "Disabled"}")
+                
+                if (!isChecked) {
+                    // Clear biometric data when disabled
+                    biometricPreferences.clearBiometricData()
+                }
+            } else {
+                showToast("Biometric authentication not available on this device")
+                biometricSwitch.isChecked = false
+            }
         }
         
         notificationsSwitch.setOnCheckedChangeListener { _, isChecked ->

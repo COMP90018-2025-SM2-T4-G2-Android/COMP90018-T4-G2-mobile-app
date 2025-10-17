@@ -14,11 +14,15 @@ import com.cashpal.app.MainActivity
 import com.cashpal.app.R
 import com.cashpal.app.databinding.ActivitySignInBinding
 import com.cashpal.app.di.ServiceLocator
+import com.cashpal.app.dialogs.ForgotPasswordDialog
+import com.cashpal.app.utils.BiometricPreferences
 import kotlinx.coroutines.launch
 
 class SignInActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySignInBinding
     private val repository = ServiceLocator.getRepository()
+    private lateinit var biometricManager: BiometricAuthManager
+    private lateinit var biometricPreferences: BiometricPreferences
     
     // Google Sign-In launcher
     private val googleSignInLauncher = registerForActivityResult(
@@ -46,8 +50,14 @@ class SignInActivity : AppCompatActivity() {
             insets
         }
         
+        // Initialize biometric components
+        biometricManager = BiometricAuthManager(this, this)
+        biometricPreferences = BiometricPreferences(this)
+        
         setupClickListeners()
         checkAuthStatus()
+        setupBiometricAvailability()
+        loadLastLoginEmail()
     }
     
     private fun setupClickListeners() {
@@ -66,8 +76,23 @@ class SignInActivity : AppCompatActivity() {
             navigateToSignUp()
         }
         
+        // Handle forgot password click
+        binding.tvForgotPassword.setOnClickListener {
+            showForgotPasswordDialog()
+        }
+        
         binding.btnGoogleSignIn.setOnClickListener {
             signInWithGoogle()
+        }
+        
+        // Handle biometric login click
+        binding.cardBiometric.setOnClickListener {
+            handleBiometricLogin()
+        }
+        
+        // Handle demo mode click
+        binding.btnDemoMode.setOnClickListener {
+            enableDemoMode()
         }
     }
     
@@ -82,6 +107,8 @@ class SignInActivity : AppCompatActivity() {
             repository.signInWithEmail(email, password).collect { result ->
                 result.fold(
                     onSuccess = { user ->
+                        // Save email for biometric login
+                        biometricPreferences.setLastLoginEmail(email)
                         Toast.makeText(this@SignInActivity, "Signed in successfully", Toast.LENGTH_SHORT).show()
                         navigateToMain()
                     },
@@ -127,6 +154,69 @@ class SignInActivity : AppCompatActivity() {
     
     private fun navigateToMain() {
         val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+    }
+    
+    private fun setupBiometricAvailability() {
+        if (!biometricManager.isBiometricAvailable()) {
+            binding.cardBiometric.visibility = android.view.View.GONE
+        }
+    }
+    
+    private fun loadLastLoginEmail() {
+        val lastEmail = biometricPreferences.getLastLoginEmail()
+        if (!lastEmail.isNullOrEmpty()) {
+            binding.etEmail.setText(lastEmail)
+        }
+    }
+    
+    private fun showForgotPasswordDialog() {
+        val dialog = ForgotPasswordDialog()
+        dialog.show(supportFragmentManager, "ForgotPasswordDialog")
+    }
+    
+    private fun handleBiometricLogin() {
+        if (!biometricManager.isBiometricAvailable()) {
+            Toast.makeText(this, "Biometric authentication not available", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        val lastEmail = biometricPreferences.getLastLoginEmail()
+        if (lastEmail.isNullOrEmpty()) {
+            Toast.makeText(this, "No saved credentials found. Please sign in manually first.", Toast.LENGTH_LONG).show()
+            return
+        }
+        
+        biometricManager.showBiometricPrompt(object : BiometricAuthManager.BiometricCallback {
+            override fun onSuccess() {
+                // For demo purposes, we'll just show a toast
+                // In a real app, you'd retrieve stored credentials and sign in
+                Toast.makeText(this@SignInActivity, "Biometric authentication successful!", Toast.LENGTH_SHORT).show()
+                
+                // Navigate to main activity (in demo mode)
+                val intent = Intent(this@SignInActivity, MainActivity::class.java)
+                intent.putExtra("demo_mode", true)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+            }
+            
+            override fun onError(errorCode: Int, errorMessage: String) {
+                Toast.makeText(this@SignInActivity, "Biometric error: $errorMessage", Toast.LENGTH_SHORT).show()
+            }
+            
+            override fun onFailed() {
+                Toast.makeText(this@SignInActivity, "Biometric authentication failed", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+    
+    private fun enableDemoMode() {
+        biometricPreferences.setDemoMode(true)
+        val intent = Intent(this, MainActivity::class.java)
+        intent.putExtra("demo_mode", true)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()

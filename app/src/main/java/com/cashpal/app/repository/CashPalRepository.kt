@@ -60,6 +60,15 @@ class CashPalRepository(
         authService.signOut()
     }
     
+    suspend fun resetPassword(email: String) = flow {
+        try {
+            authService.sendPasswordResetEmail(email).await()
+            emit(Result.success(Unit))
+        } catch (e: Exception) {
+            emit(Result.failure(e))
+        }
+    }
+    
     fun signInWithGoogle(activity: android.app.Activity, onIntentReady: (android.content.Intent) -> Unit) {
         try {
             // Get Google Sign-In client

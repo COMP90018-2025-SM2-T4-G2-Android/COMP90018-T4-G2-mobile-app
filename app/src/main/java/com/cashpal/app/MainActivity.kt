@@ -22,6 +22,7 @@ import com.cashpal.app.fragments.HistoryFragment
 import com.cashpal.app.fragments.MoreFragment
 import com.cashpal.app.fragments.PayFragment
 import com.cashpal.app.fragments.ScanFragment
+import com.cashpal.app.utils.BiometricPreferences
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
 
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     
     private lateinit var dataRepository: DataRepository
     private lateinit var firebaseRepository: com.cashpal.app.repository.CashPalRepository
+    private lateinit var biometricPreferences: BiometricPreferences
     private lateinit var balanceValue: TextView
     private lateinit var monthlyChange: TextView
     private lateinit var pendingAmount: TextView
@@ -38,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewAllText: TextView
     private lateinit var scrollView: ScrollView
     private lateinit var bottomNavigationView: BottomNavigationView
+    private var isDemoMode = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +50,14 @@ class MainActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
             insets
+        }
+        
+        // Check for demo mode
+        isDemoMode = intent.getBooleanExtra("demo_mode", false) || 
+                     BiometricPreferences(this).isDemoMode()
+        
+        if (isDemoMode) {
+            showDemoModeBanner()
         }
 
         initializeViews()
@@ -578,5 +589,33 @@ class MainActivity : AppCompatActivity() {
     
     private fun Int.dpToPx(): Int {
         return (this * resources.displayMetrics.density).toInt()
+    }
+    
+    private fun showDemoModeBanner() {
+        val demoBanner = MaterialCardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(16, 16, 16, 8)
+            }
+            setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, android.R.color.holo_orange_light))
+            radius = 12f
+            elevation = 4f
+            setContentPadding(16, 12, 16, 12)
+            
+            addView(TextView(this@MainActivity).apply {
+                text = "🔍 Demo Mode - Using sample data"
+                textSize = 14f
+                setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.black))
+                setPadding(8, 8, 8, 8)
+            })
+        }
+        
+        // Add banner to the top of the main container
+        val mainContainer = findViewById<LinearLayout>(R.id.main)
+        if (mainContainer != null) {
+            mainContainer.addView(demoBanner, 0)
+        }
     }
 }

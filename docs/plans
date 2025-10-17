@@ -391,3 +391,158 @@ After implementation:
 - [ ] Error messages are clear and helpful
 - [ ] Back button behaves correctly
 - [ ] Keyboard navigation works smoothly
+
+
+--- Change layout of the auth--
+# Separate Sign-In and Sign-Up Pages Plan
+
+## Problem Analysis
+
+**Current Issue:**
+
+- AuthActivity combines both sign-in and sign-up on one page
+- Display Name field is visible even for sign-in users
+- Confusing UX with both buttons visible simultaneously
+
+**Desired Behavior:**
+
+- Main authentication page (SignInActivity) shows only:
+  - Email field
+  - Password field
+  - Sign In button
+  - Google Sign-In button
+  - Link to "Don't have an account? Sign Up"
+- Separate Sign-Up page (SignUpActivity) shows:
+  - Display Name field
+  - Email field
+  - Password field
+  - Sign Up button
+  - Link to "Already have an account? Sign In"
+
+## Implementation Steps
+
+### Step 1: Rename AuthActivity to SignInActivity
+
+**Files to modify:**
+
+- `app/src/main/java/com/cashpal/app/auth/AuthActivity.kt` → Rename to `SignInActivity.kt`
+- `app/src/main/res/layout/activity_auth.xml` → Rename to `activity_sign_in.xml`
+- `app/src/main/AndroidManifest.xml` → Update activity declaration
+
+**Changes in SignInActivity.kt:**
+
+- Remove `etDisplayName` references
+- Remove `btnSignUp` button and its click listener
+- Keep only sign-in and Google sign-in functionality
+- Add navigation to SignUpActivity when "Sign Up" link is clicked
+
+**Changes in activity_sign_in.xml:**
+
+- Remove Display Name field
+- Remove "Sign Up" button
+- Add "Don't have an account? Sign Up" clickable text at the bottom
+- Keep Email, Password, Sign In button, and Google Sign-In button
+
+### Step 2: Create SignUpActivity
+
+**New files to create:**
+
+- `app/src/main/java/com/cashpal/app/auth/SignUpActivity.kt`
+- `app/src/main/res/layout/activity_sign_up.xml`
+
+**SignUpActivity.kt implementation:**
+
+- Include Display Name, Email, and Password fields
+- Single "Sign Up" button
+- Google Sign-In button (optional, as Google handles both sign-in and sign-up)
+- Navigation back to SignInActivity with "Already have an account? Sign In" link
+- Validate all fields before sign-up
+- On successful sign-up, navigate to MainActivity
+
+**activity_sign_up.xml design:**
+
+- Display Name field (required for sign-up)
+- Email field
+- Password field
+- Sign Up button (primary)
+- Optional: Google Sign-In button
+- "Already have an account? Sign In" clickable text
+- Same visual style as sign-in page
+
+### Step 3: Update AndroidManifest.xml
+
+**Changes:**
+
+- Rename `.auth.AuthActivity` to `.auth.SignInActivity`
+- Add new `.auth.SignUpActivity` (not exported)
+- Ensure SignInActivity remains the launcher activity
+
+### Step 4: Update Navigation Flow
+
+**SignInActivity:**
+
+- When user clicks "Sign Up" link → Navigate to SignUpActivity
+- After successful sign-in → Navigate to MainActivity
+- After successful Google sign-in → Navigate to MainActivity
+
+**SignUpActivity:**
+
+- When user clicks "Sign In" link → Navigate back to SignInActivity (finish current)
+- After successful sign-up → Navigate to MainActivity
+- After successful Google sign-in → Navigate to MainActivity (Google handles both)
+
+### Step 5: Improve UX/UI
+
+**Enhancements:**
+
+- Add proper loading states during authentication
+- Show password strength indicator on Sign Up page
+- Add "Forgot Password?" link on Sign In page (future enhancement)
+- Ensure proper keyboard handling (Next → Next → Done)
+- Add form validation with helpful error messages
+
+## File Structure After Changes
+
+```
+app/src/main/java/com/cashpal/app/auth/
+├── SignInActivity.kt (renamed from AuthActivity.kt)
+└── SignUpActivity.kt (new)
+
+app/src/main/res/layout/
+├── activity_sign_in.xml (renamed from activity_auth.xml)
+└── activity_sign_up.xml (new)
+```
+
+## Expected User Flow
+
+1. **App Launch** → SignInActivity (launcher)
+2. **User without account** → Clicks "Sign Up" → SignUpActivity
+3. **User enters details** → Clicks "Sign Up" → Account created → MainActivity
+4. **User with account** → Enters credentials → Clicks "Sign In" → MainActivity
+5. **User wants Google** → Clicks "Continue with Google" → Google picker → MainActivity
+6. **User on wrong page** → Clicks "Sign In/Sign Up" link → Switches pages
+
+## Key Benefits
+
+- Cleaner, more intuitive UI
+- Separate concerns (sign-in vs sign-up)
+- Standard authentication flow (matches most apps)
+- Reduces cognitive load for users
+- Easier to maintain and extend
+- Better form validation per context
+
+## Testing Checklist
+
+After implementation:
+
+- [ ] Sign In with email/password works
+- [ ] Sign Up with email/password creates new user
+- [ ] Google Sign-In works from both pages
+- [ ] Navigation between Sign In and Sign Up works
+- [ ] Display Name is only required on Sign Up page
+- [ ] Form validation works correctly on both pages
+- [ ] Loading states show during authentication
+- [ ] Success messages appear after authentication
+- [ ] Error messages are clear and helpful
+- [ ] Back button behaves correctly
+- [ ] Keyboard navigation works smoothly
