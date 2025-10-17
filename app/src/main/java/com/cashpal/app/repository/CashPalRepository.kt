@@ -60,6 +60,69 @@ class CashPalRepository(
         authService.signOut()
     }
     
+    fun signInWithGoogle(activity: android.app.Activity, onIntentReady: (android.content.Intent) -> Unit) {
+        try {
+            // Get Google Sign-In client
+            val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(activity.getString(com.cashpal.app.R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+            
+            val googleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(activity, gso)
+            
+            // Launch Google Sign-In intent
+            val signInIntent = googleSignInClient.signInIntent
+            onIntentReady(signInIntent)
+        } catch (e: Exception) {
+            // Handle error if needed
+        }
+    }
+    
+    suspend fun handleGoogleSignInResult(data: android.content.Intent) = flow {
+        try {
+            val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(data)
+            val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
+            
+            val idToken = account?.idToken
+            if (idToken != null) {
+                val authResult = authService.signInWithGoogle(idToken).await()
+                val user = authResult.user
+                
+                if (user != null) {
+                    // Create user in Firestore if doesn't exist
+                    val userModel = com.cashpal.app.models.User(
+                        id = user.uid,
+                        email = user.email ?: "",
+                        displayName = user.displayName ?: "",
+                        phoneNumber = user.phoneNumber,
+                        avatarUrl = user.photoUrl?.toString(),
+                        balance = 0.0,
+                        currency = "AUD",
+                        isVerified = user.isEmailVerified,
+                        createdAt = com.google.firebase.Timestamp.now(),
+                        updatedAt = com.google.firebase.Timestamp.now()
+                    )
+                    
+                    // Try to create user in Firestore, but don't fail if it already exists
+                    try {
+                        // Just attempt to create user, ignore result
+                        firestoreService.createUser(userModel)
+                    } catch (e: Exception) {
+                        // User might already exist, continue anyway
+                    }
+                    
+                    emit(Result.success(userModel))
+                } else {
+                    emit(Result.failure(Exception("Failed to get user from Google Sign-In")))
+                }
+            } else {
+                emit(Result.failure(Exception("Failed to get ID token from Google Sign-In")))
+            }
+        } catch (e: Exception) {
+            emit(Result.failure(e))
+        }
+    }
+    
     // User Profile Management
     suspend fun createUser(user: com.cashpal.app.models.User) = flow {
         try {

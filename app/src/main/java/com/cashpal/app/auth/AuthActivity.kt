@@ -1,9 +1,11 @@
 package com.cashpal.app.auth
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -17,6 +19,20 @@ import kotlinx.coroutines.launch
 class AuthActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAuthBinding
     private val repository = ServiceLocator.getRepository()
+    
+    // Google Sign-In launcher
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            if (data != null) {
+                handleGoogleSignInResult(data)
+            }
+        } else {
+            Toast.makeText(this, "Google Sign-In cancelled", Toast.LENGTH_SHORT).show()
+        }
+    }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +73,10 @@ class AuthActivity : AppCompatActivity() {
                 Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
             }
         }
+        
+        binding.btnGoogleSignIn.setOnClickListener {
+            signInWithGoogle()
+        }
     }
     
     private fun checkAuthStatus() {
@@ -91,6 +111,32 @@ class AuthActivity : AppCompatActivity() {
                     },
                     onFailure = { error ->
                         Toast.makeText(this@AuthActivity, "Sign up failed: ${error.message}", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+        }
+    }
+    
+    private fun signInWithGoogle() {
+        try {
+            repository.signInWithGoogle(this@AuthActivity) { intent ->
+                googleSignInLauncher.launch(intent)
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this@AuthActivity, "Google Sign-In failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun handleGoogleSignInResult(data: Intent) {
+        lifecycleScope.launch {
+            repository.handleGoogleSignInResult(data).collect { result ->
+                result.fold(
+                    onSuccess = { user ->
+                        Toast.makeText(this@AuthActivity, "Google Sign-In successful", Toast.LENGTH_SHORT).show()
+                        navigateToMain()
+                    },
+                    onFailure = { error ->
+                        Toast.makeText(this@AuthActivity, "Google Sign-In failed: ${error.message}", Toast.LENGTH_SHORT).show()
                     }
                 )
             }
