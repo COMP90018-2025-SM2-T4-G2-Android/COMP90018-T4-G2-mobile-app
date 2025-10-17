@@ -53,9 +53,8 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         
-        // Check for demo mode
-        isDemoMode = intent.getBooleanExtra("demo_mode", false) || 
-                     BiometricPreferences(this).isDemoMode()
+        // Check for demo mode - only from explicit user action
+        isDemoMode = intent.getBooleanExtra("demo_mode", false)
         
         if (isDemoMode) {
             showDemoModeBanner()
@@ -124,20 +123,24 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun loadData() {
-        // Try Firebase first, fallback to JSON
-        if (dataRepository.isUserSignedIn()) {
+        // Always try Firebase first if user is signed in
+        if (dataRepository.isUserSignedIn() && !isDemoMode) {
             loadFirebaseData()
-        } else {
+        } else if (isDemoMode) {
+            // Only load JSON data if explicitly in demo mode
             loadDataFromJSON()
+        } else {
+            // User not signed in and not in demo mode - show empty state
+            showEmptyState()
         }
     }
     
     private fun loadFirebaseData() {
         val currentUserId = dataRepository.getCurrentUserId()
         if (currentUserId == null) {
-            android.util.Log.w("MainActivity", "User not found, falling back to JSON data")
+            android.util.Log.w("MainActivity", "User not found, showing empty state")
             Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show()
-            loadDataFromJSON()
+            showEmptyState()
             return
         }
         
@@ -154,13 +157,13 @@ class MainActivity : AppCompatActivity() {
                                 populateBalanceFromFirebase(it)
                             } ?: run {
                                 android.util.Log.w("MainActivity", "User profile is null")
-                                loadDataFromJSON()
+                                showEmptyState()
                             }
                         },
                         onFailure = { error ->
                             android.util.Log.e("MainActivity", "Failed to load user profile", error)
                             Toast.makeText(this@MainActivity, "Failed to load user data: ${error.message}", Toast.LENGTH_SHORT).show()
-                            loadDataFromJSON()
+                            showEmptyState()
                         }
                     )
                 }
@@ -169,18 +172,21 @@ class MainActivity : AppCompatActivity() {
                 firebaseRepository.getUserTransactions(currentUserId, 10).collect { transactionsResult ->
                     transactionsResult.fold(
                         onSuccess = { transactions ->
+                            android.util.Log.d("MainActivity", "Loaded ${transactions.size} transactions from Firebase")
                             populateTransactionsFromFirebase(transactions)
                         },
                         onFailure = { error ->
+                            android.util.Log.e("MainActivity", "Failed to load transactions", error)
                             Toast.makeText(this@MainActivity, "Failed to load transactions: ${error.message}", Toast.LENGTH_SHORT).show()
-                            loadDataFromJSON()
+                            showEmptyState()
                         }
                     )
                 }
                 
             } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to load data from Firebase", e)
                 Toast.makeText(this@MainActivity, "Failed to load data: ${e.message}", Toast.LENGTH_SHORT).show()
-                loadDataFromJSON()
+                showEmptyState()
             }
         }
         
@@ -307,9 +313,14 @@ class MainActivity : AppCompatActivity() {
     private fun populateTransactionsFromFirebase(transactions: List<com.cashpal.app.models.Transaction>) {
         transactionsContainer.removeAllViews()
         
-        transactions.take(5).forEach { transaction ->
-            val cardView = createFirebaseTransactionCard(transaction)
-            transactionsContainer.addView(cardView)
+        if (transactions.isEmpty()) {
+            // Show empty state for transactions (not necessarily a new user)
+            showEmptyTransactionsState()
+        } else {
+            transactions.take(5).forEach { transaction ->
+                val cardView = createFirebaseTransactionCard(transaction)
+                transactionsContainer.addView(cardView)
+            }
         }
     }
     
@@ -642,5 +653,152 @@ class MainActivity : AppCompatActivity() {
                 fragmentContainer.layoutParams = layoutParams
             }
         }
+    }
+    
+    private fun showWelcomeMessage() {
+        android.util.Log.d("MainActivity", "Showing welcome message for new user")
+        
+        // Clear existing transactions
+        transactionsContainer.removeAllViews()
+        
+        // Create welcome message card
+        val welcomeCard = MaterialCardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(16.dpToPx(), 16.dpToPx(), 16.dpToPx(), 16.dpToPx())
+            }
+            radius = 12f
+            elevation = 4f
+            setContentPadding(24.dpToPx(), 24.dpToPx(), 24.dpToPx(), 24.dpToPx())
+            setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, android.R.color.holo_green_light))
+            
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = android.view.Gravity.CENTER
+                
+                // Welcome icon
+                addView(TextView(this@MainActivity).apply {
+                    text = "🎉"
+                    textSize = 48f
+                    gravity = android.view.Gravity.CENTER
+                    setPadding(0, 0, 0, 16.dpToPx())
+                })
+                
+                // Welcome title
+                addView(TextView(this@MainActivity).apply {
+                    text = "Welcome to CashPal!"
+                    textSize = 24f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.black))
+                    gravity = android.view.Gravity.CENTER
+                    setPadding(0, 0, 0, 8.dpToPx())
+                })
+                
+                // Welcome message
+                addView(TextView(this@MainActivity).apply {
+                    text = "You've received a welcome bonus of \$100 AUD to get started. Start by sending money to friends or scanning a QR code!"
+                    textSize = 16f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.black))
+                    gravity = android.view.Gravity.CENTER
+                    setPadding(0, 0, 0, 16.dpToPx())
+                })
+                
+                // Get started button
+                addView(com.google.android.material.button.MaterialButton(this@MainActivity).apply {
+                    text = "Get Started"
+                    setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.white))
+                    setBackgroundColor(ContextCompat.getColor(this@MainActivity, com.cashpal.app.R.color.purple_500))
+                    setOnClickListener {
+                        // Navigate to home content
+                        showHomeContent()
+                    }
+                })
+            })
+        }
+        
+        transactionsContainer.addView(welcomeCard)
+    }
+    
+    private fun showEmptyState() {
+        android.util.Log.d("MainActivity", "Showing empty state - user not signed in or no data")
+        
+        // Clear all containers
+        transactionsContainer.removeAllViews()
+        
+        // Show empty state message
+        val emptyStateCard = MaterialCardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(16.dpToPx(), 16.dpToPx(), 16.dpToPx(), 16.dpToPx())
+            }
+            radius = 12f
+            elevation = 4f
+            setContentPadding(24.dpToPx(), 24.dpToPx(), 24.dpToPx(), 24.dpToPx())
+            setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, android.R.color.darker_gray))
+            
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = android.view.Gravity.CENTER
+                
+                addView(TextView(this@MainActivity).apply {
+                    text = "No data available"
+                    textSize = 18f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.white))
+                    gravity = android.view.Gravity.CENTER
+                })
+            })
+        }
+        
+        transactionsContainer.addView(emptyStateCard)
+    }
+    
+    private fun showEmptyTransactionsState() {
+        android.util.Log.d("MainActivity", "Showing empty transactions state")
+        
+        // Show empty transactions message
+        val emptyTransactionsCard = MaterialCardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(16.dpToPx(), 16.dpToPx(), 16.dpToPx(), 16.dpToPx())
+            }
+            radius = 12f
+            elevation = 4f
+            setContentPadding(24.dpToPx(), 24.dpToPx(), 24.dpToPx(), 24.dpToPx())
+            setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, android.R.color.holo_blue_light))
+            
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = android.view.Gravity.CENTER
+                
+                addView(TextView(this@MainActivity).apply {
+                    text = "📱"
+                    textSize = 48f
+                    gravity = android.view.Gravity.CENTER
+                    setPadding(0, 0, 0, 16.dpToPx())
+                })
+                
+                addView(TextView(this@MainActivity).apply {
+                    text = "No transactions yet"
+                    textSize = 18f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.black))
+                    gravity = android.view.Gravity.CENTER
+                    setPadding(0, 0, 0, 8.dpToPx())
+                })
+                
+                addView(TextView(this@MainActivity).apply {
+                    text = "Start by sending or receiving money!"
+                    textSize = 14f
+                    setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.black))
+                    gravity = android.view.Gravity.CENTER
+                })
+            })
+        }
+        
+        transactionsContainer.addView(emptyTransactionsCard)
     }
 }

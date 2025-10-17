@@ -24,17 +24,24 @@ class CashPalRepository(
             val user = authResult.user
             
             if (user != null) {
-                // Create user profile in Firestore
+                // Create user profile in Firestore with default values
                 val userProfile = com.cashpal.app.models.User(
                     id = user.uid,
                     email = user.email ?: "",
                     displayName = displayName,
+                    phoneNumber = user.phoneNumber,
+                    avatarUrl = user.photoUrl?.toString(),
+                    balance = 0.0, // Start with 0 balance
+                    currency = "AUD", // Default currency
+                    isVerified = user.isEmailVerified,
                     createdAt = com.google.firebase.Timestamp.now(),
                     updatedAt = com.google.firebase.Timestamp.now()
                 )
                 
                 val result = firestoreService.createUser(userProfile)
                 if (result.isSuccess) {
+                    // Initialize empty collections for new user
+                    initializeNewUserCollections(user.uid)
                     emit(Result.success(user))
                 } else {
                     emit(Result.failure(result.exceptionOrNull() ?: Exception("Failed to create user profile")))
@@ -125,6 +132,8 @@ class CashPalRepository(
                         android.util.Log.d("CashPalRepository", "Creating user in Firestore")
                         firestoreService.createUser(userModel)
                         android.util.Log.d("CashPalRepository", "User created successfully in Firestore")
+                        // Initialize empty collections for new user
+                        initializeNewUserCollections(user.uid)
                     } catch (e: Exception) {
                         android.util.Log.w("CashPalRepository", "User might already exist in Firestore", e)
                         // User might already exist, continue anyway
@@ -397,6 +406,49 @@ class CashPalRepository(
             
         } catch (e: Exception) {
             emit(Result.failure(e))
+        }
+    }
+    
+    /**
+     * Initialize empty collections for new users
+     * This ensures new users have proper database structure
+     */
+    private suspend fun initializeNewUserCollections(userId: String) {
+        try {
+            android.util.Log.d("CashPalRepository", "Initializing collections for new user: $userId")
+            
+            // Create a welcome transaction to give users a starting balance
+            // This is optional - you can remove this if you want users to start with truly empty accounts
+            val welcomeTransaction = com.cashpal.app.models.Transaction(
+                id = "",
+                fromUserId = "system", // System-generated transaction
+                toUserId = userId,
+                amount = 100.0, // Welcome bonus of $100 AUD
+                currency = "AUD",
+                description = "Welcome to CashPal! Here's your starting balance.",
+                category = com.cashpal.app.models.TransactionCategory.OTHER,
+                status = com.cashpal.app.models.TransactionStatus.COMPLETED,
+                type = com.cashpal.app.models.TransactionType.RECEIPT,
+                createdAt = com.google.firebase.Timestamp.now(),
+                completedAt = com.google.firebase.Timestamp.now()
+            )
+            
+            // Add the welcome transaction (this will also update the user's balance)
+            createTransaction(welcomeTransaction).collect { result ->
+                result.fold(
+                    onSuccess = {
+                        android.util.Log.d("CashPalRepository", "Welcome transaction created for new user")
+                    },
+                    onFailure = { error ->
+                        android.util.Log.w("CashPalRepository", "Failed to create welcome transaction", error)
+                        // Don't fail the entire signup process if welcome transaction fails
+                    }
+                )
+            }
+            
+        } catch (e: Exception) {
+            android.util.Log.e("CashPalRepository", "Failed to initialize collections for new user", e)
+            // Don't fail the entire signup process if initialization fails
         }
     }
 }

@@ -98,6 +98,11 @@ class MoreFragment : Fragment() {
         
         // App Info - App Version is non-clickable
         
+        // Demo Mode Toggle
+        requireView().findViewById<View>(R.id.card_demo_mode)?.setOnClickListener {
+            toggleDemoMode()
+        }
+        
         // Sign Out
         requireView().findViewById<View>(R.id.btn_sign_out)?.setOnClickListener {
             signOut()
@@ -158,6 +163,30 @@ class MoreFragment : Fragment() {
     private fun showPaymentMethodsDialog() {
         val paymentMethodsDialog = PaymentMethodsDialogFragment.newInstance()
         paymentMethodsDialog.show(childFragmentManager, PaymentMethodsDialogFragment.TAG)
+    }
+    
+    private fun toggleDemoMode() {
+        val currentDemoMode = biometricPreferences.isDemoMode()
+        biometricPreferences.setDemoMode(!currentDemoMode)
+        
+        val message = if (!currentDemoMode) {
+            "Demo mode enabled! Sample data will be shown."
+        } else {
+            "Demo mode disabled! Real data will be shown."
+        }
+        
+        showToast(message)
+        
+        // Restart the app to apply changes
+        val intent = requireActivity().packageManager.getLaunchIntentForPackage(requireActivity().packageName)
+        if (intent != null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            intent.putExtra("demo_mode", !currentDemoMode)
+            startActivity(intent)
+            requireActivity().finish()
+        } else {
+            showToast("Failed to restart app")
+        }
     }
     
     private fun signOut() {
