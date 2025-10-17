@@ -10,7 +10,7 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.cashpal.app.R
-import com.cashpal.app.auth.AuthActivity
+import com.cashpal.app.auth.SignInActivity
 import com.cashpal.app.di.ServiceLocator
 import kotlinx.coroutines.launch
 
@@ -137,7 +137,7 @@ class MoreFragment : Fragment() {
                 repository.signOut()
                 
                 // Navigate to AuthActivity and clear the back stack
-                val intent = Intent(requireContext(), AuthActivity::class.java)
+                        val intent = Intent(requireContext(), SignInActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
                 

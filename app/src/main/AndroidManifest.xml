@@ -37,9 +37,9 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Authentication Activity -->
+        <!-- Sign In Activity (Main Authentication) -->
         <activity
-            android:name=".auth.AuthActivity"
+            android:name=".auth.SignInActivity"
             android:exported="true"
             android:theme="@style/Theme.CashPal">
             <intent-filter>
@@ -47,6 +47,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Sign Up Activity -->
+        <activity
+            android:name=".auth.SignUpActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CashPal" />
 
         <!-- Your custom splash as the launcher -->
         <activity

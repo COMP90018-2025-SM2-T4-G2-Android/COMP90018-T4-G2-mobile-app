@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F8F9FA"
-    tools:context=".auth.AuthActivity">
+    tools:context=".auth.SignUpActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -27,8 +27,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="CashPal"
-            android:textSize="32sp"
+            android:text="Create Account"
+            android:textSize="28sp"
             android:textStyle="bold"
             android:textColor="#6B46C1"
             android:layout_marginBottom="48dp" />
@@ -60,7 +60,8 @@
                         android:id="@+id/etDisplayName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textPersonName" />
+                        android:inputType="textPersonName"
+                        android:nextFocusDown="@+id/etEmail" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -77,7 +78,8 @@
                         android:id="@+id/etEmail"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textEmailAddress" />
+                        android:inputType="textEmailAddress"
+                        android:nextFocusDown="@+id/etPassword" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -99,18 +101,6 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Sign In Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSignIn"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginBottom="12dp"
-                    android:text="Sign In"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="#6B46C1"
-                    app:cornerRadius="28dp" />
-
                 <!-- Sign Up Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSignUp"
@@ -120,10 +110,7 @@
                     android:text="Sign Up"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="#6B46C1"
-                    app:backgroundTint="@android:color/transparent"
-                    app:strokeColor="#6B46C1"
-                    app:strokeWidth="2dp"
+                    app:backgroundTint="#6B46C1"
                     app:cornerRadius="28dp" />
 
                 <!-- Divider -->
@@ -175,6 +162,20 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Sign In Link -->
+        <TextView
+            android:id="@+id/tvSignInLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Already have an account? Sign In"
+            android:textSize="14sp"
+            android:textColor="#6B46C1"
+            android:layout_marginTop="24dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground"
+            android:padding="8dp" />
+
         <!-- Footer -->
         <TextView
             android:layout_width="wrap_content"
@@ -182,7 +183,7 @@
             android:text="Secure • Fast • Reliable"
             android:textSize="14sp"
             android:textColor="#6B7280"
-            android:layout_marginTop="24dp" />
+            android:layout_marginTop="16dp" />
 
     </LinearLayout>
 
