@@ -30,6 +30,7 @@
     <string name="pay_send_to_fmt">Send to %1$s</string>
     <string name="start_scanning">Start Scanning</string>
     <string name="back">Back</string>
+    <string name="date_time">Date &amp; Time</string>
     
     <!-- Firebase Configuration -->
     <string name="default_web_client_id">860245071011-d7q3s0om7mdq6povpifaeprau9hq9a9b.apps.googleusercontent.com</string>
