@@ -71,7 +71,9 @@ class HistoryFragment : Fragment() {
             TransactionHistory("Freelance Client", "Project payment", "+$350.00", "completed", "2024-01-10", "received")
         )
 
-        transactionAdapter = TransactionHistoryAdapter(allTransactions) {}
+        transactionAdapter = TransactionHistoryAdapter(allTransactions) { tx ->
+            openReceipt(tx)
+        }
         transactionsRecyclerView.adapter = transactionAdapter
 
         calculateTotals()
@@ -223,4 +225,41 @@ class HistoryFragment : Fragment() {
         totalSentTextView.text = "$%.2f".format(totalSent)
         totalReceivedTextView.text = "$%.2f".format(totalReceived)
     }
+    private fun openReceipt(tx: TransactionHistory) {
+        // amount in your model is a string like "+$25.00" or "-$4.50"
+        val rawAmount = tx.amount.replace(Regex("[^0-9.-]"), "")
+        val amountDouble = rawAmount.toDoubleOrNull() ?: 0.0
+
+        // infer type/status from your model fields
+        val isReceived = tx.type.equals("received", true) || tx.amount.trim().startsWith("+")
+        val typeStr = if (isReceived) "received" else "sent"
+        val statusStr = when (tx.status.lowercase(Locale.ROOT)) {
+            "completed", "success" -> "completed"
+            "pending" -> "pending"
+            else -> "failed"
+        }
+
+        // Build args that ReceiptFragment expects (same keys used by Notification deep-link)
+        val args = Bundle().apply {
+            putString("transactionId", "TXN-${System.currentTimeMillis()}")
+            putString("senderName", tx.name)                 // shown as counterparty on the receipt
+            putDouble("amount", kotlin.math.abs(amountDouble))
+            putString("timestamp", tx.date)                  // you can add time if you have it
+            putString("status", statusStr)                   // "completed" | "pending" | "failed"
+            putString("type", typeStr)                       // "received" | "sent"
+            // optional extras you may want later:
+            putString("reference", tx.reference)
+        }
+
+        val receiptFragment = com.cashpal.app.fragments.ReceiptFragment().apply {
+            arguments = args
+        }
+
+        // Navigate to the receipt page
+        requireActivity().supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, receiptFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
 }

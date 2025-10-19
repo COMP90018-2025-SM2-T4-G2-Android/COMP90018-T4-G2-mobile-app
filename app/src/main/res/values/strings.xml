@@ -26,8 +26,10 @@
     <string name="pay_coming_soon">Payment features coming soon...</string>
     <string name="scan_coming_soon">QR Code scanner coming soon...</string>
     <string name="history_coming_soon">Transaction history coming soon...</string>
+    <string name="more_coming_soon">Additional features coming soon...</string>
     <string name="start_scanning">Start Scanning</string>
     <string name="back">Back</string>
+    <string name="date_time">Date &amp; Time</string>
     
     <!-- Firebase Configuration -->
     <string name="default_web_client_id">860245071011-d7q3s0om7mdq6povpifaeprau9hq9a9b.apps.googleusercontent.com</string>
