@@ -1,51 +1,70 @@
 package com.cashpal.app.utils
 
 import android.content.Context
-import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 
+/**
+ * Securely stores biometric-related preferences and credentials.
+ * Used for biometric login (fingerprint or face authentication).
+ */
 class BiometricPreferences(context: Context) {
-    
-    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    
-    companion object {
-        private const val PREFS_NAME = "biometric_preferences"
-        private const val KEY_BIOMETRIC_ENABLED = "biometric_enabled"
-        private const val KEY_LAST_LOGIN_EMAIL = "last_login_email"
-        private const val KEY_DEMO_MODE = "demo_mode"
-    }
-    
-    fun setBiometricEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_BIOMETRIC_ENABLED, enabled).apply()
-    }
-    
-    fun isBiometricEnabled(): Boolean {
-        return prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false)
-    }
-    
-    fun setLastLoginEmail(email: String) {
-        prefs.edit().putString(KEY_LAST_LOGIN_EMAIL, email).apply()
-    }
-    
-    fun getLastLoginEmail(): String? {
-        return prefs.getString(KEY_LAST_LOGIN_EMAIL, null)
-    }
-    
-    fun setDemoMode(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_DEMO_MODE, enabled).apply()
-    }
-    
-    fun isDemoMode(): Boolean {
-        return prefs.getBoolean(KEY_DEMO_MODE, false)
-    }
-    
-    fun clearBiometricData() {
+
+    // Master key for AES encryption
+    private val masterKey = MasterKey.Builder(context)
+        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        .build()
+
+    // Encrypted shared preferences
+    private val prefs = EncryptedSharedPreferences.create(
+        context,
+        "biometric_prefs",
+        masterKey,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
+
+    /** Save the last login email for quick autofill */
+    fun setLastLoginEmail(email: String) =
+        prefs.edit().putString("last_email", email).apply()
+
+    fun getLastLoginEmail(): String? =
+        prefs.getString("last_email", null)
+
+    /** Enable/disable biometric login flag */
+    fun setBiometricEnabled(enabled: Boolean) =
+        prefs.edit().putBoolean("biometric_enabled", enabled).apply()
+
+    fun isBiometricEnabled(): Boolean =
+        prefs.getBoolean("biometric_enabled", false)
+
+    /** Save encrypted credentials for biometric sign-in */
+    fun saveCredentials(email: String, password: String) {
         prefs.edit()
-            .remove(KEY_BIOMETRIC_ENABLED)
-            .remove(KEY_LAST_LOGIN_EMAIL)
+            .putString("cred_email", email)
+            .putString("cred_password", password)
             .apply()
     }
-    
-    fun clearAllData() {
-        prefs.edit().clear().apply()
+
+    /** Retrieve saved credentials if both exist */
+    fun getSavedCredentials(): Pair<String, String>? {
+        val email = prefs.getString("cred_email", null)
+        val password = prefs.getString("cred_password", null)
+        return if (email.isNullOrBlank() || password.isNullOrBlank()) null else email to password
     }
+
+    /** Remove saved credentials (for logout or security reasons) */
+    fun clearCredentials() {
+        prefs.edit()
+            .remove("cred_email")
+            .remove("cred_password")
+            .apply()
+    }
+
+    /** Optional: toggle demo mode */
+    fun setDemoMode(enabled: Boolean) =
+        prefs.edit().putBoolean("demo_mode", enabled).apply()
+
+    fun isDemoMode(): Boolean =
+        prefs.getBoolean("demo_mode", false)
 }

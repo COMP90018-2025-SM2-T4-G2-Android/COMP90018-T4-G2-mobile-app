@@ -36,7 +36,7 @@ class MoreFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         
         // Initialize biometric components
-        biometricManager = BiometricAuthManager(requireActivity(), requireContext())
+        biometricManager = BiometricAuthManager(requireContext(), requireActivity())
         biometricPreferences = BiometricPreferences(requireContext())
         
         initViews()
@@ -134,7 +134,7 @@ class MoreFragment : Fragment() {
                 
                 if (!isChecked) {
                     // Clear biometric data when disabled
-                    biometricPreferences.clearBiometricData()
+                    biometricPreferences.clearCredentials()
                 }
             } else {
                 showToast("Biometric authentication not available on this device")
