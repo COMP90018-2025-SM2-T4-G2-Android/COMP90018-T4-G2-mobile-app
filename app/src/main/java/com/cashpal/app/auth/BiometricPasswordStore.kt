@@ -84,4 +84,57 @@ object BiometricPasswordStore {
         prefs(ctx).getString(PREF_PW_ENC, null)?.let { Base64.decode(it, Base64.DEFAULT) }
 
     fun disable(ctx: Context) = prefs(ctx).edit { clear() }
+    // --- Multi-Factor Extension (PIN support) ---
+
+    private const val PREF_PIN_HASH = "pin_hash"
+    private const val PREF_PIN_SALT = "pin_salt"
+
+    /**
+     * Sets a secure numeric PIN (4–8 digits) hashed and salted.
+     */
+    fun setPin(ctx: Context, pin: String) {
+        require(pin.length in 4..8 && pin.all { it.isDigit() }) { "PIN must be 4–8 digits" }
+
+        val salt = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
+        val hash = hashPin(pin, salt)
+
+        prefs(ctx).edit {
+            putString(PREF_PIN_SALT, android.util.Base64.encodeToString(salt, android.util.Base64.NO_WRAP))
+            putString(PREF_PIN_HASH, android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP))
+        }
+    }
+
+    /**
+     * Verifies a user-entered PIN against stored hash.
+     */
+    fun verifyPin(ctx: Context, pin: String): Boolean {
+        val saltB64 = prefs(ctx).getString(PREF_PIN_SALT, null) ?: return false
+        val hashB64 = prefs(ctx).getString(PREF_PIN_HASH, null) ?: return false
+
+        val salt = android.util.Base64.decode(saltB64, android.util.Base64.NO_WRAP)
+        val storedHash = android.util.Base64.decode(hashB64, android.util.Base64.NO_WRAP)
+        val computed = hashPin(pin, salt)
+
+        return constantTimeEquals(storedHash, computed)
+    }
+
+    /**
+     * Checks if a PIN has been configured.
+     */
+    fun isPinSet(ctx: Context): Boolean =
+        prefs(ctx).contains(PREF_PIN_HASH) && prefs(ctx).contains(PREF_PIN_SALT)
+
+    private fun hashPin(pin: String, salt: ByteArray): ByteArray {
+        val spec = javax.crypto.spec.PBEKeySpec(pin.toCharArray(), salt, 100_000, 256)
+        val skf = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+        return skf.generateSecret(spec).encoded
+    }
+
+    private fun constantTimeEquals(a: ByteArray, b: ByteArray): Boolean {
+        if (a.size != b.size) return false
+        var r = 0
+        for (i in a.indices) r = r or (a[i].toInt() xor b[i].toInt())
+        return r == 0
+    }
+
 }
