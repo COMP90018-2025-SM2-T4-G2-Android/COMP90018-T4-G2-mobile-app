@@ -91,4 +91,7 @@ dependencies {
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
+    //Pin authentication
+    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
+
 }

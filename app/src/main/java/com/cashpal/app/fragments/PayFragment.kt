@@ -22,6 +22,8 @@ import com.cashpal.app.data.PaymentRequest
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
+import com.cashpal.app.auth.MfaGuard
+
 
 class PayFragment : Fragment() {
 
@@ -205,16 +207,20 @@ class PayFragment : Fragment() {
             amount = amount
         )
 
-        //Success sound
-        val successSound = MediaPlayer.create(requireContext(), R.raw.success_sound)
-        successSound.start()
+        // Require MFA (biometric + PIN if set) before proceeding
+        MfaGuard.requireAuth(requireActivity()) {
+            // Only runs after MFA passes
+            //Success sound
+            val successSound = MediaPlayer.create(requireContext(), R.raw.success_sound)
+            successSound.start()
 
-        //Success animaiton
-        val bounce = AnimationUtils.loadAnimation(requireContext(), R.anim.success_bounce)
-        selectedContactView.startAnimation(bounce)
+            //Success animaiton
+            val bounce = AnimationUtils.loadAnimation(requireContext(), R.anim.success_bounce)
+            selectedContactView.startAnimation(bounce)
 
-        // In a real app, you would process the payment here
-        showPaymentConfirmation(paymentRequest)
+            // In a real app, you would process the payment here
+            showPaymentConfirmation(paymentRequest)
+        }
     }
 
     private fun showPaymentConfirmation(paymentRequest: PaymentRequest) {
