@@ -1,6 +1,7 @@
 package com.cashpal.app.fragments
 
 import android.content.ClipData
+import com.itextpdf.layout.property.TextAlignment
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
