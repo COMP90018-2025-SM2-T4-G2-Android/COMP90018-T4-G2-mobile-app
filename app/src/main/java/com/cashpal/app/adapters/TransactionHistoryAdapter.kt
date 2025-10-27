@@ -9,9 +9,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.cashpal.app.R
 import com.cashpal.app.models.TransactionHistory
 
+import androidx.fragment.app.FragmentManager
+import com.cashpal.app.fragments.ReceiptFragment
+
 class TransactionHistoryAdapter(
     private var transactions: List<TransactionHistory>,
-    private val onItemClick: (TransactionHistory) -> Unit
+    private val fragmentManager: FragmentManager
 ) : RecyclerView.Adapter<TransactionHistoryAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -59,7 +62,11 @@ class TransactionHistoryAdapter(
         }
 
         holder.container.setOnClickListener {
-            onItemClick(transaction)
+            // Navigate to receipt fragment
+            fragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, ReceiptFragment.newInstance(transaction.toTransaction()))
+                .addToBackStack(null)
+                .commit()
         }
     }
 
@@ -68,5 +75,21 @@ class TransactionHistoryAdapter(
     fun updateTransactions(newTransactions: List<TransactionHistory>) {
         transactions = newTransactions
         notifyDataSetChanged()
+    }
+
+    private fun TransactionHistory.toTransaction(): com.cashpal.app.models.Transaction {
+        return com.cashpal.app.models.Transaction(
+            id = reference,  // Using reference as transaction ID
+            fromUserId = if (amount.startsWith("-")) "user_id" else "other_user",
+            toUserId = if (amount.startsWith("-")) "other_user" else "user_id",
+            amount = amount.replace(Regex("[^0-9.]"), "").toDouble(),
+            description = reference,
+            status = when (status.lowercase()) {
+                "completed" -> com.cashpal.app.models.TransactionStatus.COMPLETED
+                "pending" -> com.cashpal.app.models.TransactionStatus.PENDING
+                else -> com.cashpal.app.models.TransactionStatus.FAILED
+            },
+            merchantName = name
+        )
     }
 }
