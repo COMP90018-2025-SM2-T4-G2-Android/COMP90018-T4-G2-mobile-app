@@ -18,11 +18,12 @@ import com.cashpal.app.adapters.PayContactItem
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.models.Contact
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import com.google.android.material.button.MaterialButton
+import com.google.firebase.Timestamp
 import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -38,6 +39,9 @@ class PayFragment : Fragment() {
     private lateinit var favoritesEmptyView: TextView
     private lateinit var recentsEmptyView: TextView
     private lateinit var sendProgressIndicator: CircularProgressIndicator
+    private lateinit var recipientNameTextView: TextView
+    private lateinit var recipientSubtitleTextView: TextView
+    private lateinit var sendPaymentButton: MaterialButton
     private lateinit var contactOptionView: View
     private lateinit var phoneOptionView: View
     private lateinit var qrOptionView: View
@@ -52,6 +56,7 @@ class PayFragment : Fragment() {
     private var isProcessingTransfer = false
     private var cachedContacts: List<Contact> = emptyList()
     private var hasLoadedContacts = false
+    private var selectedRecipient: PayContactItem? = null
 
     private val colorPalette = listOf(
         "#6C5CE7",
@@ -102,6 +107,9 @@ class PayFragment : Fragment() {
         favoritesEmptyView = root.findViewById(R.id.tv_favorites_empty)
         recentsEmptyView = root.findViewById(R.id.tv_recents_empty)
         sendProgressIndicator = root.findViewById(R.id.progress_send)
+        recipientNameTextView = root.findViewById(R.id.tv_recipient_name)
+        recipientSubtitleTextView = root.findViewById(R.id.tv_recipient_subtitle)
+        sendPaymentButton = root.findViewById(R.id.btn_send_payment)
         contactOptionView = root.findViewById(R.id.option_contact)
         phoneOptionView = root.findViewById(R.id.option_phone)
         qrOptionView = root.findViewById(R.id.option_qr)
@@ -115,6 +123,8 @@ class PayFragment : Fragment() {
         phoneOptionView.setOnClickListener { showPhoneEntrySheet() }
         qrOptionView.setOnClickListener { navigateToScanner() }
         vendorOptionView.setOnClickListener { showMessage(getString(R.string.pay_vendor_not_available)) }
+        sendPaymentButton.setOnClickListener { performTransfer() }
+        updateSelectedRecipientUI()
 
         favoritesAdapter = ContactAdapter(
             isFavorites = true,
@@ -148,7 +158,8 @@ class PayFragment : Fragment() {
             repository.getUserContacts(userId).collect { result ->
                 result.fold(
                     onSuccess = { contacts ->
-                        updateContactLists(contacts ?: emptyList())
+                        val resolved = contacts?.takeIf { it.isNotEmpty() } ?: createDummyContacts()
+                        updateContactLists(resolved)
                     },
                     onFailure = { error ->
                         val reason = error.localizedMessage?.takeIf { it.isNotBlank() }
@@ -156,7 +167,7 @@ class PayFragment : Fragment() {
                             getString(R.string.pay_contacts_error, it)
                         } ?: getString(R.string.pay_contacts_error_generic)
                         showMessage(message)
-                        updateContactLists(emptyList())
+                        updateContactLists(createDummyContacts())
                     }
                 )
             }
@@ -225,6 +236,7 @@ class PayFragment : Fragment() {
                 if (isFiltering) R.string.pay_no_recent_contacts_search else R.string.pay_no_recent_contacts
             )
         }
+        updateSelectedRecipientUI()
     }
 
     private fun mapToPayContactItem(contact: Contact): PayContactItem {
@@ -257,6 +269,21 @@ class PayFragment : Fragment() {
 
     private fun handleContactSelection(contact: PayContactItem) {
         if (isProcessingTransfer) return
+        selectedRecipient = contact
+        updateSelectedRecipientUI()
+        if (contact.contactUserId.isNullOrBlank()) {
+            showMessage(getString(R.string.pay_contact_not_available))
+        }
+    }
+
+    private fun performTransfer() {
+        if (isProcessingTransfer) return
+
+        val recipient = selectedRecipient
+        if (recipient == null) {
+            showMessage(getString(R.string.pay_select_recipient_prompt))
+            return
+        }
 
         val amountValue = amountEditText.text?.toString()?.trim().orEmpty()
         val amount = amountValue.toDoubleOrNull()
@@ -273,7 +300,7 @@ class PayFragment : Fragment() {
             return
         }
 
-        val recipientId = contact.contactUserId
+        val recipientId = recipient.contactUserId
         if (recipientId.isNullOrBlank()) {
             showMessage(getString(R.string.pay_contact_not_available))
             return
@@ -294,12 +321,12 @@ class PayFragment : Fragment() {
                     fromUserId = senderId,
                     toUserId = recipientId,
                     amount = amount,
-                    description = getString(R.string.pay_transaction_description, contact.name)
+                    description = getString(R.string.pay_transaction_description, recipient.name)
                 ).collect { result ->
                     result.fold(
                         onSuccess = {
                             amountEditText.text?.clear()
-                            showMessage(getString(R.string.pay_transfer_success, contact.name))
+                            showMessage(getString(R.string.pay_transfer_success, recipient.name))
                             refreshContactsAfterTransfer()
                         },
                         onFailure = { error ->
@@ -391,7 +418,8 @@ class PayFragment : Fragment() {
         val continueButton = sheetView.findViewById<MaterialButton>(R.id.btn_continue_phone)
 
         continueButton.setOnClickListener {
-            val digits = editText?.text?.toString()?.filter { it.isDigit() } ?: ""
+            val rawInput = editText?.text?.toString()?.trim().orEmpty()
+            val digits = rawInput.filter { it.isDigit() }
             if (digits.isBlank()) {
                 inputLayout?.error = getString(R.string.pay_phone_enter_number)
                 return@setOnClickListener
@@ -399,15 +427,26 @@ class PayFragment : Fragment() {
 
             inputLayout?.error = null
             val normalized = digits
-
             val matchedContact = cachedContacts.firstOrNull { contact ->
                 normalizePhone(contact.phone) == normalized
             }
 
+            dialog.dismiss()
+
             if (matchedContact != null) {
-                dialog.dismiss()
                 handleContactSelection(mapToPayContactItem(matchedContact))
             } else {
+                val displayNumber = if (rawInput.startsWith("+")) rawInput else "+$digits"
+                selectedRecipient = PayContactItem(
+                    id = "phone-$normalized",
+                    name = displayNumber,
+                    initials = buildInitials(displayNumber),
+                    colorHex = colorPalette.randomFromSeed(displayNumber),
+                    subtitle = getString(R.string.pay_phone_trailing_note),
+                    contactUserId = null,
+                    phone = displayNumber
+                )
+                updateSelectedRecipientUI()
                 showMessage(getString(R.string.pay_phone_contact_not_found))
             }
         }
@@ -424,15 +463,99 @@ class PayFragment : Fragment() {
         return phone?.filter { it.isDigit() } ?: ""
     }
 
+    private fun updateSelectedRecipientUI() {
+        if (!this::recipientNameTextView.isInitialized) return
+        val recipient = selectedRecipient
+        if (recipient == null) {
+            recipientNameTextView.text = getString(R.string.pay_recipient_placeholder)
+            recipientSubtitleTextView.isVisible = false
+        } else {
+            recipientNameTextView.text = recipient.name
+            val subtitle = recipient.subtitle ?: recipient.phone
+            if (!subtitle.isNullOrBlank()) {
+                recipientSubtitleTextView.text = subtitle
+                recipientSubtitleTextView.isVisible = true
+            } else {
+                recipientSubtitleTextView.isVisible = false
+            }
+        }
+        updateSendButtonState()
+    }
+
+    private fun updateSendButtonState() {
+        if (!this::sendPaymentButton.isInitialized) return
+        val canSend = !isProcessingTransfer &&
+            (selectedRecipient?.contactUserId?.isNotBlank() == true)
+        sendPaymentButton.isEnabled = canSend
+    }
+
     private fun toggleProcessing(active: Boolean) {
         isProcessingTransfer = active
         sendProgressIndicator.isVisible = active
+        updateSendButtonState()
     }
 
     private fun showMessage(message: String) {
         val host = rootView ?: return
         if (message.isBlank()) return
         Snackbar.make(host, message, Snackbar.LENGTH_SHORT).show()
+    }
+
+    private fun createDummyContacts(): List<Contact> {
+        val ownerId = currentUserId ?: "demo-owner"
+        val now = Timestamp.now()
+        return listOf(
+            Contact(
+                id = "demo-alex",
+                userId = ownerId,
+                name = "Alex Johnson",
+                email = "alex.johnson@example.com",
+                phone = "+1 (555) 101-1111",
+                isFrequent = true,
+                totalTransactions = 18,
+                lastTransactionDate = now
+            ),
+            Contact(
+                id = "demo-sarah",
+                userId = ownerId,
+                name = "Sarah Williams",
+                email = "sarah.williams@example.com",
+                phone = "+1 (555) 202-2222",
+                isFrequent = true,
+                totalTransactions = 15,
+                lastTransactionDate = now
+            ),
+            Contact(
+                id = "demo-mike",
+                userId = ownerId,
+                name = "Mike Johnson",
+                email = "mike.johnson@example.com",
+                phone = "+1 (555) 303-3333",
+                isFrequent = false,
+                totalTransactions = 6,
+                lastTransactionDate = now
+            ),
+            Contact(
+                id = "demo-emma",
+                userId = ownerId,
+                name = "Emma Davis",
+                email = "emma.davis@example.com",
+                phone = "+1 (555) 404-4444",
+                isFrequent = false,
+                totalTransactions = 3,
+                lastTransactionDate = now
+            ),
+            Contact(
+                id = "demo-john",
+                userId = ownerId,
+                name = "John Smith",
+                email = "john.smith@example.com",
+                phone = "+1 (555) 505-5555",
+                isFrequent = true,
+                totalTransactions = 9,
+                lastTransactionDate = now
+            )
+        )
     }
 
     private fun buildInitials(name: String): String {

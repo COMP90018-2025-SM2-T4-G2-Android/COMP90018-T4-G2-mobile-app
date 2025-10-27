@@ -80,4 +80,9 @@
     <string name="pay_phone_contact_not_found">We couldn\'t find a CashPal account for that phone number.</string>
     <string name="pay_phone_enter_number">Please enter a valid phone number.</string>
     <string name="pay_vendor_not_available">Vendor payments are coming soon.</string>
+    <string name="pay_recipient_label">Recipient</string>
+    <string name="pay_recipient_placeholder">Select a contact to send money</string>
+    <string name="pay_send_button">Send Payment</string>
+    <string name="pay_select_recipient_prompt">Choose someone to send money to first.</string>
+    <string name="pay_phone_trailing_note">Entered phone number</string>
 </resources>
