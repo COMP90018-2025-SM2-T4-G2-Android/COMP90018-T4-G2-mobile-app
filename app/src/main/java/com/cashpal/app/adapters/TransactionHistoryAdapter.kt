@@ -64,6 +64,8 @@ class TransactionHistoryAdapter(
         holder.container.setOnClickListener {
             // Navigate to receipt fragment
             fragmentManager.beginTransaction()
+                //e: file:///Users/user/Documents/GitHub/COMP90018-T4-G2-mobile-app/app/src/main/java/com/cashpal/app/adapters/TransactionHistoryAdapter.kt:67:31 Unresolved reference 'fragment_container'.
+                
                 .replace(R.id.fragment_container, ReceiptFragment.newInstance(transaction.toTransaction()))
                 .addToBackStack(null)
                 .commit()
