@@ -66,9 +66,10 @@ class HistoryFragment : Fragment() {
         transactionsRecyclerView.layoutManager = LinearLayoutManager(context)
     }
 
+    // Going through CashPallApp provides implicit check that we're in app's authentication flow
     private fun setupData() {
         repository = (requireActivity().application as com.cashpal.app.CashPalApp)
-            .serviceLocator.getCashPalRepository()
+            .ServiceLocator.getCashPalRepository()
             
         transactionAdapter = TransactionHistoryAdapter(emptyList(), parentFragmentManager)
         transactionsRecyclerView.adapter = transactionAdapter
