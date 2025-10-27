@@ -16,7 +16,15 @@ data class Transaction(
     val completedAt: Timestamp? = null,
     val qrCodeData: String? = null,
     val location: TransactionLocation? = null,
-    val metadata: Map<String, Any> = emptyMap()
+    val metadata: Map<String, Any> = emptyMap(),
+    // Receipt-related fields
+    val receiptUrl: String? = null,
+    val receiptNumber: String? = null,
+    val merchantName: String? = null,
+    val transactionFee: Double = 0.0,
+    val paymentMethod: String? = null,
+    val fromAccount: String? = null,
+    val toAccount: String? = null
 )
 
 enum class TransactionStatus {
