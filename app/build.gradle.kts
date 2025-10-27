@@ -89,4 +89,6 @@ dependencies {
     
     // Biometric Authentication
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
+    // PDF Generation
+    implementation("com.itextpdf:itext7-core:7.2.5")
 }
