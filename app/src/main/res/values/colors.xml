@@ -61,5 +61,11 @@
 <color name="border">#CCCCCC</color> <!-- light gray -->
 <color name= "hint_text">#A0A3B1</color>
     <color name="app_background">#FAFAFA</color>
+<color name="pay_header_end">#8A74FF</color>
+<color name="pay_soft_surface">#F1ECFF</color>
+<color name="pay_option_border">#E2DBFF</color>
+<color name="pay_option_icon_surface">#EAE4FF</color>
+<color name="pay_nfc_start">#F5F0FF</color>
+<color name="pay_nfc_end">#E9F1FF</color>
 
 </resources>

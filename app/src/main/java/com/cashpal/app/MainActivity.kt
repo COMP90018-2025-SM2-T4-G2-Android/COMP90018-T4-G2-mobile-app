@@ -631,6 +631,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun openScanTab() {
+        updateBottomNavigationSelection(R.id.nav_scan)
+    }
+    
     private fun updateBottomNavigationSelection(selectedItemId: Int) {
         bottomNavigationView.selectedItemId = selectedItemId
     }
