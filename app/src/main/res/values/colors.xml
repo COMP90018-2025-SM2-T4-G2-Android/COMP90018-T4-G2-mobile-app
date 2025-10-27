@@ -22,6 +22,8 @@
 <color name="card">#FFFFFF</color>
 <color name="foreground">#1A1B2E</color>
 <color name="muted_foreground">#6C7293</color>
+<color name="muted">@color/muted_foreground</color>
+
 
 <color name="success">#00B894</color>
 <color name="warning">#E17055</color>
