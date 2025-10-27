@@ -17,6 +17,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.cashpal.app.R
 import com.cashpal.app.adapters.TransactionHistoryAdapter
 import com.cashpal.app.models.TransactionHistory
+import com.cashpal.app.repository.CashPalRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import com.google.android.material.tabs.TabLayout
 import java.io.File
 import java.io.FileWriter
@@ -34,6 +38,7 @@ class HistoryFragment : Fragment() {
 
     private lateinit var transactionAdapter: TransactionHistoryAdapter
     private var allTransactions = listOf<TransactionHistory>()
+    private lateinit var repository: CashPalRepository
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,20 +67,13 @@ class HistoryFragment : Fragment() {
     }
 
     private fun setupData() {
-        allTransactions = listOf(
-            TransactionHistory("Coffee Shop", "Order #12345", "-$4.50", "completed", "2024-01-15", "sent"),
-            TransactionHistory("John Doe", "Split dinner bill", "+$25.00", "completed", "2024-01-14", "received"),
-            TransactionHistory("Online Store", "Order #67890", "-$89.99", "pending", "2024-01-13", "sent"),
-            TransactionHistory("Sarah Wilson", "Movie tickets", "+$15.00", "completed", "2024-01-12", "received"),
-            TransactionHistory("Gas Station", "Fuel purchase", "-$45.67", "completed", "2024-01-11", "sent"),
-            TransactionHistory("Freelance Client", "Project payment", "+$350.00", "completed", "2024-01-10", "received")
-        )
-
-        transactionAdapter = TransactionHistoryAdapter(allTransactions) {}
+        repository = (requireActivity().application as com.cashpal.app.CashPalApp)
+            .serviceLocator.getCashPalRepository()
+            
+        transactionAdapter = TransactionHistoryAdapter(emptyList(), parentFragmentManager)
         transactionsRecyclerView.adapter = transactionAdapter
 
-        calculateTotals()
-        filterTransactions("all", "")
+        loadTransactions()
     }
 
     private fun setupSearch() {
@@ -187,25 +185,56 @@ class HistoryFragment : Fragment() {
         transactionAdapter.updateTransactions(filtered)
     }
 
-    /** ---------------- EXPORT ---------------- */
-
-    private fun exportTransactionsToCSV() {
-        try {
-            val fileName = "transactions_${System.currentTimeMillis()}.csv"
-            val downloadsDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            val file = File(downloadsDir, fileName)
-
-            FileWriter(file).use { writer ->
-                writer.append("Name,Reference,Amount,Status,Date,Type\n")
-                for (transaction in allTransactions) {
-                    writer.append("${transaction.name},${transaction.reference},${transaction.amount},${transaction.status},${transaction.date},${transaction.type}\n")
+    private fun loadTransactions() {
+        val userId = repository.getCurrentUserId() ?: return
+        
+        CoroutineScope(Dispatchers.Main).launch {
+            repository.getUserTransactions(userId).collect { result ->
+                result.onSuccess { transactions ->
+                    // Convert Firestore transactions to UI model
+                    allTransactions = transactions.map { transaction ->
+                        val isIncoming = transaction.toUserId == userId
+                        val amount = if (isIncoming) "+$${transaction.amount}" else "-$${transaction.amount}"
+                        
+                        TransactionHistory(
+                            name = transaction.merchantName ?: "Unknown",
+                            reference = transaction.id,
+                            amount = amount,
+                            status = transaction.status.toString().lowercase(),
+                            date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                                .format(transaction.createdAt.toDate()),
+                            type = if (isIncoming) "received" else "sent"
+                        )
+                    }
+                    
+                    transactionAdapter.updateTransactions(allTransactions)
+                    calculateTotals()
+                    filterTransactions("all", "")
                 }
             }
-
-            Toast.makeText(requireContext(), "CSV saved: ${file.absolutePath}", Toast.LENGTH_LONG).show()
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Toast.makeText(requireContext(), "Failed to export CSV", Toast.LENGTH_SHORT).show()
+        }
+        
+        // Set up real-time listener for updates
+        repository.listenToUserTransactions(userId) { transactions ->
+            // Convert and update transactions same as above
+            allTransactions = transactions.map { transaction ->
+                val isIncoming = transaction.toUserId == userId
+                val amount = if (isIncoming) "+$${transaction.amount}" else "-$${transaction.amount}"
+                
+                TransactionHistory(
+                    name = transaction.merchantName ?: "Unknown",
+                    reference = transaction.id,
+                    amount = amount,
+                    status = transaction.status.toString().lowercase(),
+                    date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        .format(transaction.createdAt.toDate()),
+                    type = if (isIncoming) "received" else "sent"
+                )
+            }
+            
+            transactionAdapter.updateTransactions(allTransactions)
+            calculateTotals()
+            filterTransactions("all", searchEditText.text.toString())
         }
     }
 
