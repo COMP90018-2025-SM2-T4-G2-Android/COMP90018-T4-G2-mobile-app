@@ -30,4 +30,18 @@
     
     <!-- Firebase Configuration -->
     <string name="default_web_client_id">860245071011-d7q3s0om7mdq6povpifaeprau9hq9a9b.apps.googleusercontent.com</string>
+
+    <!-- Pay Fragment -->
+    <string name="pay_option_phone">Phone Number</string>
+    <string name="pay_option_qr">QR Code</string>
+    <string name="pay_option_contacts">Contacts</string>
+    <string name="pay_search_hint">Search contacts</string>
+    <string name="pay_amount_title">Amount</string>
+    <string name="pay_amount_hint">Enter amount</string>
+    <string name="pay_favorites_title">Favorites</string>
+    <string name="pay_recent_title">Recent</string>
+    <string name="pay_success_message">Payment of $%1$.2f to %2$s has been processed!</string>
+    <string name="pay_enter_amount_message">Enter an amount to send to %1$s</string>
+    <string name="pay_contact_no_detail">Contact info unavailable</string>
+    <string name="pay_last_transaction_template">Last transaction: %1$s</string>
 </resources>

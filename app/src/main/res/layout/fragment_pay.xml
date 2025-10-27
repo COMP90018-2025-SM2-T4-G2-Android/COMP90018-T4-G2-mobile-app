@@ -1,224 +1,300 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="@color/background"
+    android:padding="16dp">
 
-    <!-- Main Content -->
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <LinearLayout
+        <!-- Send Money Options Card -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="@color/card"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
 
-            <!-- Header -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Send Money"
-                android:textSize="24sp"
-                android:textColor="#212529"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Select a contact to send money to"
-                android:textSize="14sp"
-                android:textColor="#6C757D"
-                android:layout_marginBottom="24dp" />
-
-            <!-- Search Bar -->
-            <com.google.android.material.textfield.TextInputLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Search contacts..."
-                android:layout_marginBottom="16dp"
-                app:startIconDrawable="@android:drawable/ic_menu_search"
-                app:boxBackgroundMode="filled"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp">
+                android:orientation="vertical"
+                android:padding="20dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/searchInput"
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:imeOptions="actionSearch"
-                    android:inputType="text" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Add New Contact Button -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/addContactCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white"
-                android:clickable="true"
-                android:focusable="true"
-                app:rippleColor="#E3F2FD">
+                    android:layout_marginBottom="16dp"
+                    android:text="Send Money"
+                    android:textColor="@color/foreground"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_add_money"
-                        android:background="@drawable/circle_background"
-                        android:backgroundTint="#E3F2FD"
-                        android:padding="8dp"
-                        android:layout_marginEnd="16dp"
-                        app:tint="#1976D2" />
+                    android:weightSum="3">
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:gravity="center"
                         android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Add New Contact"
-                            android:textSize="16sp"
-                            android:textColor="#212529"
-                            android:textStyle="bold" />
+                        <ImageButton
+                            android:id="@+id/btn_send_phone"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:background="@drawable/send_option_background"
+                            android:contentDescription="@string/pay_option_phone"
+                            android:src="@drawable/ic_phone"
+                            android:tint="@color/primary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Send money to someone new"
-                            android:textSize="12sp"
-                            android:textColor="#6C757D"
-                            android:layout_marginTop="2dp" />
+                            android:layout_marginTop="8dp"
+                            android:text="@string/pay_option_phone"
+                            android:textAlignment="center"
+                            android:textColor="@color/foreground"
+                            android:textSize="12sp" />
 
                     </LinearLayout>
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_arrow_forward"
-                        app:tint="#6C757D" />
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <ImageButton
+                            android:id="@+id/btn_send_qr"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:background="@drawable/send_option_background"
+                            android:contentDescription="@string/pay_option_qr"
+                            android:src="@drawable/ic_qr_scanner"
+                            android:tint="@color/primary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/pay_option_qr"
+                            android:textAlignment="center"
+                            android:textColor="@color/foreground"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <ImageButton
+                            android:id="@+id/btn_send_contacts"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:background="@drawable/send_option_background"
+                            android:contentDescription="@string/pay_option_contacts"
+                            android:src="@drawable/ic_person"
+                            android:tint="@color/primary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/pay_option_contacts"
+                            android:textAlignment="center"
+                            android:textColor="@color/foreground"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
-            </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-            <!-- Frequent Contacts Section -->
-            <TextView
-                android:id="@+id/frequentTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Recent"
-                android:textSize="18sp"
-                android:textColor="#212529"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
+        </androidx.cardview.widget.CardView>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/frequentContactsList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:nestedScrollingEnabled="false" />
-
-            <!-- All Contacts Section -->
-            <TextView
-                android:id="@+id/allContactsTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="All Contacts"
-                android:textSize="18sp"
-                android:textColor="#212529"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/allContactsList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
-
-        </LinearLayout>
-
-    </androidx.core.widget.NestedScrollView>
-
-    <!-- Amount Input Bottom Sheet Trigger (Hidden by default) -->
-    <LinearLayout
-        android:id="@+id/selectedContactView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@android:color/white"
-        android:elevation="8dp"
-        android:padding="16dp"
-        android:visibility="gone"
-        android:layout_gravity="bottom">
-
-        <TextView
-            android:id="@+id/selectedContactName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Selected Contact"
-            android:textSize="16sp"
-            android:textColor="#212529"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
+        <!-- Search Bar -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Amount ($)"
-            android:layout_marginBottom="16dp"
-            app:boxBackgroundMode="filled">
+            android:layout_marginBottom="24dp"
+            app:boxCornerRadiusBottomEnd="16dp"
+            app:boxCornerRadiusBottomStart="16dp"
+            app:boxCornerRadiusTopEnd="16dp"
+            app:boxCornerRadiusTopStart="16dp"
+            app:startIconDrawable="@drawable/ic_search">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/amountInput"
+                android:id="@+id/et_search"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
+                android:hint="@string/pay_search_hint" />
+
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Amount Input Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="@color/card"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:text="@string/pay_amount_title"
+                    android:textColor="@color/foreground"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:boxCornerRadiusBottomEnd="16dp"
+                    app:boxCornerRadiusBottomStart="16dp"
+                    app:boxCornerRadiusTopEnd="16dp"
+                    app:boxCornerRadiusTopStart="16dp"
+                    app:prefixText="$">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_amount"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/pay_amount_hint"
+                        android:inputType="numberDecimal" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="4">
+
+                    <Button
+                        android:id="@+id/btn_amount_10"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:text="$10" />
+
+                    <Button
+                        android:id="@+id/btn_amount_25"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:text="$25" />
+
+                    <Button
+                        android:id="@+id/btn_amount_50"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="4dp"
+                        android:layout_weight="1"
+                        android:text="$50" />
+
+                    <Button
+                        android:id="@+id/btn_amount_100"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:layout_weight="1"
+                        android:text="$100" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Favorites Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_marginBottom="24dp"
+            android:orientation="vertical">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/cancelButton"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="0dp"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Cancel"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginBottom="12dp"
+                android:text="@string/pay_favorites_title"
+                android:textColor="@color/foreground"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/payButton"
-                android:layout_width="0dp"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_favorites"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Send Money"
-                android:layout_marginStart="8dp" />
+                android:overScrollMode="never" />
+
+        </LinearLayout>
+
+        <!-- Recent Contacts Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="@string/pay_recent_title"
+                android:textColor="@color/foreground"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/card"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_recent_contacts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:padding="8dp" />
+
+            </androidx.cardview.widget.CardView>
 
         </LinearLayout>
 
     </LinearLayout>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</ScrollView>
