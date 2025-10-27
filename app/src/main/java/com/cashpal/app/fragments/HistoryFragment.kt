@@ -1,6 +1,7 @@
 package com.cashpal.app.fragments
 
 import android.app.DatePickerDialog
+import com.cashpal.app.di.ServiceLocator
 import android.os.Bundle
 import android.os.Environment
 import android.text.Editable
@@ -68,8 +69,7 @@ class HistoryFragment : Fragment() {
 
     // Going through CashPallApp provides implicit check that we're in app's authentication flow
     private fun setupData() {
-        repository = (requireActivity().application as com.cashpal.app.CashPalApp)
-            .ServiceLocator.getCashPalRepository()
+        repository = com.cashpal.app.di.ServiceLocator.getRepository()
             
         transactionAdapter = TransactionHistoryAdapter(emptyList(), parentFragmentManager)
         transactionsRecyclerView.adapter = transactionAdapter
