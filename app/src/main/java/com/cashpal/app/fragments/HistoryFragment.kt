@@ -187,7 +187,7 @@ class HistoryFragment : Fragment() {
     }
 
     private fun loadTransactions() {
-        val userId = repository.getCurrentUserId() ?: return
+        val userId = repository.getCurrentUser()?.uid ?: return
         
         CoroutineScope(Dispatchers.Main).launch {
             repository.getUserTransactions(userId).collect { result ->
