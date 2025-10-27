@@ -1,7 +1,6 @@
 package com.cashpal.app.fragments
 
 import android.content.ClipData
-import com.itextpdf.layout.property.TextAlignment
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
@@ -21,7 +20,7 @@ import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfWriter
 import com.itextpdf.layout.Document
 import com.itextpdf.layout.element.Paragraph
-import com.itextpdf.layout.property.TextAlignment
+import com.itextpdf.layout.property.TextAlignment as ITextAlignment
 import java.io.File
 import com.cashpal.app.R
 import com.cashpal.app.models.Transaction
@@ -307,12 +306,12 @@ class ReceiptFragment : Fragment() {
             // Add content
             document.add(Paragraph("CashPal Transaction Receipt")
                 .setFontSize(24f)
-                .setTextAlignment(TextAlignment.CENTER)
+                .setTextAlignment(ITextAlignment.CENTER)
                 .setBold())
             
             document.add(Paragraph("Transaction Details")
                 .setFontSize(18f)
-                .setTextAlignment(TextAlignment.LEFT)
+                .setTextAlignment(ITextAlignment.LEFT)
                 .setBold()
                 .setMarginTop(20f))
             
@@ -381,12 +380,12 @@ class ReceiptFragment : Fragment() {
             // Add content
             document.add(Paragraph("CashPal Transaction Receipt")
                 .setFontSize(24f)
-                .setTextAlignment(TextAlignment.CENTER)
+                .setTextAlignment(ITextAlignment.CENTER)
                 .setBold())
             
             document.add(Paragraph("Transaction Details")
                 .setFontSize(18f)
-                .setTextAlignment(TextAlignment.LEFT)
+                .setTextAlignment(ITextAlignment.LEFT)
                 .setBold()
                 .setMarginTop(20f))
             
