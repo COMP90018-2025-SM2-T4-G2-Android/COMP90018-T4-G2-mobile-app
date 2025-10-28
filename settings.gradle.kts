@@ -21,4 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "CashPal"
 include(":app")
- 
+
+//Error
