@@ -91,7 +91,7 @@ dependencies {
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
     
     // iText PDF modules
-    implementation("com.itextpdf:itext7-kernel:7.2.5")
-    implementation("com.itextpdf:itext7-io:7.2.5")
-    implementation("com.itextpdf:itext7-layout:7.2.5")
+    iimplementation(libs.itext7.kernel)
+    implementation(libs.itext7.io)
+    implementation(libs.itext7.layout)
 }
