@@ -10,6 +10,7 @@ material = "1.12.0"
 activity = "1.10.1"
 constraintlayout = "2.2.1"
 googleServices = "4.4.2"
+itext7 = "7.2.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -20,6 +21,11 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+
+# iText7 dependencies
+itext7-kernel = { group = "com.itextpdf", name = "itext7-kernel", version.ref = "itext7" }
+itext7-io = { group = "com.itextpdf", name = "itext7-io", version.ref = "itext7" }
+itext7-layout = { group = "com.itextpdf", name = "itext7-layout", version.ref = "itext7" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
