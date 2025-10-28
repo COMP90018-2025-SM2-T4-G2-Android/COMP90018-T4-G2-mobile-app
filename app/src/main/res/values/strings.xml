@@ -85,4 +85,12 @@
     <string name="pay_send_button">Send Payment</string>
     <string name="pay_select_recipient_prompt">Choose someone to send money to first.</string>
     <string name="pay_phone_trailing_note">Entered phone number</string>
+    <string name="nfc_payment_title">Tap to Receive</string>
+    <string name="nfc_payment_status_ready">Hold a card near the top of your phone</string>
+    <string name="nfc_payment_info">Stay on this screen so others can tap their card or device to pay you instantly.</string>
+    <string name="nfc_payment_processing">Processing payment…</string>
+    <string name="nfc_payment_received">Payment detected!</string>
+    <string name="nfc_payment_no_support">This device does not support NFC payments.</string>
+    <string name="nfc_payment_disabled">Turn on NFC in your device settings to receive payments.</string>
+    <string name="nfc_payment_icon_content_desc">Tap to pay icon</string>
 </resources>

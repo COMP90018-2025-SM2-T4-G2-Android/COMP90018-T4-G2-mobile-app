@@ -42,6 +42,7 @@ class PayFragment : Fragment() {
     private lateinit var recipientNameTextView: TextView
     private lateinit var recipientSubtitleTextView: TextView
     private lateinit var sendPaymentButton: MaterialButton
+    private lateinit var nfcCardView: View
     private lateinit var contactOptionView: View
     private lateinit var phoneOptionView: View
     private lateinit var qrOptionView: View
@@ -110,6 +111,7 @@ class PayFragment : Fragment() {
         recipientNameTextView = root.findViewById(R.id.tv_recipient_name)
         recipientSubtitleTextView = root.findViewById(R.id.tv_recipient_subtitle)
         sendPaymentButton = root.findViewById(R.id.btn_send_payment)
+        nfcCardView = root.findViewById(R.id.card_nfc)
         contactOptionView = root.findViewById(R.id.option_contact)
         phoneOptionView = root.findViewById(R.id.option_phone)
         qrOptionView = root.findViewById(R.id.option_qr)
@@ -122,8 +124,10 @@ class PayFragment : Fragment() {
         contactOptionView.setOnClickListener { showContactSelectionSheet() }
         phoneOptionView.setOnClickListener { showPhoneEntrySheet() }
         qrOptionView.setOnClickListener { navigateToScanner() }
+        nfcCardView.setOnClickListener { navigateToNfcPayment() }
         vendorOptionView.setOnClickListener { showMessage(getString(R.string.pay_vendor_not_available)) }
         sendPaymentButton.setOnClickListener { performTransfer() }
+        root.findViewById<View>(R.id.btn_use_nfc).setOnClickListener { navigateToNfcPayment() }
         updateSelectedRecipientUI()
 
         favoritesAdapter = ContactAdapter(
@@ -459,6 +463,10 @@ class PayFragment : Fragment() {
         (activity as? com.cashpal.app.MainActivity)?.openScanTab()
     }
 
+    private fun navigateToNfcPayment() {
+        (activity as? com.cashpal.app.MainActivity)?.openNfcPayment()
+    }
+
     private fun normalizePhone(phone: String?): String {
         return phone?.filter { it.isDigit() } ?: ""
     }
@@ -508,6 +516,7 @@ class PayFragment : Fragment() {
             Contact(
                 id = "demo-alex",
                 userId = ownerId,
+                contactUserId = "demo-recipient-alex",
                 name = "Alex Johnson",
                 email = "alex.johnson@example.com",
                 phone = "+1 (555) 101-1111",
@@ -518,6 +527,7 @@ class PayFragment : Fragment() {
             Contact(
                 id = "demo-sarah",
                 userId = ownerId,
+                contactUserId = "demo-recipient-sarah",
                 name = "Sarah Williams",
                 email = "sarah.williams@example.com",
                 phone = "+1 (555) 202-2222",
@@ -528,6 +538,7 @@ class PayFragment : Fragment() {
             Contact(
                 id = "demo-mike",
                 userId = ownerId,
+                contactUserId = "demo-recipient-mike",
                 name = "Mike Johnson",
                 email = "mike.johnson@example.com",
                 phone = "+1 (555) 303-3333",
@@ -538,6 +549,7 @@ class PayFragment : Fragment() {
             Contact(
                 id = "demo-emma",
                 userId = ownerId,
+                contactUserId = "demo-recipient-emma",
                 name = "Emma Davis",
                 email = "emma.davis@example.com",
                 phone = "+1 (555) 404-4444",
@@ -548,6 +560,7 @@ class PayFragment : Fragment() {
             Contact(
                 id = "demo-john",
                 userId = ownerId,
+                contactUserId = "demo-recipient-john",
                 name = "John Smith",
                 email = "john.smith@example.com",
                 phone = "+1 (555) 505-5555",

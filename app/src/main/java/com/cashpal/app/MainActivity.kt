@@ -22,6 +22,8 @@ import com.cashpal.app.fragments.MoreFragment
 import com.cashpal.app.fragments.PayFragment
 import com.cashpal.app.fragments.ScanFragment
 import com.cashpal.app.fragments.ReceiptFragment
+import com.cashpal.app.fragments.NfcPaymentFragment
+import com.cashpal.app.utils.BiometricPreferences
 import com.cashpal.app.utils.GooglePlayServicesUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
@@ -633,6 +635,15 @@ class MainActivity : AppCompatActivity() {
 
     fun openScanTab() {
         updateBottomNavigationSelection(R.id.nav_scan)
+    }
+
+    fun openNfcPayment() {
+        updateBottomNavigationSelection(R.id.nav_pay)
+        scrollView.visibility = View.GONE
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, NfcPaymentFragment())
+            .addToBackStack("nfcPayment")
+            .commit()
     }
     
     private fun updateBottomNavigationSelection(selectedItemId: Int) {
