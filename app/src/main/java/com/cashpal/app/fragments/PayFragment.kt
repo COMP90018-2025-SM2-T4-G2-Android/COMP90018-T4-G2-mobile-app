@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -14,14 +15,15 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cashpal.app.R
+import com.cashpal.app.auth.MfaGuard
 import com.cashpal.app.data.Contact
 import com.cashpal.app.data.ContactRepository
 import com.cashpal.app.data.PaymentRequest
+import com.cashpal.app.utils.DuplicatePaymentGuard
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
-import com.cashpal.app.auth.MfaGuard
-
+import java.util.Locale
 
 class PayFragment : Fragment() {
 
@@ -51,13 +53,10 @@ class PayFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_pay, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_pay, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         initializeViews(view)
         setupRepository()
         setupRecyclerViews()
@@ -83,19 +82,13 @@ class PayFragment : Fragment() {
     }
 
     private fun setupRecyclerViews() {
-        // Setup frequent contacts list
-        frequentContactsAdapter = ContactAdapter(requireContext()) { contact ->
-            onContactSelected(contact)
-        }
+        frequentContactsAdapter = ContactAdapter(requireContext()) { contact -> onContactSelected(contact) }
         frequentContactsList.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = frequentContactsAdapter
         }
 
-        // Setup all contacts list
-        allContactsAdapter = ContactAdapter(requireContext()) { contact ->
-            onContactSelected(contact)
-        }
+        allContactsAdapter = ContactAdapter(requireContext()) { contact -> onContactSelected(contact) }
         allContactsList.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = allContactsAdapter
@@ -103,23 +96,14 @@ class PayFragment : Fragment() {
     }
 
     private fun setupClickListeners() {
-        addContactCard.setOnClickListener {
-            showAddContactDialog()
-        }
-
-        cancelButton.setOnClickListener {
-            hidePaymentSection()
-        }
-
-        payButton.setOnClickListener {
-            processPayment()
-        }
+        addContactCard.setOnClickListener { showAddContactDialog() }
+        cancelButton.setOnClickListener { hidePaymentSection() }
+        payButton.setOnClickListener { processPayment() }
     }
 
     private fun loadContacts() {
         allContacts = contactRepository.getContacts()
         frequentContacts = contactRepository.getFrequentContacts()
-
         frequentContactsAdapter.updateContacts(frequentContacts)
         allContactsAdapter.updateContacts(allContacts)
     }
@@ -127,10 +111,9 @@ class PayFragment : Fragment() {
     private fun setupSearch() {
         searchInput.addTextChangedListener { text ->
             val query = text?.toString() ?: ""
-            val filteredContacts = contactRepository.searchContacts(query)
-            allContactsAdapter.updateContacts(filteredContacts)
+            val filtered = contactRepository.searchContacts(query)
+            allContactsAdapter.updateContacts(filtered)
 
-            // Hide frequent contacts when searching
             if (query.isNotEmpty()) {
                 frequentContactsList.visibility = View.GONE
                 view?.findViewById<TextView>(R.id.frequentTitle)?.visibility = View.GONE
@@ -144,25 +127,22 @@ class PayFragment : Fragment() {
 
     private fun onContactSelected(contact: Contact) {
         selectedContact = contact
-        selectedContactName.text = "Send money to ${contact.name}"
+        selectedContactName.text = getString(R.string.pay_send_to_fmt, contact.name)
         selectedContactView.visibility = View.VISIBLE
         amountInput.requestFocus()
-
-        // Hide keyboard helper
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-        imm.showSoftInput(amountInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.showSoftInput(amountInput, InputMethodManager.SHOW_IMPLICIT)
     }
 
     private fun hidePaymentSection() {
         selectedContactView.visibility = View.GONE
         selectedContact = null
         amountInput.text?.clear()
-
-        // Hide keyboard
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(amountInput.windowToken, 0)
     }
 
+    // ---------- Payment flow with duplicate check + MFA ----------
     private fun processPayment() {
         val contact = selectedContact
         val amountText = amountInput.text?.toString()
@@ -171,46 +151,44 @@ class PayFragment : Fragment() {
             Toast.makeText(requireContext(), "Please select a contact", Toast.LENGTH_SHORT).show()
             return
         }
-
         if (amountText.isNullOrBlank()) {
             Toast.makeText(requireContext(), "Please enter an amount", Toast.LENGTH_SHORT).show()
             return
         }
-
         val amount = amountText.toDoubleOrNull()
         if (amount == null || amount <= 0) {
             Toast.makeText(requireContext(), "Please enter a valid amount", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Create payment request
-        val paymentRequest = PaymentRequest(
-            contact = contact,
-            amount = amount
-        )
+        val paymentRequest = PaymentRequest(contact = contact, amount = amount)
 
-        // Require MFA (biometric + PIN if set) before proceeding
-        MfaGuard.requireAuth(requireActivity()) {
-            // Only runs after MFA passes
-            showPaymentConfirmation(paymentRequest)
+        // If this looks like a duplicate (same contact + same amount within window), require MFA.
+        if (DuplicatePaymentGuard.isDuplicate(requireContext(), paymentRequest)) {
+            MfaGuard.requireAuth(requireActivity()) {
+                finalizePayment(paymentRequest)
+                DuplicatePaymentGuard.save(requireContext(), paymentRequest)
+            }
+        } else {
+            finalizePayment(paymentRequest)
+            DuplicatePaymentGuard.save(requireContext(), paymentRequest)
         }
     }
 
-    private fun showPaymentConfirmation(paymentRequest: PaymentRequest) {
-        val message = "Payment of $${String.format("%.2f", paymentRequest.amount)} to ${paymentRequest.contact.name} has been processed!"
+    private fun finalizePayment(paymentRequest: PaymentRequest) {
+        val message = "Payment of $${String.format(Locale.US, "%.2f", paymentRequest.amount)} to ${paymentRequest.contact.name} has been processed!"
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
-
         hidePaymentSection()
 
-        // Optional: Navigate back to home or show success screen
+        // If you show a local notification for "payment sent", you can call it here.
+        // NotificationService.showPaymentSentNotification(requireContext(), paymentRequest.contact.name, paymentRequest.amount)
     }
 
     private fun showAddContactDialog() {
-        // For now, just show a toast. In a real app, you'd show a dialog or new screen
         Toast.makeText(requireContext(), "Add Contact feature coming soon!", Toast.LENGTH_SHORT).show()
     }
 
-    // Contact Adapter for RecyclerView
+    // -------- RecyclerView Adapter --------
     private class ContactAdapter(
         private val context: Context,
         private val onContactClick: (Contact) -> Unit
@@ -246,7 +224,6 @@ class PayFragment : Fragment() {
                 contactName.text = contact.name
                 contactEmail.text = contact.email ?: contact.phone ?: "No contact info"
 
-                // Show last transaction if available
                 if (!contact.lastTransactionDate.isNullOrEmpty()) {
                     lastTransaction.text = "Last transaction: ${contact.lastTransactionDate}"
                     lastTransaction.visibility = View.VISIBLE
@@ -254,19 +231,8 @@ class PayFragment : Fragment() {
                     lastTransaction.visibility = View.GONE
                 }
 
-                // Show frequent badge if contact is frequent
-                if (contact.isFrequent) {
-                    frequentBadge.visibility = View.VISIBLE
-                } else {
-                    frequentBadge.visibility = View.GONE
-                }
-
-                // Set click listener
-                itemView.setOnClickListener {
-                    onContactClick(contact)
-                }
-
-                // Set avatar (for now using default icon, could be enhanced with real images)
+                frequentBadge.visibility = if (contact.isFrequent) View.VISIBLE else View.GONE
+                itemView.setOnClickListener { onContactClick(contact) }
                 contactAvatar.setImageResource(R.drawable.ic_person)
             }
         }

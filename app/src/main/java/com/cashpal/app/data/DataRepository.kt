@@ -6,10 +6,13 @@ import com.google.gson.reflect.TypeToken
 import java.io.IOException
 import com.cashpal.app.repository.CashPalRepository
 
+
 class DataRepository(
     private val context: Context,
     private val firebaseRepository: CashPalRepository
 ) {
+
+
     
     private val gson = Gson()
     
@@ -36,7 +39,8 @@ class DataRepository(
             null
         }
     }
-    
+
+
     // Firebase integration methods
     fun getFirebaseRepository() = firebaseRepository
     
