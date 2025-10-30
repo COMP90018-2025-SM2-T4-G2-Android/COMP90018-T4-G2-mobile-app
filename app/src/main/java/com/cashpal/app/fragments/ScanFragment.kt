@@ -1,6 +1,8 @@
 package com.cashpal.app.fragments
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,7 +12,11 @@ import android.view.animation.TranslateAnimation
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Toast
-import androidx.camera.core.*
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
@@ -44,7 +50,16 @@ class ScanFragment : Fragment() {
     private lateinit var scanningLine: View
 
     private lateinit var cameraExecutor: ExecutorService
-    private var hasScanned = false  // prevent multiple triggers
+    private var hasScanned = false // prevent multiple triggers
+
+    private val requestCameraPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                startCameraSession()
+            } else {
+                Toast.makeText(requireContext(), "Camera permission is required to scan", Toast.LENGTH_SHORT).show()
+            }
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -66,9 +81,12 @@ class ScanFragment : Fragment() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        // Start camera on button click
         startScanButton.setOnClickListener {
-            startCamera()
+            if (hasCameraPermission()) {
+                startCameraSession()
+            } else {
+                requestCameraPermission.launch(Manifest.permission.CAMERA)
+            }
         }
 
         qrOption.setOnClickListener {
@@ -100,6 +118,18 @@ class ScanFragment : Fragment() {
 
         // Animate scanning line
         startScanningLineAnimation()
+    }
+
+    private fun hasCameraPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun startCameraSession() {
+        hasScanned = false
+        startCamera()
     }
 
     private fun startCamera() {
