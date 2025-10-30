@@ -42,6 +42,42 @@ class FirestoreService {
             Result.failure(e)
         }
     }
+
+    // Security & Session Operations
+    suspend fun upsertDeviceRegistration(
+        userId: String,
+        device: com.cashpal.app.models.DeviceRegistration
+    ): Result<Unit> {
+        return try {
+            val deviceRef = db.collection("users")
+                .document(userId)
+                .collection("devices")
+                .document(device.deviceId)
+
+            deviceRef.set(device, SetOptions.merge()).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun logLoginSession(
+        userId: String,
+        session: com.cashpal.app.models.LoginSession
+    ): Result<String> {
+        return try {
+            val sessionRef = db.collection("users")
+                .document(userId)
+                .collection("sessions")
+                .document()
+
+            val sessionWithId = session.copy(id = sessionRef.id)
+            sessionRef.set(sessionWithId).await()
+            Result.success(sessionWithId.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
     
     // Transaction Operations
     suspend fun createTransaction(transaction: com.cashpal.app.models.Transaction): Result<String> {

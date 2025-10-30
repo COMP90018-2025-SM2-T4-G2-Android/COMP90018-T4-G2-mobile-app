@@ -16,4 +16,9 @@
         name="internal"
         path="." />
 
+    <!-- Allow sharing files stored on external storage (e.g. Downloads/CashPal) -->
+    <external-path
+        name="external"
+        path="." />
+
 </paths>

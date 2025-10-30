@@ -70,6 +70,7 @@ dependencies {
     implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-messaging")
     
     // CameraX
     implementation("androidx.camera:camera-core:1.3.3")
@@ -89,6 +90,7 @@ dependencies {
     
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation("com.google.android.gms:play-services-location:21.2.0")
     
     // Biometric Authentication
     implementation("androidx.biometric:biometric:1.2.0-alpha05")

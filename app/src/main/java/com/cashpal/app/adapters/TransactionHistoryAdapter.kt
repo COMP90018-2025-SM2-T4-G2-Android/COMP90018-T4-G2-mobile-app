@@ -69,4 +69,6 @@ class TransactionHistoryAdapter(
         transactions = newTransactions
         notifyDataSetChanged()
     }
+
+    fun currentTransactions(): List<TransactionHistory> = transactions
 }

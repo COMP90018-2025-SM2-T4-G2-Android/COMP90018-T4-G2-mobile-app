@@ -1,6 +1,8 @@
 package com.cashpal.app
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -15,6 +17,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.cashpal.app.data.DataRepository
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.fragments.HistoryFragment
@@ -23,11 +27,16 @@ import com.cashpal.app.fragments.PayFragment
 import com.cashpal.app.fragments.ScanFragment
 import com.cashpal.app.fragments.ReceiptFragment
 import com.cashpal.app.utils.GooglePlayServicesUtils
+import com.cashpal.app.dialogs.FraudAlertDialogFragment
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
 import android.content.Intent
-import com.cashpal.app.NotificationService
+import com.cashpal.app.utils.NotificationService
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import java.text.DateFormat
+import java.util.Date
 
 class MainActivity : AppCompatActivity() {
 
@@ -42,7 +51,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewAllText: TextView
     private lateinit var scrollView: ScrollView
     private lateinit var bottomNavigationView: BottomNavigationView
+    private lateinit var securityRepository: com.cashpal.app.repository.SecurityRepository
     private var isDemoMode = false
+    private val isDebugBuild: Boolean
+        get() = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,13 +62,15 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         NotificationService.createNotificationChannel(this)
-        NotificationService.simulatePaymentReceived(this)
 
         if (android.os.Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
             != PackageManager.PERMISSION_GRANTED
         ) {
             requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+        } else {
+            NotificationService.simulatePaymentReceived(this)
+            showLocalFraudAlertDemo()
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -73,6 +87,8 @@ class MainActivity : AppCompatActivity() {
         GooglePlayServicesUtils.logGooglePlayServicesStatus(this)
 
         initializeViews()
+        val toolbar = findViewById<MaterialToolbar>(R.id.topAppBar)
+        setSupportActionBar(toolbar)
         setupBottomNavigation()
         setupClickListeners()
         loadData()
@@ -90,6 +106,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun initializeViews() {
         firebaseRepository = ServiceLocator.getRepository()
+        securityRepository = ServiceLocator.getSecurityRepository()
         dataRepository = DataRepository(this, firebaseRepository)
         balanceValue = findViewById(R.id.balanceValue)
         monthlyChange = findViewById(R.id.monthlyChange)
@@ -645,7 +662,51 @@ class MainActivity : AppCompatActivity() {
         openFromIntent(intent)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        return if (isDebugBuild) {
+            menuInflater.inflate(R.menu.debug_security_menu, menu)
+            true
+        } else {
+            super.onCreateOptionsMenu(menu)
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (isDebugBuild && item.itemId == R.id.action_simulate_remote_login) {
+            simulateFraudAlertForTesting()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1001) {
+            val granted = grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED
+            if (granted) {
+                NotificationService.simulatePaymentReceived(this)
+                showLocalFraudAlertDemo()
+            } else {
+                Toast.makeText(
+                    this,
+                    "Notifications are disabled; cannot show alerts.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
     private fun openFromIntent(intent: Intent) {
+        if (intent.getBooleanExtra(NotificationService.EXTRA_FRAUD_ALERT, false)) {
+            showFraudAlertDialog(intent)
+            intent.removeExtra(NotificationService.EXTRA_FRAUD_ALERT)
+        }
+
         if (intent.getStringExtra("openTab") == "receipt") {
             scrollView.visibility = View.GONE
             findViewById<View>(R.id.fragmentContainer).bringToFront()
@@ -667,6 +728,75 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.fragmentContainer, receiptFragment)
                 .addToBackStack(null)
                 .commit()
+        }
+    }
+
+    private fun showFraudAlertDialog(intent: Intent) {
+        val alreadyVisible = supportFragmentManager.findFragmentByTag("FraudAlertDialogFragment")
+        if (alreadyVisible != null) return
+
+        val title = intent.getStringExtra(NotificationService.EXTRA_FRAUD_TITLE)
+        val message = intent.getStringExtra(NotificationService.EXTRA_FRAUD_MESSAGE)
+            ?: getString(R.string.fraud_alert_generic_message)
+        val location = intent.getStringExtra(NotificationService.EXTRA_FRAUD_LOCATION)
+        val device = intent.getStringExtra(NotificationService.EXTRA_FRAUD_DEVICE)
+        val timestamp = intent.getStringExtra(NotificationService.EXTRA_FRAUD_TIMESTAMP)
+
+        FraudAlertDialogFragment
+            .newInstance(title, message, location, device, timestamp)
+            .show(supportFragmentManager, "FraudAlertDialogFragment")
+    }
+
+    private fun showLocalFraudAlertDemo() {
+        val formattedTime = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+            .format(Date())
+
+        val metadata = NotificationService.FraudAlertMetadata(
+            locationLabel = "Sydney, AU (simulated)",
+            deviceName = "[TEST] Remote Device",
+            occurredAt = formattedTime
+        )
+
+        NotificationService.showFraudAlert(
+            context = this,
+            message = "Test fraud alert — simulated suspicious login.",
+            metadata = metadata
+        )
+
+        if (supportFragmentManager.findFragmentByTag("FraudAlertDialogFragment") == null) {
+            FraudAlertDialogFragment
+                .newInstance(
+                    title = getString(R.string.fraud_alert_title),
+                    message = "Test fraud alert — simulated suspicious login.",
+                    location = metadata.locationLabel,
+                    device = metadata.deviceName,
+                    timestamp = metadata.occurredAt
+                )
+                .show(supportFragmentManager, "FraudAlertDialogFragment")
+        }
+    }
+
+    private fun simulateFraudAlertForTesting() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val result = securityRepository.simulateRemoteLoginForTesting(applicationContext)
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Simulated suspicious login recorded. Watch for the push notification.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    },
+                    onFailure = { error ->
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Simulation failed: ${error.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                )
+            }
         }
     }
 

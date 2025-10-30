@@ -33,4 +33,18 @@
     
     <!-- Firebase Configuration -->
     <string name="default_web_client_id">860245071011-d7q3s0om7mdq6povpifaeprau9hq9a9b.apps.googleusercontent.com</string>
+
+    <!-- Security -->
+    <string name="fraud_alert_title">Security Alert</string>
+    <string name="fraud_alert_generic_message">We noticed a new sign-in on your account. Review the activity immediately.</string>
+    <string name="fraud_alert_simulate_action">Simulate Suspicious Login</string>
+    <string name="fraud_alert_location">Location: %1$s</string>
+    <string name="fraud_alert_device">Device: %1$s</string>
+    <string name="fraud_alert_timestamp">Time: %1$s</string>
+    <string name="fraud_alert_ok">Review Later</string>
+    <string name="csv_viewer_title">Transaction Export Preview</string>
+    <string name="csv_close_button">Close</string>
+    <string name="csv_share_button">Share CSV</string>
+    <string name="csv_share_not_available">CSV file not available to share yet.</string>
+    <string name="csv_share_title">Share export</string>
 </resources>
