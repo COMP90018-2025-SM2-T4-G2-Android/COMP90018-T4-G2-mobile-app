@@ -114,12 +114,16 @@ class HistoryFragment : Fragment() {
     }
 
     private fun setupButtons() {
-        // Filter by State (Success/Fail)
-// Filter button handles both state + date
         requireView().findViewById<View>(R.id.btn_filter_state).setOnClickListener {
             showFilterOptionsDialog()
         }
-
+        requireView().findViewById<View>(R.id.btn_download_csv).setOnClickListener {
+            if (allTransactions.isEmpty()) {
+                Toast.makeText(requireContext(), "No transactions to export yet", Toast.LENGTH_SHORT).show()
+            } else {
+                exportTransactionsToCSV()
+            }
+        }
     }
 
     /** ---------------- FILTERS ---------------- */
