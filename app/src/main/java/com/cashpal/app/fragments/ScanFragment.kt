@@ -31,11 +31,6 @@ import java.util.concurrent.Executors
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.cashpal.app.adapters.RecentScanAdapter
 import com.cashpal.app.models.RecentScan
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 
 
 
@@ -115,7 +110,6 @@ class ScanFragment : Fragment() {
 
 
 
-
         // Animate scanning line
         startScanningLineAnimation()
     }
@@ -154,12 +148,12 @@ class ScanFragment : Fragment() {
                         if (!hasScanned) {
                             hasScanned = true
                             requireActivity().runOnUiThread {
-                                   handleScannedResult(qrText)
+                                Toast.makeText(requireContext(), "QR Scanned: $qrText", Toast.LENGTH_LONG).show()
+                                // TODO: navigate or trigger payment with qrText
                             }
                         }
                     })
                 }
-
 
             try {
                 cameraProvider.unbindAll()
@@ -175,42 +169,6 @@ class ScanFragment : Fragment() {
 
         }, ContextCompat.getMainExecutor(requireContext()))
     }
-    private fun handleScannedResult(qrText: String) {
-        when {
-            // If QR is a URL
-            qrText.startsWith("http://") || qrText.startsWith("https://") -> {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(qrText))
-                startActivity(intent)
-            }
-
-            // If QR is a custom payment URI (e.g. pay://merchant?amount=100)
-            qrText.startsWith("pay:") -> {
-                val uri = Uri.parse(qrText)
-                val merchant = uri.host ?: "Unknown"
-                val amount = uri.getQueryParameter("amount") ?: "0"
-
-                val payFragment = PayFragment().apply {
-                    arguments = Bundle().apply {
-                        putString("merchant", merchant)
-                        putString("amount", amount)
-                    }
-                }
-
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainer, payFragment)
-                    .addToBackStack(null)
-                    .commit()
-            }
-
-            // Otherwise copy to clipboard
-            else -> {
-                val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                clipboard.setPrimaryClip(ClipData.newPlainText("QR Code", qrText))
-                Toast.makeText(requireContext(), "Copied to clipboard", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
 
     private fun startScanningLineAnimation() {
         val animation = TranslateAnimation(
@@ -263,5 +221,3 @@ class QRCodeAnalyzerMLKit(
         }
     }
 }
-
-
