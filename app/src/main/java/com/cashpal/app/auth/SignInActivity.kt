@@ -34,10 +34,8 @@ class SignInActivity : AppCompatActivity() {
     private lateinit var biometricManager: BiometricAuthManager
     private lateinit var biometricPreferences: BiometricPreferences
 
-    // Post-login location flow state
     private var postLoginThenGo: (() -> Unit)? = null
 
-    // Location permission for fraud checks
     private val requestFineLocation =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             val thenGo = postLoginThenGo
@@ -46,11 +44,9 @@ class SignInActivity : AppCompatActivity() {
             else thenGo?.invoke()
         }
 
-    // Notifications permission (Android 13+)
     private val requestPostNotifications =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* no-op */ }
 
-    // Google sign-in launcher
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -61,9 +57,6 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
-    // ----------------------------------------------------
-    // Lifecycle
-    // ----------------------------------------------------
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -85,16 +78,12 @@ class SignInActivity : AppCompatActivity() {
         setupBiometricAvailability()
         loadLastLoginEmail()
 
-        // If we were launched for “reset pin” verification from an older flow, ignore it now.
         if (intent.hasExtra("reset_pin_mode")) {
             intent.removeExtra("reset_pin_mode")
             intent.removeExtra("new_pin_candidate")
         }
     }
 
-    // ----------------------------------------------------
-    // UI bindings
-    // ----------------------------------------------------
     private fun setupClickListeners() {
         binding.btnSignIn.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
@@ -112,7 +101,6 @@ class SignInActivity : AppCompatActivity() {
 
         binding.btnGoogleSignIn.setOnClickListener { signInWithGoogle() }
 
-        // Quick login with biometrics; sheet will have a "Use Password" button
         binding.cardBiometric.setOnClickListener { handleBiometricLogin() }
 
         binding.btnDemoMode.setOnClickListener { enableDemoMode() }
@@ -132,9 +120,6 @@ class SignInActivity : AppCompatActivity() {
         BiometricPasswordStore.getEmail(this)?.let { binding.etEmail.setText(it) }
     }
 
-    // ----------------------------------------------------
-    // Sign-in flows
-    // ----------------------------------------------------
     private fun signIn(email: String, password: String, fromBiometric: Boolean = false) {
         lifecycleScope.launch {
             repository.signInWithEmail(email, password).collect { result ->
@@ -143,7 +128,6 @@ class SignInActivity : AppCompatActivity() {
                         if (fromBiometric || BiometricPasswordStore.isEnabled(this@SignInActivity)) {
                             handlePostLoginSecurity { navigateToMain() }
                         } else {
-                            // After first manual login, offer to enable quick biometric login
                             maybeEnableBiometrics(email, password)
                         }
                     },
@@ -179,9 +163,6 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
-    // ----------------------------------------------------
-    // Biometric quick login (with "Use Password" fallback)
-    // ----------------------------------------------------
     private fun maybeEnableBiometrics(email: String, password: String) {
         if (!biometricManager.isBiometricAvailable() || BiometricPasswordStore.isEnabled(this)) {
             handlePostLoginSecurity { navigateToMain() }
@@ -207,7 +188,6 @@ class SignInActivity : AppCompatActivity() {
                 }
             },
             onUsePassword = {
-                // If user prefers password here, just continue (biometrics not enabled yet)
                 handlePostLoginSecurity { navigateToMain() }
             }
         )
@@ -238,7 +218,6 @@ class SignInActivity : AppCompatActivity() {
                         val plainPassword = String(decCipher.doFinal(enc), Charsets.UTF_8)
                         signIn(email, plainPassword, fromBiometric = true)
                     } catch (e: Exception) {
-                        // Key/IV invalidated (reinstall, fingerprint change, etc.)
                         BiometricPasswordStore.disable(this@SignInActivity)
                         Toast.makeText(
                             this@SignInActivity,
@@ -252,7 +231,6 @@ class SignInActivity : AppCompatActivity() {
             },
             negativeLabel = "Use Password",
             onUsePassword = {
-                // Fallback: show a small password dialog and verify; on success run normal sign-in
                 showPasswordReauthDialog(prefillEmail = email) { ok, pw ->
                     if (ok && email != null) signIn(email, pw)
                 }
@@ -260,9 +238,6 @@ class SignInActivity : AppCompatActivity() {
         )
     }
 
-    // ----------------------------------------------------
-    // Post-login security (GPS-based fraud check)
-    // ----------------------------------------------------
     private fun handlePostLoginSecurity(thenGo: () -> Unit) {
         if (!hasLocationPermission()) {
             postLoginThenGo = thenGo
@@ -286,7 +261,6 @@ class SignInActivity : AppCompatActivity() {
                     "Sign-in from a new location. Additional verification required."
                 )
 
-                // Password re-auth (no PIN)
                 showPasswordReauthDialog(prefillEmail = binding.etEmail.text?.toString()) { ok, _ ->
                     if (ok) {
                         LocationRisk.saveLastLoginFix(this, currentLoc)
@@ -310,9 +284,6 @@ class SignInActivity : AppCompatActivity() {
         return fine || coarse
     }
 
-    // ----------------------------------------------------
-    // Password re-auth dialog (used for fraud & biometric fallback)
-    // ----------------------------------------------------
     private fun showPasswordReauthDialog(
         prefillEmail: String? = null,
         onResult: (ok: Boolean, password: String) -> Unit
@@ -374,9 +345,6 @@ class SignInActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    // ----------------------------------------------------
-    // Misc
-    // ----------------------------------------------------
     private fun requestNotificationsIfNeeded() {
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
