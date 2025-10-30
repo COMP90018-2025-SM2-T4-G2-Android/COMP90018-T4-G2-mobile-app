@@ -63,7 +63,6 @@ object NotificationService {
         }
     }
 
-    // --- Payment Received ---
     fun showPaymentReceivedNotification(
         context: Context,
         senderName: String,
@@ -90,7 +89,7 @@ object NotificationService {
         val msg = "From $senderName: +$${String.format("%.2f", amount)}"
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info) // or your own drawable
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("Payment received")
             .setContentText(msg)
             .setStyle(NotificationCompat.BigTextStyle().bigText("$msg  •  $timestamp"))
@@ -103,7 +102,6 @@ object NotificationService {
         post(context, builder)
     }
 
-    // --- Payment Sent ---
     fun showPaymentSentNotification(
         context: Context,
         recipientName: String,
@@ -132,7 +130,6 @@ object NotificationService {
         post(context, builder)
     }
 
-    // --- Payment Failed ---
     fun showPaymentFailedNotification(
         context: Context,
         recipientName: String,
@@ -166,7 +163,6 @@ object NotificationService {
         post(context, builder)
     }
 
-    // --- Fraud Alert (for GPS/MFA checks) ---
     fun showFraudAlert(context: Context, reason: String) {
         val tapIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -189,12 +185,5 @@ object NotificationService {
             .setColor(ContextCompat.getColor(context, R.color.error))
 
         post(context, builder)
-    }
-
-    // Simple demo trigger
-    fun simulatePaymentReceived(context: Context) {
-        val senders = listOf("Sarah Johnson", "John Doe", "Mike Wilson", "Emma Brown")
-        val amounts = listOf(25.50, 50.00, 75.25, 100.00, 15.75)
-        showPaymentReceivedNotification(context, senders.random(), amounts.random())
     }
 }

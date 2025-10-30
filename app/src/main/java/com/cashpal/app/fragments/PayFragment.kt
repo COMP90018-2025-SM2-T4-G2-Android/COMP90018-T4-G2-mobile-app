@@ -31,7 +31,6 @@ class PayFragment : Fragment() {
 
     private lateinit var contactRepository: ContactRepository
 
-    // UI Views
     private lateinit var searchInput: TextInputEditText
     private lateinit var addContactCard: MaterialCardView
     private lateinit var frequentContactsList: RecyclerView
@@ -42,11 +41,9 @@ class PayFragment : Fragment() {
     private lateinit var cancelButton: MaterialButton
     private lateinit var payButton: MaterialButton
 
-    // Adapters
     private lateinit var frequentContactsAdapter: ContactAdapter
     private lateinit var allContactsAdapter: ContactAdapter
 
-    // Data
     private var allContacts: List<Contact> = emptyList()
     private var frequentContacts: List<Contact> = emptyList()
     private var selectedContact: Contact? = null
@@ -144,7 +141,6 @@ class PayFragment : Fragment() {
         imm.hideSoftInputFromWindow(amountInput.windowToken, 0)
     }
 
-    // ---------- Payment flow with duplicate check + MFA ----------
     private fun processPayment() {
         val contact = selectedContact
         val amountText = amountInput.text?.toString()
@@ -181,7 +177,6 @@ class PayFragment : Fragment() {
 
         val paymentRequest = PaymentRequest(contact = contact, amount = amount)
 
-        // If this looks like a duplicate (same contact + same amount within window), require MFA.
         if (DuplicatePaymentGuard.isDuplicate(requireContext(), paymentRequest)) {
             MfaGuard.requireAuth(requireActivity()) {
                 finalizePayment(paymentRequest)
@@ -206,15 +201,12 @@ class PayFragment : Fragment() {
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
         hidePaymentSection()
 
-        // If you show a local notification for "payment sent", you can call it here.
-        // NotificationService.showPaymentSentNotification(requireContext(), paymentRequest.contact.name, paymentRequest.amount)
     }
 
     private fun showAddContactDialog() {
         Toast.makeText(requireContext(), "Add Contact feature coming soon!", Toast.LENGTH_SHORT).show()
     }
 
-    // -------- RecyclerView Adapter --------
     private class ContactAdapter(
         private val context: Context,
         private val onContactClick: (Contact) -> Unit

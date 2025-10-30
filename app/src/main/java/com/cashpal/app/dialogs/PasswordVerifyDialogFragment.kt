@@ -70,8 +70,7 @@ class PasswordVerifyDialogFragment : DialogFragment() {
                     return@setOnClickListener
                 }
 
-                // Reauth with crash guards
-                viewLifecycleOwner.lifecycleScope.launch {
+                lifecycleScope.launch {
                     try {
                         Reauth.reauthenticate(email, pw).collect { result: Result<Unit> ->
                             result.fold(
