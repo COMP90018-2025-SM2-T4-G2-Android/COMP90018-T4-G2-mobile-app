@@ -1,10 +1,11 @@
 package com.cashpal.app.auth
 
 import androidx.fragment.app.FragmentActivity
+import com.cashpal.app.dialogs.PasswordVerifyDialogFragment
 
 /**
- * MFA guard = biometric first, then PIN (if set).
- * Call MfaGuard.requireAuth(activity) { /* secure action */ }
+ * Central MFA: biometric first, then PASSWORD fallback (no PIN).
+ * Usage: MfaGuard.requireAuth(activity) { /* secure action */ }
  */
 object MfaGuard {
 
@@ -13,29 +14,26 @@ object MfaGuard {
 
         biometricManager.showBiometricPrompt(
             title = "Confirm your identity",
-            subtitle = "Use fingerprint or device PIN",
-            // NOTE: No cryptoObject here — your BiometricAuthManager doesn't accept it
+            subtitle = "Use fingerprint or password",
+            crypto = null, // not doing crypto-bound flows here
             callback = object : BiometricAuthManager.BiometricCallback {
-
                 override fun onSuccess() {
-                    // If a PIN is configured, require it after biometric success
-                    if (BiometricPasswordStore.isPinSet(activity)) {
-                        // PinVerifyDialogFragment should accept a no-arg onPassed() callback
-                        PinVerifyDialogFragment {
-                            onPassed()
-                        }.show(activity.supportFragmentManager, "PinVerify")
-                    } else {
-                        onPassed()
-                    }
+                    onPassed()
                 }
-
                 override fun onError(errorCode: Int, errorMessage: String) {
-                    // Optional: Toast or log
+                    // Errors are handled by the prompt; no-op.
                 }
-
                 override fun onFailed() {
-                    // Optional: Toast or log
+                    // Bad sample; prompt remains. No-op.
                 }
+            },
+            negativeLabel = "Use Password",
+            onUsePassword = {
+                // Fallback: verify account password in a small dialog.
+                val prefill = BiometricPasswordStore.getEmail(activity)
+                PasswordVerifyDialogFragment.new(prefill) { ok ->
+                    if (ok) onPassed()
+                }.show(activity.supportFragmentManager, "PasswordVerify")
             }
         )
     }

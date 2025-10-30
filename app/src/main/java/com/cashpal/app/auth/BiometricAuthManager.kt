@@ -7,72 +7,78 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 
 /**
- * Handles showing the BiometricPrompt and verifying availability.
- * Supports fingerprint and face (if device supports & enrolled).
+ * Shows BiometricPrompt. If [onUsePassword] is provided, the prompt will show a
+ * "Use Password" button and invoke that callback when tapped.
  */
 class BiometricAuthManager(
     private val context: Context,
-    private val activity: FragmentActivity   // <- MUST be FragmentActivity
+    private val activity: FragmentActivity
 ) {
-
     interface BiometricCallback {
         fun onSuccess()
         fun onError(errorCode: Int, errorMessage: String)
         fun onFailed()
     }
 
-    /** True if biometric hardware exists and at least one biometric is enrolled */
+    /** True if strong biometrics are available & enrolled. */
     fun isBiometricAvailable(): Boolean {
         val bm = BiometricManager.from(context)
-        return when (bm.canAuthenticate(
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
-        )) {
-            BiometricManager.BIOMETRIC_SUCCESS -> true
-            else -> false
-        }
+        return bm.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+                BiometricManager.BIOMETRIC_SUCCESS
     }
 
     /**
      * Show the system biometric prompt.
      *
-     * @param title      Title displayed on the sheet
-     * @param subtitle   Optional subtitle
-     * @param crypto     Optional CryptoObject for encrypt/decrypt flows
-     * @param callback   Result callbacks
+     * If [onUsePassword] is non-null, the sheet shows a "Use Password" negative button
+     * and we invoke it when the user taps that button.
      */
     fun showBiometricPrompt(
         title: String,
         subtitle: String? = null,
         crypto: BiometricPrompt.CryptoObject? = null,
-        callback: BiometricCallback
+        callback: BiometricCallback,
+        negativeLabel: String = "Use Password",
+        onUsePassword: (() -> Unit)? = null
     ) {
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+        val builder = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
             .setSubtitle(subtitle ?: "")
-            .setAllowedAuthenticators(
-                BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                        BiometricManager.Authenticators.DEVICE_CREDENTIAL
-            )
-            .build()
 
+        if (onUsePassword != null) {
+            // We must NOT include DEVICE_CREDENTIAL when using a custom negative button.
+            builder.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+            builder.setNegativeButtonText(negativeLabel)
+        } else {
+            // No password fallback requested; allow device credential as system fallback if you want.
+            builder.setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG
+                // If you still want device PIN/pattern fallback when no custom password is provided,
+                // uncomment the next line:
+                // or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            )
+        }
+
+        val promptInfo = builder.build()
         val executor = ContextCompat.getMainExecutor(context)
+
         val prompt = BiometricPrompt(
             activity,
             executor,
             object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(
-                    result: BiometricPrompt.AuthenticationResult
-                ) {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
                     callback.onSuccess()
                 }
-
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
-                    callback.onError(errorCode, errString.toString())
+                    if (errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON && onUsePassword != null) {
+                        // User tapped "Use Password"
+                        onUsePassword.invoke()
+                    } else {
+                        callback.onError(errorCode, errString.toString())
+                    }
                 }
-
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
                     callback.onFailed()
@@ -81,9 +87,9 @@ class BiometricAuthManager(
         )
 
         if (crypto != null) {
-            prompt.authenticate(promptInfo, crypto)  // <- valid overload
+            prompt.authenticate(promptInfo, crypto)
         } else {
-            prompt.authenticate(promptInfo)          // <- valid overload
+            prompt.authenticate(promptInfo)
         }
     }
 }

@@ -8,19 +8,19 @@ import com.cashpal.app.services.FirestoreService
 
 object ServiceLocator {
     private var _repository: CashPalRepository? = null
-    
+
     fun initialize(context: Context) {
         val authService = FirebaseAuthService()
         val firestoreService = FirestoreService()
         val storageService = FirebaseStorageService()
-        
+
         _repository = CashPalRepository(
             authService = authService,
             firestoreService = firestoreService,
             storageService = storageService
         )
     }
-    
+
     fun getRepository(): CashPalRepository {
         return _repository ?: throw IllegalStateException("ServiceLocator not initialized")
     }

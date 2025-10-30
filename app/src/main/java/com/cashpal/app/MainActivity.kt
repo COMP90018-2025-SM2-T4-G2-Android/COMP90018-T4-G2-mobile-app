@@ -15,7 +15,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import com.cashpal.app.data.AppData
 import com.cashpal.app.data.DataRepository
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.fragments.HistoryFragment
@@ -26,6 +25,10 @@ import com.cashpal.app.utils.BiometricPreferences
 import com.cashpal.app.utils.GooglePlayServicesUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import com.cashpal.app.utils.NotificationService
 
 class MainActivity : AppCompatActivity() {
     
@@ -42,34 +45,42 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scrollView: ScrollView
     private lateinit var bottomNavigationView: BottomNavigationView
     private var isDemoMode = false
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(com.cashpal.app.R.layout.activity_main)
+        setContentView(R.layout.activity_main)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
             insets
         }
-        
-        // Check for demo mode - only from explicit user action
+
+        // ✅ STEP 1: Create notification channel once at startup
+        NotificationService.createNotificationChannel(this)
+
+        // ✅ STEP 2: Request POST_NOTIFICATIONS permission on Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
+            }
+        }
+
+        // ✅ Your existing code below
         isDemoMode = intent.getBooleanExtra("demo_mode", false)
-        
         if (isDemoMode) {
             showDemoModeBanner()
         }
 
-        // Check Google Play Services status
         GooglePlayServicesUtils.logGooglePlayServicesStatus(this)
-
         initializeViews()
         setupBottomNavigation()
         setupClickListeners()
         loadData()
-        showHomeContent() // Show home content by default
+        showHomeContent()
     }
-    
     private fun initializeViews() {
         firebaseRepository = ServiceLocator.getRepository()
         dataRepository = DataRepository(this, firebaseRepository)
