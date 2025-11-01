@@ -1,10 +1,12 @@
 package com.cashpal.app.fragments
 
 import android.content.Context
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -166,16 +168,32 @@ class PayFragment : Fragment() {
         val amountText = amountInput.text?.toString()
 
         if (contact == null) {
+            //Failure: no contact selected
+            //Failure sound
+            val failSound = MediaPlayer.create(requireContext(), R.raw.failure_sound)
+            failSound.start()
             Toast.makeText(requireContext(), "Please select a contact", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (amountText.isNullOrBlank()) {
+            //Failure: no amount entered
+            //Failure sound
+            val failSound = MediaPlayer.create(requireContext(), R.raw.failure_sound) // ✅ Added
+            failSound.start()
+            val shake = AnimationUtils.loadAnimation(requireContext(), R.anim.failure_shake) // ✅ Added
+            amountInput.startAnimation(shake)
             Toast.makeText(requireContext(), "Please enter an amount", Toast.LENGTH_SHORT).show()
             return
         }
 
         val amount = amountText.toDoubleOrNull()
+        //Failure: invalid amount
+        //Failure sound
+        val failSound = MediaPlayer.create(requireContext(), R.raw.failure_sound) // ✅ Added
+        failSound.start()
+        val shake = AnimationUtils.loadAnimation(requireContext(), R.anim.failure_shake) // ✅ Added
+        amountInput.startAnimation(shake)
         if (amount == null || amount <= 0) {
             Toast.makeText(requireContext(), "Please enter a valid amount", Toast.LENGTH_SHORT).show()
             return
@@ -186,6 +204,14 @@ class PayFragment : Fragment() {
             contact = contact,
             amount = amount
         )
+
+        //Success sound
+        val successSound = MediaPlayer.create(requireContext(), R.raw.success_sound)
+        successSound.start()
+
+        //Success animaiton
+        val bounce = AnimationUtils.loadAnimation(requireContext(), R.anim.success_bounce)
+        selectedContactView.startAnimation(bounce)
 
         // In a real app, you would process the payment here
         showPaymentConfirmation(paymentRequest)
