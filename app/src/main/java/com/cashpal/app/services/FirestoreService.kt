@@ -4,6 +4,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.*
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.tasks.await
 
 class FirestoreService {
@@ -24,14 +25,69 @@ class FirestoreService {
         return try {
             val document = db.collection("users").document(userId).get().await()
             if (document.exists()) {
-                val user = document.toObject(com.cashpal.app.models.User::class.java)
+                android.util.Log.d("FirestoreService", "User document found for: $userId")
+                android.util.Log.d("FirestoreService", "Document data: ${document.data}")
+                
+                // Manually convert to handle field name mismatches and preferences map
+                val user = document.toUserModel()
+                
+                android.util.Log.d("FirestoreService", "Converted user balance: ${user.balance}")
                 Result.success(user)
             } else {
+                android.util.Log.w("FirestoreService", "User document not found for: $userId")
                 Result.success(null)
             }
         } catch (e: Exception) {
+            android.util.Log.e("FirestoreService", "Error getting user: $userId", e)
             Result.failure(e)
         }
+    }
+    
+    /**
+     * Converts Firestore document to User model, handling field name mismatches
+     * and preferences map conversion
+     */
+    private fun DocumentSnapshot.toUserModel(): com.cashpal.app.models.User {
+        // Handle verified field (Firestore uses "verified", model uses "isVerified")
+        val verified = this.getBoolean("verified") ?: this.getBoolean("isVerified") ?: false
+        
+        // Handle preferences map
+        val preferencesMap = this.get("preferences") as? Map<String, Any?> ?: emptyMap()
+        val preferences = com.cashpal.app.models.UserPreferences(
+            theme = preferencesMap["theme"] as? String ?: "light",
+            notifications = preferencesMap["notifications"] as? Boolean ?: true,
+            biometricAuth = preferencesMap["biometricAuth"] as? Boolean ?: false,
+            currency = preferencesMap["currency"] as? String ?: "AUD",
+            language = preferencesMap["language"] as? String ?: "en"
+        )
+        
+        // Handle balance - can be Double, Long, or Int in Firestore
+        val balanceValue = when (val balanceData = this.get("balance")) {
+            is Double -> balanceData
+            is Long -> balanceData.toDouble()
+            is Int -> balanceData.toDouble()
+            is Number -> balanceData.toDouble()
+            else -> {
+                android.util.Log.w("FirestoreService", "Balance field type not recognized: ${balanceData?.javaClass?.simpleName}")
+                this.getDouble("balance") ?: 0.0
+            }
+        }
+        
+        android.util.Log.d("FirestoreService", "Reading balance from Firestore: $balanceValue (type: ${this.get("balance")?.javaClass?.simpleName})")
+        
+        return com.cashpal.app.models.User(
+            id = this.id,
+            email = this.getString("email") ?: "",
+            displayName = this.getString("displayName") ?: "",
+            phoneNumber = this.getString("phoneNumber"),
+            avatarUrl = this.getString("avatarUrl"),
+            balance = balanceValue,
+            currency = this.getString("currency") ?: "AUD",
+            isVerified = verified,
+            createdAt = this.getTimestamp("createdAt") ?: com.google.firebase.Timestamp.now(),
+            updatedAt = this.getTimestamp("updatedAt") ?: com.google.firebase.Timestamp.now(),
+            preferences = preferences
+        )
     }
     
     suspend fun updateUser(userId: String, updates: Map<String, Any>): Result<Unit> {
@@ -57,6 +113,7 @@ class FirestoreService {
     
     suspend fun getUserTransactions(userId: String, limit: Int = 50): Result<List<com.cashpal.app.models.Transaction>> {
         return try {
+            // Try top-level transactions collection first (current structure)
             val query = db.collection("transactions")
                 .where(
                     Filter.or(
@@ -67,12 +124,30 @@ class FirestoreService {
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .limit(limit.toLong())
             
-            val snapshot = query.get().await()
+            val snapshot = try {
+                query.get().await()
+            } catch (e: Exception) {
+                // If top-level query fails, try subcollection (legacy structure)
+                android.util.Log.w("FirestoreService", "Top-level transactions query failed, trying subcollection", e)
+                db.collection("users").document(userId)
+                    .collection("transactions")
+                    .orderBy("createdAt", Query.Direction.DESCENDING)
+                    .limit(limit.toLong())
+                    .get()
+                    .await()
+            }
+            
             val transactions = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(com.cashpal.app.models.Transaction::class.java)
+                try {
+                    doc.toObject(com.cashpal.app.models.Transaction::class.java)
+                } catch (e: Exception) {
+                    android.util.Log.e("FirestoreService", "Error converting transaction document: ${doc.id}", e)
+                    null
+                }
             }
             Result.success(transactions)
         } catch (e: Exception) {
+            android.util.Log.e("FirestoreService", "Error getting user transactions for: $userId", e)
             Result.failure(e)
         }
     }

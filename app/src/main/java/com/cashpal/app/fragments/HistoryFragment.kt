@@ -12,12 +12,16 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cashpal.app.R
 import com.cashpal.app.adapters.TransactionHistoryAdapter
+import com.cashpal.app.data.DataRepository
+import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.models.TransactionHistory
 import com.google.android.material.tabs.TabLayout
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
@@ -34,6 +38,9 @@ class HistoryFragment : Fragment() {
 
     private lateinit var transactionAdapter: TransactionHistoryAdapter
     private var allTransactions = listOf<TransactionHistory>()
+    
+    private lateinit var repository: com.cashpal.app.repository.CashPalRepository
+    private lateinit var dataRepository: DataRepository
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,6 +50,9 @@ class HistoryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        repository = ServiceLocator.getRepository()
+        dataRepository = DataRepository(requireContext(), repository)
 
         initViews()
         setupData()
@@ -59,25 +69,103 @@ class HistoryFragment : Fragment() {
         totalReceivedTextView = requireView().findViewById(R.id.tv_total_received)
 
         transactionsRecyclerView.layoutManager = LinearLayoutManager(context)
-    }
-
-    private fun setupData() {
-        allTransactions = listOf(
-            TransactionHistory("Coffee Shop", "Order #12345", "-$4.50", "completed", "2024-01-15", "sent"),
-            TransactionHistory("John Doe", "Split dinner bill", "+$25.00", "completed", "2024-01-14", "received"),
-            TransactionHistory("Online Store", "Order #67890", "-$89.99", "pending", "2024-01-13", "sent"),
-            TransactionHistory("Sarah Wilson", "Movie tickets", "+$15.00", "completed", "2024-01-12", "received"),
-            TransactionHistory("Gas Station", "Fuel purchase", "-$45.67", "completed", "2024-01-11", "sent"),
-            TransactionHistory("Freelance Client", "Project payment", "+$350.00", "completed", "2024-01-10", "received")
-        )
-
-        transactionAdapter = TransactionHistoryAdapter(allTransactions) { tx ->
+        
+        // Initialize adapter with empty list
+        transactionAdapter = TransactionHistoryAdapter(emptyList()) { tx ->
             openReceipt(tx)
         }
         transactionsRecyclerView.adapter = transactionAdapter
+    }
 
-        calculateTotals()
-        filterTransactions("all", "")
+    private fun setupData() {
+        val currentUserId = dataRepository.getCurrentUserId()
+        
+        if (currentUserId == null || !dataRepository.isUserSignedIn()) {
+            // Show empty state if user not signed in
+            allTransactions = emptyList()
+            transactionAdapter.updateTransactions(emptyList())
+            calculateTotals()
+            Toast.makeText(requireContext(), "Please sign in to view transaction history", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Load transactions from Firebase
+        lifecycleScope.launch {
+            repository.getUserTransactions(currentUserId, 1000).collect { result ->
+                result.fold(
+                    onSuccess = { transactions ->
+                        android.util.Log.d("HistoryFragment", "Loaded ${transactions.size} transactions from Firebase")
+                        // Convert Firebase Transaction to TransactionHistory
+                        allTransactions = transactions.map { transaction ->
+                            convertToTransactionHistory(transaction, currentUserId)
+                        }
+                        transactionAdapter.updateTransactions(allTransactions)
+                        calculateTotals()
+                        filterTransactions("all", searchEditText.text.toString())
+                    },
+                    onFailure = { error ->
+                        android.util.Log.e("HistoryFragment", "Failed to load transactions", error)
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to load transactions: ${error.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        allTransactions = emptyList()
+                        transactionAdapter.updateTransactions(emptyList())
+                        calculateTotals()
+                    }
+                )
+            }
+        }
+    }
+    
+    private fun convertToTransactionHistory(
+        transaction: com.cashpal.app.models.Transaction,
+        currentUserId: String
+    ): TransactionHistory {
+        val isReceived = transaction.toUserId == currentUserId
+        val isSent = transaction.fromUserId == currentUserId && transaction.fromUserId != "system"
+        
+        // Determine transaction type
+        val type = when {
+            isReceived -> "received"
+            isSent -> "sent"
+            else -> "sent" // Default for system transactions
+        }
+        
+        // Format amount with +/- prefix
+        val amountPrefix = if (isReceived) "+" else "-"
+        val formattedAmount = "$amountPrefix$${String.format("%.2f", transaction.amount)} ${transaction.currency}"
+        
+        // Convert status
+        val statusString = when (transaction.status) {
+            com.cashpal.app.models.TransactionStatus.COMPLETED -> "completed"
+            com.cashpal.app.models.TransactionStatus.PENDING -> "pending"
+            com.cashpal.app.models.TransactionStatus.FAILED -> "failed"
+            com.cashpal.app.models.TransactionStatus.CANCELLED -> "failed"
+            com.cashpal.app.models.TransactionStatus.REFUNDED -> "completed"
+        }
+        
+        // Format date
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val dateString = dateFormat.format(transaction.createdAt.toDate())
+        
+        // Get merchant/name from description or other user
+        val merchantName = transaction.description.ifEmpty { 
+            if (isReceived) "Received Payment" else "Sent Payment"
+        }
+        
+        // Create reference from transaction ID
+        val reference = "TXN-${transaction.id.take(8)}"
+        
+        return TransactionHistory(
+            name = merchantName,
+            reference = reference,
+            amount = formattedAmount,
+            status = statusString,
+            date = dateString,
+            type = type
+        )
     }
 
     private fun setupSearch() {

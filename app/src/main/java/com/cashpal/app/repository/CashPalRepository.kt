@@ -203,7 +203,49 @@ class CashPalRepository(
     // Transaction Management
     suspend fun createTransaction(transaction: com.cashpal.app.models.Transaction) = flow {
         try {
+            // If transaction is completed and involves users (not system-to-system), update balances
+            if (transaction.status == com.cashpal.app.models.TransactionStatus.COMPLETED && 
+                transaction.fromUserId != "system" && transaction.toUserId != "system") {
+                // Use processTransactionWithBalanceUpdate for user-to-user transactions
+                val fromUserResult = firestoreService.getUser(transaction.fromUserId)
+                val toUserResult = firestoreService.getUser(transaction.toUserId)
+                
+                if (fromUserResult.isSuccess && toUserResult.isSuccess) {
+                    val fromUser = fromUserResult.getOrNull()
+                    val toUser = toUserResult.getOrNull()
+                    
+                    if (fromUser != null && toUser != null) {
+                        val result = firestoreService.processTransactionWithBalanceUpdate(
+                            transaction = transaction,
+                            fromUserBalance = fromUser.balance - transaction.amount,
+                            toUserBalance = toUser.balance + transaction.amount
+                        )
+                        emit(result)
+                        return@flow
+                    }
+                }
+            }
+            
+            // For system transactions or if balance update fails, just create the transaction
             val result = firestoreService.createTransaction(transaction)
+            if (result.isSuccess && transaction.status == com.cashpal.app.models.TransactionStatus.COMPLETED) {
+                // Update balance for system transactions (e.g., welcome bonus)
+                if (transaction.fromUserId == "system" && transaction.toUserId != "system") {
+                    val toUserResult = firestoreService.getUser(transaction.toUserId)
+                    toUserResult.fold(
+                        onSuccess = { user ->
+                            if (user != null) {
+                                val newBalance = user.balance + transaction.amount
+                                firestoreService.updateUser(transaction.toUserId, mapOf(
+                                    "balance" to newBalance,
+                                    "updatedAt" to com.google.firebase.Timestamp.now()
+                                ))
+                            }
+                        },
+                        onFailure = { }
+                    )
+                }
+            }
             emit(result)
         } catch (e: Exception) {
             emit(Result.failure(e))
