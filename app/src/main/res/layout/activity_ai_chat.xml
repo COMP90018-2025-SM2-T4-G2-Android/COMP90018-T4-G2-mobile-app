@@ -71,46 +71,91 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:padding="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/inputContainer"
+        app:layout_constraintBottom_toTopOf="@+id/recommendationsContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
 
+    <!-- Recommendations Container -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recommendationsContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:clipToPadding="false"
+        app:layout_constraintBottom_toTopOf="@+id/inputContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <!-- Input Container -->
-    <LinearLayout
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/inputContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="@color/white"
         android:elevation="8dp"
-        android:padding="16dp"
+        app:cardBackgroundColor="@color/surface"
+        app:cardCornerRadius="0dp"
+        app:cardElevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editTextMessage"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="Type your message..."
-            android:inputType="textMultiLine"
-            android:maxLines="4"
-            android:minLines="1"
-            android:textSize="16sp" />
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:gravity="center_vertical">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/btnSend"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="12dp"
-            app:backgroundTint="@color/primary"
-            app:tint="@color/white"
-            app:srcCompat="@drawable/ic_send_chat" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textInputLayout"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Type your message..."
+                app:boxBackgroundMode="none"
+                app:boxStrokeWidth="0dp"
+                app:startIconDrawable="@drawable/ic_bot"
+                app:startIconTint="@color/primary"
+                app:endIconMode="none"
+                app:hintEnabled="false">
 
-    </LinearLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:maxLines="4"
+                    android:minLines="1"
+                    android:textSize="16sp"
+                    android:background="@drawable/rounded_chat_input_background"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:textColor="@color/foreground"
+                    android:textColorHint="@color/muted_foreground" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                android:id="@+id/btnSend"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Send"
+                android:textColor="@color/white"
+                app:icon="@drawable/ic_send_chat"
+                app:iconTint="@color/white"
+                app:backgroundTint="@color/primary" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- Loading Indicator -->
     <LinearLayout
@@ -123,7 +168,7 @@
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/inputContainer"
         app:layout_constraintEnd_toEndOf="@+id/inputContainer"
-        app:layout_constraintTop_toBottomOf="@+id/recyclerViewMessages">
+        app:layout_constraintTop_toBottomOf="@+id/recommendationsContainer">
 
         <ProgressBar
             android:layout_width="32dp"
