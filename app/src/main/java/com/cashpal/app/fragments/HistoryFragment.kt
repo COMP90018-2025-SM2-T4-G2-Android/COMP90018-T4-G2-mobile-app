@@ -38,6 +38,12 @@ class HistoryFragment : Fragment() {
 
     private lateinit var transactionAdapter: TransactionHistoryAdapter
     private var allTransactions = listOf<TransactionHistory>()
+    private var filteredTransactions = listOf<TransactionHistory>() // Track currently filtered transactions
+    
+    // Track active filters
+    private var activeMonthFilter: String? = null // MM format
+    private var activeDateFilter: String? = null // yyyy-MM-dd format
+    private var activeStateFilter: String? = null // "success", "fail", or null
     
     private lateinit var repository: com.cashpal.app.repository.CashPalRepository
     private lateinit var dataRepository: DataRepository
@@ -84,7 +90,8 @@ class HistoryFragment : Fragment() {
             // Show empty state if user not signed in
             allTransactions = emptyList()
             transactionAdapter.updateTransactions(emptyList())
-            calculateTotals()
+            filteredTransactions = emptyList()
+            calculateTotals(emptyList())
             Toast.makeText(requireContext(), "Please sign in to view transaction history", Toast.LENGTH_SHORT).show()
             return
         }
@@ -99,8 +106,12 @@ class HistoryFragment : Fragment() {
                         allTransactions = transactions.map { transaction ->
                             convertToTransactionHistory(transaction, currentUserId)
                         }
+                        filteredTransactions = allTransactions // Initialize filtered list
+                        activeMonthFilter = null
+                        activeDateFilter = null
+                        activeStateFilter = null
                         transactionAdapter.updateTransactions(allTransactions)
-                        calculateTotals()
+                        calculateTotals(filteredTransactions)
                         filterTransactions("all", searchEditText.text.toString())
                     },
                     onFailure = { error ->
@@ -112,7 +123,8 @@ class HistoryFragment : Fragment() {
                         ).show()
                         allTransactions = emptyList()
                         transactionAdapter.updateTransactions(emptyList())
-                        calculateTotals()
+                        filteredTransactions = emptyList()
+                        calculateTotals(emptyList())
                     }
                 )
             }
@@ -214,13 +226,14 @@ class HistoryFragment : Fragment() {
 
     /** ---------------- FILTERS ---------------- */
     private fun showFilterOptionsDialog() {
-        val options = arrayOf("Filter by State", "Filter by Date")
+        val options = arrayOf("Filter by State", "Filter by Date", "Filter by Month")
         val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
         builder.setTitle("Choose Filter")
         builder.setItems(options) { _, which ->
             when (which) {
                 0 -> showStateFilterDialog()
                 1 -> showDateFilterDialog()
+                2 -> showMonthFilterDialog()
             }
         }
         builder.show()
@@ -250,31 +263,116 @@ class HistoryFragment : Fragment() {
             calendar.get(Calendar.DAY_OF_MONTH)
         ).show()
     }
+    
+    private fun showMonthFilterDialog() {
+        val months = arrayOf(
+            "All Time", "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        )
+        
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Filter by Month")
+            .setItems(months) { _, which ->
+                if (which == 0) {
+                    // All Time - clear month filter
+                    activeMonthFilter = null
+                    activeDateFilter = null
+                    applyAllFilters()
+                } else {
+                    // Filter by selected month
+                    // Array index 1 = January = "01", index 2 = February = "02", etc.
+                    val selectedMonth = String.format("%02d", which) // 01-12
+                    filterTransactionsByMonth(selectedMonth)
+                }
+            }
+            .show()
+    }
 
     private fun filterTransactionsByState(state: String) {
-        val filtered = when (state) {
-            "success" -> allTransactions.filter { it.status == "completed" }
-            "fail" -> allTransactions.filter { it.status == "pending" || it.status == "failed" }
-            else -> allTransactions
+        activeStateFilter = when (state) {
+            "all" -> null
+            else -> state
         }
-        transactionAdapter.updateTransactions(filtered)
+        applyAllFilters()
     }
 
     private fun filterTransactionsByDate(date: String) {
-        val filtered = allTransactions.filter { it.date == date }
-        transactionAdapter.updateTransactions(filtered)
+        activeDateFilter = date
+        activeMonthFilter = null // Clear month filter when date is selected
+        applyAllFilters()
+    }
+    
+    private fun filterTransactionsByMonth(month: String) {
+        activeMonthFilter = month
+        activeDateFilter = null // Clear date filter when month is selected
+        applyAllFilters()
+    }
+    
+    /**
+     * Apply all active filters and update the filtered transactions list
+     */
+    private fun applyAllFilters() {
+        var filtered = allTransactions
+        
+        // Apply date filter
+        activeDateFilter?.let { date ->
+            filtered = filtered.filter { it.date == date }
+        }
+        
+        // Apply month filter
+        activeMonthFilter?.let { month ->
+            filtered = filtered.filter { transaction ->
+                val dateParts = transaction.date.split("-")
+                if (dateParts.size >= 2) {
+                    dateParts[1] == month // Compare month part (MM)
+                } else {
+                    false
+                }
+            }
+        }
+        
+        // Apply state filter
+        activeStateFilter?.let { state ->
+            filtered = when (state) {
+                "success" -> filtered.filter { it.status == "completed" }
+                "fail" -> filtered.filter { it.status == "pending" || it.status == "failed" }
+                else -> filtered
+            }
+        }
+        
+        filteredTransactions = filtered
+        
+        // Apply search and tab filters
+        val selectedTab = when (tabLayout.selectedTabPosition) {
+            1 -> "sent"
+            2 -> "received"
+            else -> "all"
+        }
+        filterTransactions(selectedTab, searchEditText.text.toString())
     }
 
     /** ---------------- SEARCH + TABS ---------------- */
 
     private fun filterTransactions(type: String, query: String) {
-        val filtered = allTransactions.filter { transaction ->
-            val matchesSearch = transaction.name.contains(query, ignoreCase = true) ||
-                    transaction.reference.contains(query, ignoreCase = true)
-            val matchesType = (type == "all" || transaction.type == type)
-            matchesSearch && matchesType
+        // Start with the base filtered transactions (from date/month/state filters)
+        var filtered = filteredTransactions
+        
+        // Apply search filter
+        if (query.isNotEmpty()) {
+            filtered = filtered.filter { transaction ->
+                transaction.name.contains(query, ignoreCase = true) ||
+                transaction.reference.contains(query, ignoreCase = true)
+            }
         }
+        
+        // Apply tab filter (type)
+        if (type != "all") {
+            filtered = filtered.filter { it.type == type }
+        }
+        
+        // Update the display
         transactionAdapter.updateTransactions(filtered)
+        calculateTotals(filtered)
     }
 
     /** ---------------- EXPORT ---------------- */
@@ -301,14 +399,26 @@ class HistoryFragment : Fragment() {
 
     /** ---------------- TOTALS ---------------- */
 
-    private fun calculateTotals() {
-        val totalSent = allTransactions
+    /**
+     * Calculate totals from the provided transactions list
+     * This allows totals to reflect filtered transactions (by date, month, state, etc.)
+     */
+    private fun calculateTotals(transactions: List<TransactionHistory> = filteredTransactions) {
+        val totalSent = transactions
             .filter { it.type == "sent" && it.status == "completed" }
-            .sumOf { it.amount.removePrefix("-$").toDoubleOrNull() ?: 0.0 }
+            .sumOf { 
+                // Extract numeric amount from string like "-$25.00 AUD" or "-$25.00"
+                val amountStr = it.amount.replace(Regex("[^0-9.-]"), "")
+                amountStr.toDoubleOrNull() ?: 0.0
+            }
 
-        val totalReceived = allTransactions
+        val totalReceived = transactions
             .filter { it.type == "received" && it.status == "completed" }
-            .sumOf { it.amount.removePrefix("+$").toDoubleOrNull() ?: 0.0 }
+            .sumOf { 
+                // Extract numeric amount from string like "+$25.00 AUD" or "+$25.00"
+                val amountStr = it.amount.replace(Regex("[^0-9.-]"), "")
+                amountStr.toDoubleOrNull() ?: 0.0
+            }
 
         totalSentTextView.text = "$%.2f".format(totalSent)
         totalReceivedTextView.text = "$%.2f".format(totalReceived)
