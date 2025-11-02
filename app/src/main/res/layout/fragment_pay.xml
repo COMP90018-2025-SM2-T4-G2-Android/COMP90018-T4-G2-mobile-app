@@ -1,224 +1,586 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/pay_scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="@color/app_background"
+    android:fillViewport="true"
+    android:overScrollMode="never"
+    tools:context=".fragments.PayFragment">
 
-    <!-- Main Content -->
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/header_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/pay_header_background"
+            android:elevation="0dp"
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingTop="56dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="36dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/ic_pay"
+                    android:tint="@android:color/white" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:text="@string/app_name"
+                    android:textColor="@android:color/white"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:orientation="horizontal">
+
+                    <ImageButton
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/pay_header_icon_background"
+                        android:contentDescription="@string/accessibility_toggle_theme"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_moon"
+                        android:tint="@android:color/white" />
+
+                    <ImageButton
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="12dp"
+                        android:background="@drawable/pay_header_icon_background"
+                        android:contentDescription="@string/accessibility_notifications"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_notifications"
+                        android:tint="@android:color/white" />
+
+                    <ImageButton
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="12dp"
+                        android:background="@drawable/pay_header_icon_background"
+                        android:contentDescription="@string/accessibility_profile"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_person"
+                        android:tint="@android:color/white" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/pay_header_tagline"
+                android:textColor="@android:color/white"
+                android:textSize="16sp" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
-
-            <!-- Header -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Send Money"
-                android:textSize="24sp"
-                android:textColor="#212529"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
+            android:paddingStart="24dp"
+            android:paddingTop="24dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="32dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Select a contact to send money to"
-                android:textSize="14sp"
-                android:textColor="#6C757D"
-                android:layout_marginBottom="24dp" />
+                android:text="@string/pay_send_options"
+                android:textColor="@color/foreground"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-            <!-- Search Bar -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Search contacts..."
-                android:layout_marginBottom="16dp"
-                app:startIconDrawable="@android:drawable/ic_menu_search"
-                app:boxBackgroundMode="filled"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/searchInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:imeOptions="actionSearch"
-                    android:inputType="text" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Add New Contact Button -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/addContactCard"
+                android:id="@+id/card_send_options"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white"
-                android:clickable="true"
-                android:focusable="true"
-                app:rippleColor="#E3F2FD">
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/card"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-                    <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_add_money"
-                        android:background="@drawable/circle_background"
-                        android:backgroundTint="#E3F2FD"
-                        android:padding="8dp"
-                        android:layout_marginEnd="16dp"
-                        app:tint="#1976D2" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/option_contact"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/pay_option_background"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingVertical="16dp"
+                            android:paddingHorizontal="12dp">
+
+                            <FrameLayout
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:background="@drawable/pay_option_icon_background"
+                                android:foreground="?attr/selectableItemBackgroundBorderless"
+                                android:foregroundGravity="center">
+
+                                <ImageView
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_contacts"
+                                    android:tint="@color/primary" />
+                            </FrameLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:gravity="center"
+                                android:text="@string/pay_option_contact"
+                                android:textColor="@color/foreground"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <Space
+                            android:layout_width="12dp"
+                            android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:id="@+id/option_phone"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/pay_option_background"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingVertical="16dp"
+                            android:paddingHorizontal="12dp">
+
+                            <FrameLayout
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:background="@drawable/pay_option_icon_background">
+
+                                <ImageView
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_phone"
+                                    android:tint="@color/primary" />
+                            </FrameLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:gravity="center"
+                                android:text="@string/pay_option_phone"
+                                android:textColor="@color/foreground"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <Space
+                        android:layout_width="1dp"
+                        android:layout_height="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/option_qr"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/pay_option_background"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingVertical="16dp"
+                            android:paddingHorizontal="12dp">
+
+                            <FrameLayout
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:background="@drawable/pay_option_icon_background">
+
+                                <ImageView
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_qr_scanner"
+                                    android:tint="@color/primary" />
+                            </FrameLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:gravity="center"
+                                android:text="@string/pay_option_qr"
+                                android:textColor="@color/foreground"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <Space
+                            android:layout_width="12dp"
+                            android:layout_height="1dp" />
+
+                        <LinearLayout
+                            android:id="@+id/option_vendor"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/pay_option_background"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:paddingVertical="16dp"
+                            android:paddingHorizontal="12dp">
+
+                            <FrameLayout
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:background="@drawable/pay_option_icon_background">
+
+                                <ImageView
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_store"
+                                    android:tint="@color/primary" />
+                            </FrameLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:gravity="center"
+                                android:text="@string/pay_option_vendor"
+                                android:textColor="@color/foreground"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_nfc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="0dp"
+                app:cardUseCompatPadding="false">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/pay_nfc_card_background"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+
+                    <FrameLayout
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@drawable/pay_option_icon_background">
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_nfc_pay"
+                            android:tint="@color/primary" />
+                    </FrameLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
                         android:layout_weight="1"
                         android:orientation="vertical">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Add New Contact"
-                            android:textSize="16sp"
-                            android:textColor="#212529"
+                            android:text="@string/pay_nfc_title"
+                            android:textColor="@color/foreground"
+                            android:textSize="18sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Send money to someone new"
-                            android:textSize="12sp"
-                            android:textColor="#6C757D"
-                            android:layout_marginTop="2dp" />
-
+                            android:layout_marginTop="4dp"
+                            android:text="@string/pay_nfc_subtitle"
+                            android:textColor="@color/muted_foreground"
+                            android:textSize="14sp" />
                     </LinearLayout>
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_arrow_forward"
-                        app:tint="#6C757D" />
-
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_use_nfc"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:insetLeft="0dp"
+                        android:insetRight="0dp"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="20dp"
+                        android:text="@string/pay_use_nfc"
+                        android:textAllCaps="false"
+                        android:textColor="@color/primary"
+                        app:strokeColor="@color/primary" />
                 </LinearLayout>
-
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Frequent Contacts Section -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                app:boxBackgroundColor="@color/pay_soft_surface"
+                app:boxCornerRadiusBottomEnd="20dp"
+                app:boxCornerRadiusBottomStart="20dp"
+                app:boxCornerRadiusTopEnd="20dp"
+                app:boxCornerRadiusTopStart="20dp"
+                app:boxStrokeColor="@android:color/transparent"
+                app:boxStrokeWidth="0dp"
+                app:startIconDrawable="@drawable/ic_search">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_search"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:hint="@string/pay_search_contacts"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:textColor="@color/foreground"
+                    android:textColorHint="@color/muted_foreground" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_amount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                app:cardBackgroundColor="@color/card"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pay_amount_label"
+                        android:textColor="@color/muted_foreground"
+                        android:textSize="14sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="$"
+                            android:textColor="@color/primary"
+                            android:textSize="42sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_amount"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:background="@android:color/transparent"
+                            android:gravity="start"
+                            android:hint="0.00"
+                            android:inputType="numberDecimal"
+                            android:textColor="@color/foreground"
+                            android:textSize="42sp"
+                            android:textStyle="bold" />
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="@string/pay_amount_more"
+                            android:src="@drawable/ic_more"
+                            android:tint="@color/muted_foreground" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="20dp"
+                        android:background="@color/pay_option_border" />
+
+                    <TextView
+                        android:id="@+id/tv_recipient_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:text="@string/pay_recipient_label"
+                        android:textColor="@color/muted_foreground"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_recipient_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/pay_recipient_placeholder"
+                        android:textColor="@color/foreground"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_recipient_subtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="@color/muted_foreground"
+                        android:textSize="14sp"
+                        android:visibility="gone" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_send_payment"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:enabled="false"
+                        android:text="@string/pay_send_button"
+                        android:textAllCaps="false" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <TextView
-                android:id="@+id/frequentTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Recent"
+                android:layout_marginTop="32dp"
+                android:drawablePadding="8dp"
+                android:text="@string/pay_favorites"
+                android:textColor="@color/foreground"
                 android:textSize="18sp"
-                android:textColor="#212529"
                 android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
+                android:drawableStart="@drawable/ic_star_outline" />
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/frequentContactsList"
+                android:id="@+id/rv_favorites"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:nestedScrollingEnabled="false" />
+                android:layout_marginTop="16dp"
+                android:overScrollMode="never"
+                android:paddingBottom="8dp" />
 
-            <!-- All Contacts Section -->
             <TextView
-                android:id="@+id/allContactsTitle"
+                android:id="@+id/tv_favorites_empty"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="All Contacts"
+                android:layout_marginTop="12dp"
+                android:text="@string/pay_no_favorites"
+                android:textColor="@color/muted_foreground"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:text="@string/pay_recent_contacts"
+                android:textColor="@color/foreground"
                 android:textSize="18sp"
-                android:textColor="#212529"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
+                android:textStyle="bold" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/allContactsList"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_recent_contacts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/card"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="2dp">
 
-        </LinearLayout>
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_recent_contacts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:overScrollMode="never"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp" />
+            </com.google.android.material.card.MaterialCardView>
 
-    </androidx.core.widget.NestedScrollView>
-
-    <!-- Amount Input Bottom Sheet Trigger (Hidden by default) -->
-    <LinearLayout
-        android:id="@+id/selectedContactView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@android:color/white"
-        android:elevation="8dp"
-        android:padding="16dp"
-        android:visibility="gone"
-        android:layout_gravity="bottom">
-
-        <TextView
-            android:id="@+id/selectedContactName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Selected Contact"
-            android:textSize="16sp"
-            android:textColor="#212529"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Amount ($)"
-            android:layout_marginBottom="16dp"
-            app:boxBackgroundMode="filled">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/amountInput"
+            <TextView
+                android:id="@+id/tv_recents_empty"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="12dp"
+                android:gravity="center_horizontal"
+                android:text="@string/pay_no_recent_contacts"
+                android:textColor="@color/muted_foreground"
+                android:textSize="14sp"
+                android:visibility="gone" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/cancelButton"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Cancel"
-                android:layout_marginEnd="8dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/payButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Send Money"
-                android:layout_marginStart="8dp" />
-
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/progress_send"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="24dp"
+                android:visibility="gone"
+                app:indicatorSize="40dp"
+                app:trackThickness="4dp" />
         </LinearLayout>
-
     </LinearLayout>
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</androidx.core.widget.NestedScrollView>

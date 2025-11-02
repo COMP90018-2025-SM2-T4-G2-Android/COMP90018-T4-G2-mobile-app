@@ -34,4 +34,63 @@
     
     <!-- Firebase Configuration -->
     <string name="default_web_client_id">860245071011-d7q3s0om7mdq6povpifaeprau9hq9a9b.apps.googleusercontent.com</string>
+
+    <!-- Pay Screen -->
+    <string name="accessibility_toggle_theme">Toggle theme</string>
+    <string name="accessibility_notifications">Notifications</string>
+    <string name="accessibility_profile">Profile</string>
+    <string name="pay_header_tagline">Manage your payments with ease</string>
+    <string name="pay_send_options">Send Options</string>
+    <string name="pay_option_contact">Contact</string>
+    <string name="pay_option_phone">Phone</string>
+    <string name="pay_option_qr">QR Scan</string>
+    <string name="pay_option_vendor">Vendor Code</string>
+    <string name="pay_nfc_title">NFC Payment</string>
+    <string name="pay_nfc_subtitle">Tap to pay instantly</string>
+    <string name="pay_use_nfc">Use NFC</string>
+    <string name="pay_search_contacts">Search contacts</string>
+    <string name="pay_amount_label">Amount to Send</string>
+    <string name="pay_amount_more">More options</string>
+    <string name="pay_favorites">Favourites</string>
+    <string name="pay_recent_contacts">Recent Contacts</string>
+    <string name="pay_send_cta">Send</string>
+    <string name="pay_user_not_signed_in">Sign in to send money.</string>
+    <string name="pay_contacts_error">Unable to load contacts: %1$s</string>
+    <string name="pay_contacts_error_generic">Unable to load contacts.</string>
+    <string name="pay_contacts_loading">Contacts are still loading. Please try again.</string>
+    <string name="pay_unknown_contact">CashPal user</string>
+    <string name="pay_amount_error">Enter an amount greater than zero.</string>
+    <string name="pay_contact_not_available">This contact is not ready to receive payments yet.</string>
+    <string name="pay_self_transfer_error">You cannot send money to yourself.</string>
+    <string name="pay_transaction_description">Payment to %1$s</string>
+    <string name="pay_transfer_success">Sent successfully to %1$s.</string>
+    <string name="pay_transfer_failed">Payment failed: %1$s</string>
+    <string name="pay_transfer_failed_generic">Payment failed. Please try again.</string>
+    <string name="pay_no_favorites">No favourite contacts yet.</string>
+    <string name="pay_no_favorites_search">No favourite contacts match your search.</string>
+    <string name="pay_no_recent_contacts">No recent contacts to show.</string>
+    <string name="pay_no_recent_contacts_search">No recent contacts match your search.</string>
+    <string name="pay_contact_sheet_title">Select Contact</string>
+    <string name="pay_contact_sheet_search_hint">Search contacts</string>
+    <string name="pay_contact_sheet_empty">No contacts available.</string>
+    <string name="pay_phone_sheet_title">Send to Phone</string>
+    <string name="pay_phone_sheet_subtitle">Enter the phone number associated with the recipient\'s CashPal account.</string>
+    <string name="pay_phone_sheet_hint">Enter phone number</string>
+    <string name="pay_phone_sheet_continue">Continue</string>
+    <string name="pay_phone_contact_not_found">We couldn\'t find a CashPal account for that phone number.</string>
+    <string name="pay_phone_enter_number">Please enter a valid phone number.</string>
+    <string name="pay_vendor_not_available">Vendor payments are coming soon.</string>
+    <string name="pay_recipient_label">Recipient</string>
+    <string name="pay_recipient_placeholder">Select a contact to send money</string>
+    <string name="pay_send_button">Send Payment</string>
+    <string name="pay_select_recipient_prompt">Choose someone to send money to first.</string>
+    <string name="pay_phone_trailing_note">Entered phone number</string>
+    <string name="nfc_payment_title">Tap to Receive</string>
+    <string name="nfc_payment_status_ready">Hold a card near the top of your phone</string>
+    <string name="nfc_payment_info">Stay on this screen so others can tap their card or device to pay you instantly.</string>
+    <string name="nfc_payment_processing">Processing payment…</string>
+    <string name="nfc_payment_received">Payment detected!</string>
+    <string name="nfc_payment_no_support">This device does not support NFC payments.</string>
+    <string name="nfc_payment_disabled">Turn on NFC in your device settings to receive payments.</string>
+    <string name="nfc_payment_icon_content_desc">Tap to pay icon</string>
 </resources>

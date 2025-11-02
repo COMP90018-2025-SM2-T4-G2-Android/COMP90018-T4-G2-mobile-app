@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_background"
+    android:padding="24dp">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:elevation="0dp"
+        android:title="@string/nfc_payment_title"
+        android:titleTextColor="@color/foreground"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navigationIcon="@drawable/ic_arrow_back" />
+
+    <FrameLayout
+        android:id="@+id/pulse_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:clipToPadding="false"
+        android:clipChildren="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
+
+        <View
+            android:id="@+id/pulse_outer"
+            android:layout_width="260dp"
+            android:layout_height="260dp"
+            android:layout_gravity="center"
+            android:background="@drawable/nfc_pulse_circle" />
+
+        <View
+            android:id="@+id/pulse_inner"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:layout_gravity="center"
+            android:background="@drawable/nfc_pulse_circle" />
+
+        <View
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_gravity="center"
+            android:background="@drawable/nfc_pulse_core" />
+
+        <ImageView
+            android:id="@+id/iv_nfc"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/nfc_payment_icon_content_desc"
+            android:src="@drawable/ic_nfc_pay"
+            android:tint="@color/primary" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tv_status"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:gravity="center"
+        android:text="@string/nfc_payment_status_ready"
+        android:textColor="@color/foreground"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/pulse_container" />
+
+    <TextView
+        android:id="@+id/tv_info"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:text="@string/nfc_payment_info"
+        android:textColor="@color/muted_foreground"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_status" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

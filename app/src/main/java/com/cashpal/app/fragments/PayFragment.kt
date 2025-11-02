@@ -1,258 +1,613 @@
 package com.cashpal.app.fragments
 
-import android.content.Context
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AnimationUtils
-import android.view.inputmethod.InputMethodManager
-import android.widget.ImageView
-import android.widget.LinearLayout
+import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cashpal.app.R
-import com.cashpal.app.auth.MfaGuard
-import com.cashpal.app.data.Contact
-import com.cashpal.app.data.ContactRepository
-import com.cashpal.app.data.PaymentRequest
-import com.cashpal.app.utils.DuplicatePaymentGuard
+import com.cashpal.app.adapters.ContactAdapter
+import com.cashpal.app.adapters.PayContactItem
+import com.cashpal.app.di.ServiceLocator
+import com.cashpal.app.models.Contact
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.card.MaterialCardView
+import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
+import com.google.firebase.Timestamp
 import java.util.Locale
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 class PayFragment : Fragment() {
 
-    private lateinit var contactRepository: ContactRepository
+    private lateinit var searchEditText: EditText
+    private lateinit var amountEditText: EditText
+    private lateinit var favoritesRecyclerView: RecyclerView
+    private lateinit var recentContactsRecyclerView: RecyclerView
+    private lateinit var recentContactsCard: View
+    private lateinit var favoritesEmptyView: TextView
+    private lateinit var recentsEmptyView: TextView
+    private lateinit var sendProgressIndicator: CircularProgressIndicator
+    private lateinit var recipientNameTextView: TextView
+    private lateinit var recipientSubtitleTextView: TextView
+    private lateinit var sendPaymentButton: MaterialButton
+    private lateinit var nfcCardView: View
+    private lateinit var contactOptionView: View
+    private lateinit var phoneOptionView: View
+    private lateinit var qrOptionView: View
+    private lateinit var vendorOptionView: View
+    private lateinit var favoritesAdapter: ContactAdapter
+    private lateinit var recentContactsAdapter: ContactAdapter
 
-    private lateinit var searchInput: TextInputEditText
-    private lateinit var addContactCard: MaterialCardView
-    private lateinit var frequentContactsList: RecyclerView
-    private lateinit var allContactsList: RecyclerView
-    private lateinit var selectedContactView: LinearLayout
-    private lateinit var selectedContactName: TextView
-    private lateinit var amountInput: TextInputEditText
-    private lateinit var cancelButton: MaterialButton
-    private lateinit var payButton: MaterialButton
+    private val repository by lazy { ServiceLocator.getRepository() }
+    private var currentUserId: String? = null
+    private var rootView: View? = null
+    private var contactsJob: Job? = null
+    private var isProcessingTransfer = false
+    private var cachedContacts: List<Contact> = emptyList()
+    private var hasLoadedContacts = false
+    private var selectedRecipient: PayContactItem? = null
 
-    private lateinit var frequentContactsAdapter: ContactAdapter
-    private lateinit var allContactsAdapter: ContactAdapter
-
-    private var allContacts: List<Contact> = emptyList()
-    private var frequentContacts: List<Contact> = emptyList()
-    private var selectedContact: Contact? = null
+    private val colorPalette = listOf(
+        "#6C5CE7",
+        "#7E57FF",
+        "#00B894",
+        "#FDCB6E",
+        "#FF7675",
+        "#74B9FF",
+        "#A29BFE"
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? = inflater.inflate(R.layout.fragment_pay, container, false)
+    ): View? {
+        return inflater.inflate(R.layout.fragment_pay, container, false)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initializeViews(view)
-        setupRepository()
-        setupRecyclerViews()
-        setupClickListeners()
-        loadContacts()
-        setupSearch()
-    }
 
-    private fun initializeViews(view: View) {
-        searchInput = view.findViewById(R.id.searchInput)
-        addContactCard = view.findViewById(R.id.addContactCard)
-        frequentContactsList = view.findViewById(R.id.frequentContactsList)
-        allContactsList = view.findViewById(R.id.allContactsList)
-        selectedContactView = view.findViewById(R.id.selectedContactView)
-        selectedContactName = view.findViewById(R.id.selectedContactName)
-        amountInput = view.findViewById(R.id.amountInput)
-        cancelButton = view.findViewById(R.id.cancelButton)
-        payButton = view.findViewById(R.id.payButton)
-    }
+        rootView = view
+        initViews(view)
 
-    private fun setupRepository() {
-        contactRepository = ContactRepository(requireContext())
-    }
-
-    private fun setupRecyclerViews() {
-        frequentContactsAdapter = ContactAdapter(requireContext()) { contact -> onContactSelected(contact) }
-        frequentContactsList.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = frequentContactsAdapter
+        currentUserId = repository.getCurrentUser()?.uid
+        if (currentUserId.isNullOrBlank()) {
+            showMessage(getString(R.string.pay_user_not_signed_in))
+            toggleProcessing(false)
+            return
         }
 
-        allContactsAdapter = ContactAdapter(requireContext()) { contact -> onContactSelected(contact) }
-        allContactsList.apply {
+        loadContacts(currentUserId!!)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        contactsJob?.cancel()
+        rootView = null
+    }
+
+    private fun initViews(root: View) {
+        searchEditText = root.findViewById(R.id.et_search)
+        amountEditText = root.findViewById(R.id.et_amount)
+        favoritesRecyclerView = root.findViewById(R.id.rv_favorites)
+        recentContactsRecyclerView = root.findViewById(R.id.rv_recent_contacts)
+        recentContactsCard = root.findViewById(R.id.card_recent_contacts)
+        favoritesEmptyView = root.findViewById(R.id.tv_favorites_empty)
+        recentsEmptyView = root.findViewById(R.id.tv_recents_empty)
+        sendProgressIndicator = root.findViewById(R.id.progress_send)
+        recipientNameTextView = root.findViewById(R.id.tv_recipient_name)
+        recipientSubtitleTextView = root.findViewById(R.id.tv_recipient_subtitle)
+        sendPaymentButton = root.findViewById(R.id.btn_send_payment)
+        nfcCardView = root.findViewById(R.id.card_nfc)
+        contactOptionView = root.findViewById(R.id.option_contact)
+        phoneOptionView = root.findViewById(R.id.option_phone)
+        qrOptionView = root.findViewById(R.id.option_qr)
+        vendorOptionView = root.findViewById(R.id.option_vendor)
+
+        searchEditText.addTextChangedListener { text ->
+            applyContactFilter(text?.toString().orEmpty())
+        }
+
+        contactOptionView.setOnClickListener { showContactSelectionSheet() }
+        phoneOptionView.setOnClickListener { showPhoneEntrySheet() }
+        qrOptionView.setOnClickListener { navigateToScanner() }
+        nfcCardView.setOnClickListener { navigateToNfcPayment() }
+        vendorOptionView.setOnClickListener { showMessage(getString(R.string.pay_vendor_not_available)) }
+        sendPaymentButton.setOnClickListener { performTransfer() }
+        root.findViewById<View>(R.id.btn_use_nfc).setOnClickListener { navigateToNfcPayment() }
+        updateSelectedRecipientUI()
+
+        favoritesAdapter = ContactAdapter(
+            isFavorites = true,
+            onContactClick = ::handleContactSelection
+        )
+
+        favoritesRecyclerView.apply {
+            layoutManager = LinearLayoutManager(
+                requireContext(),
+                LinearLayoutManager.HORIZONTAL,
+                false
+            )
+            adapter = favoritesAdapter
+        }
+
+        recentContactsAdapter = ContactAdapter(
+            isFavorites = false,
+            onContactClick = ::handleContactSelection,
+            onSendClick = ::handleContactSelection
+        )
+
+        recentContactsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = allContactsAdapter
+            adapter = recentContactsAdapter
         }
     }
 
-    private fun setupClickListeners() {
-        addContactCard.setOnClickListener { showAddContactDialog() }
-        cancelButton.setOnClickListener { hidePaymentSection() }
-        payButton.setOnClickListener { processPayment() }
-    }
-
-    private fun loadContacts() {
-        allContacts = contactRepository.getContacts()
-        frequentContacts = contactRepository.getFrequentContacts()
-        frequentContactsAdapter.updateContacts(frequentContacts)
-        allContactsAdapter.updateContacts(allContacts)
-    }
-
-    private fun setupSearch() {
-        searchInput.addTextChangedListener { text ->
-            val query = text?.toString() ?: ""
-            val filtered = contactRepository.searchContacts(query)
-            allContactsAdapter.updateContacts(filtered)
-
-            if (query.isNotEmpty()) {
-                frequentContactsList.visibility = View.GONE
-                view?.findViewById<TextView>(R.id.frequentTitle)?.visibility = View.GONE
-            } else {
-                frequentContactsList.visibility = View.VISIBLE
-                view?.findViewById<TextView>(R.id.frequentTitle)?.visibility = View.VISIBLE
-                allContactsAdapter.updateContacts(allContacts)
+    private fun loadContacts(userId: String) {
+        contactsJob?.cancel()
+        contactsJob = viewLifecycleOwner.lifecycleScope.launch {
+            repository.getUserContacts(userId).collect { result ->
+                result.fold(
+                    onSuccess = { contacts ->
+                        val resolved = contacts?.takeIf { it.isNotEmpty() } ?: createDummyContacts()
+                        updateContactLists(resolved)
+                    },
+                    onFailure = { error ->
+                        val reason = error.localizedMessage?.takeIf { it.isNotBlank() }
+                        val message = reason?.let {
+                            getString(R.string.pay_contacts_error, it)
+                        } ?: getString(R.string.pay_contacts_error_generic)
+                        showMessage(message)
+                        updateContactLists(createDummyContacts())
+                    }
+                )
             }
         }
     }
 
-    private fun onContactSelected(contact: Contact) {
-        selectedContact = contact
-        selectedContactName.text = getString(R.string.pay_send_to_fmt, contact.name)
-        selectedContactView.visibility = View.VISIBLE
-        amountInput.requestFocus()
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.showSoftInput(amountInput, InputMethodManager.SHOW_IMPLICIT)
+    private fun updateContactLists(contacts: List<Contact>) {
+        cachedContacts = contacts
+        hasLoadedContacts = true
+        val query = searchEditText.text?.toString().orEmpty()
+        applyContactFilter(query)
     }
 
-    private fun hidePaymentSection() {
-        selectedContactView.visibility = View.GONE
-        selectedContact = null
-        amountInput.text?.clear()
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(amountInput.windowToken, 0)
-    }
-
-    private fun processPayment() {
-        val contact = selectedContact
-        val amountText = amountInput.text?.toString()
-
-        if (contact == null) {
-            //Failure: no contact selected
-            //Failure sound
-            val failSound = MediaPlayer.create(requireContext(), R.raw.failure_sound)
-            failSound.start()
-            Toast.makeText(requireContext(), "Please select a contact", Toast.LENGTH_SHORT).show()
+    private fun applyContactFilter(query: String) {
+        val normalized = query.trim().lowercase(Locale.getDefault())
+        val isFiltering = normalized.isNotEmpty()
+        if (cachedContacts.isEmpty()) {
+            renderContactLists(emptyList(), isFiltering)
             return
         }
-        if (amountText.isNullOrBlank()) {
-            //Failure: no amount entered
-            //Failure sound
-            val failSound = MediaPlayer.create(requireContext(), R.raw.failure_sound) // ✅ Added
-            failSound.start()
-            val shake = AnimationUtils.loadAnimation(requireContext(), R.anim.failure_shake) // ✅ Added
-            amountInput.startAnimation(shake)
-            Toast.makeText(requireContext(), "Please enter an amount", Toast.LENGTH_SHORT).show()
+        if (!isFiltering) {
+            renderContactLists(cachedContacts, false)
             return
         }
-        val amount = amountText.toDoubleOrNull()
-        //Failure: invalid amount
-        //Failure sound
-        val failSound = MediaPlayer.create(requireContext(), R.raw.failure_sound) // ✅ Added
-        failSound.start()
-        val shake = AnimationUtils.loadAnimation(requireContext(), R.anim.failure_shake) // ✅ Added
-        amountInput.startAnimation(shake)
-        if (amount == null || amount <= 0) {
-            Toast.makeText(requireContext(), "Please enter a valid amount", Toast.LENGTH_SHORT).show()
+        val filtered = cachedContacts.filter { contact ->
+            val fields = listOfNotNull(
+                contact.name,
+                contact.email,
+                contact.phone
+            )
+            fields.any { it.contains(normalized, ignoreCase = true) }
+        }
+        renderContactLists(filtered, true)
+    }
+
+    private fun renderContactLists(contacts: List<Contact>, isFiltering: Boolean) {
+        val favoriteContacts = contacts
+            .filter { it.isFrequent }
+            .sortedByDescending { it.totalTransactions }
+            .take(8)
+            .map { mapToPayContactItem(it) }
+
+        val recentContacts = contacts
+            .sortedByDescending { it.lastTransactionDate?.toDate()?.time ?: 0L }
+            .take(10)
+            .map { mapToPayContactItem(it) }
+
+        favoritesAdapter.submitList(favoriteContacts)
+        favoritesRecyclerView.isVisible = favoriteContacts.isNotEmpty()
+        val showFavoritesEmpty = favoriteContacts.isEmpty() && (isFiltering || hasLoadedContacts)
+        favoritesEmptyView.isVisible = showFavoritesEmpty
+        if (showFavoritesEmpty) {
+            favoritesEmptyView.text = getString(
+                if (isFiltering) R.string.pay_no_favorites_search else R.string.pay_no_favorites
+            )
+        }
+
+        recentContactsAdapter.submitList(recentContacts)
+        val hasRecentContacts = recentContacts.isNotEmpty()
+        recentContactsRecyclerView.isVisible = hasRecentContacts
+        recentContactsCard.isVisible = hasRecentContacts
+        val showRecentsEmpty = !hasRecentContacts && (isFiltering || hasLoadedContacts)
+        recentsEmptyView.isVisible = showRecentsEmpty
+        if (showRecentsEmpty) {
+            recentsEmptyView.text = getString(
+                if (isFiltering) R.string.pay_no_recent_contacts_search else R.string.pay_no_recent_contacts
+            )
+        }
+        updateSelectedRecipientUI()
+    }
+
+    private fun mapToPayContactItem(contact: Contact): PayContactItem {
+        val displayName = when {
+            contact.name.isNotBlank() -> contact.name
+            !contact.email.isNullOrBlank() -> contact.email!!
+            !contact.phone.isNullOrBlank() -> contact.phone!!
+            else -> getString(R.string.pay_unknown_contact)
+        }
+
+        val initials = buildInitials(displayName)
+        val colorSeed = displayName + contact.id
+        val colorHex = colorPalette.randomFromSeed(colorSeed)
+        val subtitle = when {
+            !contact.phone.isNullOrBlank() -> contact.phone
+            !contact.email.isNullOrBlank() -> contact.email
+            else -> null
+        }
+
+        return PayContactItem(
+            id = contact.id,
+            name = displayName,
+            initials = initials,
+            colorHex = colorHex,
+            subtitle = subtitle,
+            contactUserId = contact.contactUserId,
+            phone = contact.phone
+        )
+    }
+
+    private fun handleContactSelection(contact: PayContactItem) {
+        if (isProcessingTransfer) return
+        selectedRecipient = contact
+        updateSelectedRecipientUI()
+        if (contact.contactUserId.isNullOrBlank()) {
+            showMessage(getString(R.string.pay_contact_not_available))
+        }
+    }
+
+    private fun performTransfer() {
+        if (isProcessingTransfer) return
+
+        val recipient = selectedRecipient
+        if (recipient == null) {
+            showMessage(getString(R.string.pay_select_recipient_prompt))
             return
         }
 
-        val paymentRequest = PaymentRequest(contact = contact, amount = amount)
+        val amountValue = amountEditText.text?.toString()?.trim().orEmpty()
+        val amount = amountValue.toDoubleOrNull()
 
-        if (DuplicatePaymentGuard.isDuplicate(requireContext(), paymentRequest)) {
-            MfaGuard.requireAuth(requireActivity()) {
-                finalizePayment(paymentRequest)
-                DuplicatePaymentGuard.save(requireContext(), paymentRequest)
-            }
-        } else {
-            finalizePayment(paymentRequest)
-            DuplicatePaymentGuard.save(requireContext(), paymentRequest)
-        }
-    }
-
-    private fun finalizePayment(paymentRequest: PaymentRequest) {
-        //Success sound
-        val successSound = MediaPlayer.create(requireContext(), R.raw.success_sound)
-        successSound.start()
-
-        //Success animation
-        val bounce = AnimationUtils.loadAnimation(requireContext(), R.anim.success_bounce)
-        selectedContactView.startAnimation(bounce)
-
-        val message = "Payment of $${String.format(Locale.US, "%.2f", paymentRequest.amount)} to ${paymentRequest.contact.name} has been processed!"
-        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
-        hidePaymentSection()
-
-    }
-
-    private fun showAddContactDialog() {
-        Toast.makeText(requireContext(), "Add Contact feature coming soon!", Toast.LENGTH_SHORT).show()
-    }
-
-    private class ContactAdapter(
-        private val context: Context,
-        private val onContactClick: (Contact) -> Unit
-    ) : RecyclerView.Adapter<ContactAdapter.ContactViewHolder>() {
-
-        private var contacts: List<Contact> = emptyList()
-
-        fun updateContacts(newContacts: List<Contact>) {
-            contacts = newContacts
-            notifyDataSetChanged()
+        if (amount == null || amount <= 0.0) {
+            amountEditText.error = getString(R.string.pay_amount_error)
+            showMessage(getString(R.string.pay_amount_error))
+            return
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ContactViewHolder {
-            val view = LayoutInflater.from(context).inflate(R.layout.item_contact, parent, false)
-            return ContactViewHolder(view)
+        val senderId = currentUserId
+        if (senderId.isNullOrBlank()) {
+            showMessage(getString(R.string.pay_user_not_signed_in))
+            return
         }
 
-        override fun onBindViewHolder(holder: ContactViewHolder, position: Int) {
-            val contact = contacts[position]
-            holder.bind(contact, onContactClick)
+        val recipientId = recipient.contactUserId
+        if (recipientId.isNullOrBlank()) {
+            showMessage(getString(R.string.pay_contact_not_available))
+            return
         }
 
-        override fun getItemCount(): Int = contacts.size
+        if (senderId == recipientId) {
+            showMessage(getString(R.string.pay_self_transfer_error))
+            return
+        }
 
-        class ContactViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            private val contactAvatar: ImageView = itemView.findViewById(R.id.contactAvatar)
-            private val contactName: TextView = itemView.findViewById(R.id.contactName)
-            private val contactEmail: TextView = itemView.findViewById(R.id.contactEmail)
-            private val lastTransaction: TextView = itemView.findViewById(R.id.lastTransaction)
-            private val frequentBadge: TextView = itemView.findViewById(R.id.frequentBadge)
+        amountEditText.error = null
+        view?.clearFocus()
+        toggleProcessing(true)
 
-            fun bind(contact: Contact, onContactClick: (Contact) -> Unit) {
-                contactName.text = contact.name
-                contactEmail.text = contact.email ?: contact.phone ?: "No contact info"
-
-                if (!contact.lastTransactionDate.isNullOrEmpty()) {
-                    lastTransaction.text = "Last transaction: ${contact.lastTransactionDate}"
-                    lastTransaction.visibility = View.VISIBLE
-                } else {
-                    lastTransaction.visibility = View.GONE
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                repository.processTransaction(
+                    fromUserId = senderId,
+                    toUserId = recipientId,
+                    amount = amount,
+                    description = getString(R.string.pay_transaction_description, recipient.name)
+                ).collect { result ->
+                    result.fold(
+                        onSuccess = {
+                            amountEditText.text?.clear()
+                            playSuccessSound()
+                            showMessage(getString(R.string.pay_transfer_success, recipient.name))
+                            refreshContactsAfterTransfer()
+                        },
+                        onFailure = { error ->
+                            playFailureSound()
+                            val reason = error.localizedMessage?.takeIf { it.isNotBlank() }
+                            val message = reason?.let {
+                                getString(R.string.pay_transfer_failed, it)
+                            } ?: getString(R.string.pay_transfer_failed_generic)
+                            showMessage(message)
+                        }
+                    )
                 }
-
-                frequentBadge.visibility = if (contact.isFrequent) View.VISIBLE else View.GONE
-                itemView.setOnClickListener { onContactClick(contact) }
-                contactAvatar.setImageResource(R.drawable.ic_person)
+            } catch (e: Exception) {
+                playFailureSound()
+                val reason = e.localizedMessage?.takeIf { it.isNotBlank() }
+                val message = reason?.let {
+                    getString(R.string.pay_transfer_failed, it)
+                } ?: getString(R.string.pay_transfer_failed_generic)
+                showMessage(message)
+            } finally {
+                toggleProcessing(false)
             }
         }
+    }
+
+    private fun refreshContactsAfterTransfer() {
+        currentUserId?.let { loadContacts(it) }
+    }
+
+    private fun playSuccessSound() {
+        try {
+            val successSound = MediaPlayer.create(requireContext(), R.raw.success_sound)
+            successSound?.start()
+            successSound?.setOnCompletionListener { it.release() }
+        } catch (e: Exception) {
+            // Silently fail if sound can't be played
+        }
+    }
+
+    private fun playFailureSound() {
+        try {
+            val failSound = MediaPlayer.create(requireContext(), R.raw.failure_sound)
+            failSound?.start()
+            failSound?.setOnCompletionListener { it.release() }
+        } catch (e: Exception) {
+            // Silently fail if sound can't be played
+        }
+    }
+
+    private fun showContactSelectionSheet() {
+        if (!hasLoadedContacts) {
+            showMessage(getString(R.string.pay_contacts_loading))
+            return
+        }
+
+        val dialog = BottomSheetDialog(requireContext())
+        val sheetView = layoutInflater.inflate(R.layout.bottom_sheet_contact_list, null)
+        val recyclerView = sheetView.findViewById<RecyclerView>(R.id.rv_contact_list)
+        val searchInput = sheetView.findViewById<TextInputEditText>(R.id.et_contact_search)
+        val emptyView = sheetView.findViewById<TextView>(R.id.tv_contact_list_empty)
+
+        val adapter = ContactAdapter(
+            isFavorites = false,
+            onContactClick = { item ->
+                dialog.dismiss()
+                handleContactSelection(item)
+            },
+            onSendClick = { item ->
+                dialog.dismiss()
+                handleContactSelection(item)
+            }
+        )
+
+        recyclerView.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            this.adapter = adapter
+        }
+
+        val allItems = cachedContacts.map { mapToPayContactItem(it) }
+
+        fun render(items: List<PayContactItem>) {
+            adapter.submitList(items)
+            emptyView.isVisible = items.isEmpty()
+        }
+
+        render(allItems)
+
+        searchInput?.addTextChangedListener { text ->
+            val query = text?.toString()?.trim().orEmpty()
+            if (query.isBlank()) {
+                render(allItems)
+            } else {
+                val filtered = allItems.filter { item ->
+                    item.name.contains(query, ignoreCase = true) ||
+                        (item.subtitle?.contains(query, ignoreCase = true) == true) ||
+                        (item.phone?.contains(query, ignoreCase = true) == true)
+                }
+                render(filtered)
+            }
+        }
+
+        dialog.setContentView(sheetView)
+        dialog.show()
+    }
+
+    private fun showPhoneEntrySheet() {
+        val dialog = BottomSheetDialog(requireContext())
+        val sheetView = layoutInflater.inflate(R.layout.bottom_sheet_phone_entry, null)
+        val inputLayout = sheetView.findViewById<TextInputLayout>(R.id.til_phone_number)
+        val editText = sheetView.findViewById<TextInputEditText>(R.id.et_phone_number)
+        val continueButton = sheetView.findViewById<MaterialButton>(R.id.btn_continue_phone)
+
+        continueButton.setOnClickListener {
+            val rawInput = editText?.text?.toString()?.trim().orEmpty()
+            val digits = rawInput.filter { it.isDigit() }
+            if (digits.isBlank()) {
+                inputLayout?.error = getString(R.string.pay_phone_enter_number)
+                return@setOnClickListener
+            }
+
+            inputLayout?.error = null
+            val normalized = digits
+            val matchedContact = cachedContacts.firstOrNull { contact ->
+                normalizePhone(contact.phone) == normalized
+            }
+
+            dialog.dismiss()
+
+            if (matchedContact != null) {
+                handleContactSelection(mapToPayContactItem(matchedContact))
+            } else {
+                val displayNumber = if (rawInput.startsWith("+")) rawInput else "+$digits"
+                selectedRecipient = PayContactItem(
+                    id = "phone-$normalized",
+                    name = displayNumber,
+                    initials = buildInitials(displayNumber),
+                    colorHex = colorPalette.randomFromSeed(displayNumber),
+                    subtitle = getString(R.string.pay_phone_trailing_note),
+                    contactUserId = null,
+                    phone = displayNumber
+                )
+                updateSelectedRecipientUI()
+                showMessage(getString(R.string.pay_phone_contact_not_found))
+            }
+        }
+
+        dialog.setContentView(sheetView)
+        dialog.show()
+    }
+
+    private fun navigateToScanner() {
+        (activity as? com.cashpal.app.MainActivity)?.openScanTab()
+    }
+
+    private fun navigateToNfcPayment() {
+        (activity as? com.cashpal.app.MainActivity)?.openNfcPayment()
+    }
+
+    private fun normalizePhone(phone: String?): String {
+        return phone?.filter { it.isDigit() } ?: ""
+    }
+
+    private fun updateSelectedRecipientUI() {
+        if (!this::recipientNameTextView.isInitialized) return
+        val recipient = selectedRecipient
+        if (recipient == null) {
+            recipientNameTextView.text = getString(R.string.pay_recipient_placeholder)
+            recipientSubtitleTextView.isVisible = false
+        } else {
+            recipientNameTextView.text = recipient.name
+            val subtitle = recipient.subtitle ?: recipient.phone
+            if (!subtitle.isNullOrBlank()) {
+                recipientSubtitleTextView.text = subtitle
+                recipientSubtitleTextView.isVisible = true
+            } else {
+                recipientSubtitleTextView.isVisible = false
+            }
+        }
+        updateSendButtonState()
+    }
+
+    private fun updateSendButtonState() {
+        if (!this::sendPaymentButton.isInitialized) return
+        val canSend = !isProcessingTransfer &&
+            (selectedRecipient?.contactUserId?.isNotBlank() == true)
+        sendPaymentButton.isEnabled = canSend
+    }
+
+    private fun toggleProcessing(active: Boolean) {
+        isProcessingTransfer = active
+        sendProgressIndicator.isVisible = active
+        updateSendButtonState()
+    }
+
+    private fun showMessage(message: String) {
+        val host = rootView ?: return
+        if (message.isBlank()) return
+        Snackbar.make(host, message, Snackbar.LENGTH_SHORT).show()
+    }
+
+    private fun createDummyContacts(): List<Contact> {
+        val ownerId = currentUserId ?: "demo-owner"
+        val now = Timestamp.now()
+        return listOf(
+            Contact(
+                id = "demo-alex",
+                userId = ownerId,
+                contactUserId = "demo-recipient-alex",
+                name = "Alex Johnson",
+                email = "alex.johnson@example.com",
+                phone = "+1 (555) 101-1111",
+                isFrequent = true,
+                totalTransactions = 18,
+                lastTransactionDate = now
+            ),
+            Contact(
+                id = "demo-sarah",
+                userId = ownerId,
+                contactUserId = "demo-recipient-sarah",
+                name = "Sarah Williams",
+                email = "sarah.williams@example.com",
+                phone = "+1 (555) 202-2222",
+                isFrequent = true,
+                totalTransactions = 15,
+                lastTransactionDate = now
+            ),
+            Contact(
+                id = "demo-mike",
+                userId = ownerId,
+                contactUserId = "demo-recipient-mike",
+                name = "Mike Johnson",
+                email = "mike.johnson@example.com",
+                phone = "+1 (555) 303-3333",
+                isFrequent = false,
+                totalTransactions = 6,
+                lastTransactionDate = now
+            ),
+            Contact(
+                id = "demo-emma",
+                userId = ownerId,
+                contactUserId = "demo-recipient-emma",
+                name = "Emma Davis",
+                email = "emma.davis@example.com",
+                phone = "+1 (555) 404-4444",
+                isFrequent = false,
+                totalTransactions = 3,
+                lastTransactionDate = now
+            ),
+            Contact(
+                id = "demo-john",
+                userId = ownerId,
+                contactUserId = "demo-recipient-john",
+                name = "John Smith",
+                email = "john.smith@example.com",
+                phone = "+1 (555) 505-5555",
+                isFrequent = true,
+                totalTransactions = 9,
+                lastTransactionDate = now
+            )
+        )
+    }
+
+    private fun buildInitials(name: String): String {
+        val parts = name.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
+        if (parts.isEmpty()) {
+            return name.take(2).ifBlank { "CP" }.uppercase(Locale.getDefault())
+        }
+        return parts.take(2)
+            .map { it.first().uppercaseChar() }
+            .joinToString("")
+    }
+
+    private fun List<String>.randomFromSeed(seed: String): String {
+        if (isEmpty()) return "#6C5CE7"
+        val index = (seed.hashCode() and Int.MAX_VALUE) % size
+        return this[index]
     }
 }
