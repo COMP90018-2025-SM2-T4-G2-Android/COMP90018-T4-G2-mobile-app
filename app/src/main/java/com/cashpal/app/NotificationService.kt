@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.cashpal.app.BuildConfig
 import java.util.Locale
 import android.annotation.SuppressLint
 
@@ -47,6 +48,8 @@ object NotificationService {
     ) {
         // Create transaction ID
         val transactionId = "TXN-${System.currentTimeMillis()}"
+        // Use unique notification ID as request code to ensure each PendingIntent is unique
+        val id = notificationId++
 
         // Intent to open Receipt page
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -60,7 +63,7 @@ object NotificationService {
             putExtra("type", "received")
         }
         val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
+            context, id, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -90,7 +93,7 @@ object NotificationService {
             .setLights(ContextCompat.getColor(context, R.color.received_color), 1000, 3000)
             .build()
 
-        post(context, notification)
+        post(context, id, notification)
     }
 
     fun showPaymentSentNotification(
@@ -98,12 +101,15 @@ object NotificationService {
         recipientName: String,
         amount: Double
     ) {
+        // Use unique notification ID as request code to ensure each PendingIntent is unique
+        val id = notificationId++
+        
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("openTab", "history")
         }
         val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
+            context, id, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -119,7 +125,7 @@ object NotificationService {
             .setColor(ContextCompat.getColor(context, R.color.sent_color))
             .build()
 
-        post(context, notification)
+        post(context, id, notification)
     }
 
     fun showPaymentFailedNotification(
@@ -128,12 +134,15 @@ object NotificationService {
         amount: Double,
         reason: String
     ) {
+        // Use unique notification ID as request code to ensure each PendingIntent is unique
+        val id = notificationId++
+        
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("openTab", "history")
         }
         val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
+            context, id, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -151,11 +160,20 @@ object NotificationService {
             .setColor(ContextCompat.getColor(context, R.color.error))
             .build()
 
-        post(context, notification)
+        post(context, id, notification)
     }
 
-    /** Demo helper to simulate a payment push inside the app */
+    /** 
+     * Demo helper to simulate a payment push inside the app.
+     * Only works in debug builds - will be ignored in production.
+     */
     fun simulatePaymentReceived(context: Context) {
+        // Only allow simulation in debug builds to prevent spam in production
+        if (!BuildConfig.DEBUG) {
+            android.util.Log.w("NotificationService", "simulatePaymentReceived called in production build - ignoring")
+            return
+        }
+        
         val senders = listOf("Sarah Johnson", "John Doe", "Mike Wilson", "Emma Brown")
         val amounts = listOf(25.50, 50.00, 75.25, 100.00, 15.75)
         showPaymentReceivedNotification(
@@ -176,13 +194,13 @@ object NotificationService {
     }
 
     @SuppressLint("MissingPermission")
-    private fun post(context: Context, notification: android.app.Notification) {
+    private fun post(context: Context, id: Int, notification: android.app.Notification) {
         // Runtime guard – if user denied POST_NOTIFICATIONS on API 33+, do nothing
         if (!canPostNotifications(context)) return
 
         try {
             NotificationManagerCompat.from(context)
-                .notify(notificationId++, notification)
+                .notify(id, notification)
         } catch (se: SecurityException) {
             // Extra safety on odd OEMs
         }
