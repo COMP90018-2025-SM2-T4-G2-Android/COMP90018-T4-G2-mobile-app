@@ -81,9 +81,9 @@ API keys are compiled into the APK using `BuildConfig` fields. When you build th
 ### Security Best Practices:
 
 1. **Use API Key Restrictions**:
-   - In Google Cloud Console, restrict your Gemini API key to:
-     - Only your app's package name
-     - Only Android apps
+   - In Google Cloud Console, restrict your Gemini API key using:
+     - HTTP referrer restrictions (for web clients)
+     - IP address restrictions (for backend/server use)
      - Set usage quotas/limits
    - For HuggingFace, use API key restrictions if available
 
