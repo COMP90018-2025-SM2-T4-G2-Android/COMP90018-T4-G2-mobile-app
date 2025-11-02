@@ -15,23 +15,24 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import com.cashpal.app.data.AppData
 import com.cashpal.app.data.DataRepository
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.fragments.HistoryFragment
 import com.cashpal.app.fragments.MoreFragment
 import com.cashpal.app.fragments.PayFragment
 import com.cashpal.app.fragments.ScanFragment
-import com.cashpal.app.utils.BiometricPreferences
 import com.cashpal.app.utils.GooglePlayServicesUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import com.cashpal.app.utils.NotificationService
 
 class MainActivity : AppCompatActivity() {
     
     private lateinit var dataRepository: DataRepository
     private lateinit var firebaseRepository: com.cashpal.app.repository.CashPalRepository
-    private lateinit var biometricPreferences: BiometricPreferences
     private lateinit var balanceValue: TextView
     private lateinit var monthlyChange: TextView
     private lateinit var pendingAmount: TextView
@@ -42,34 +43,39 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scrollView: ScrollView
     private lateinit var bottomNavigationView: BottomNavigationView
     private var isDemoMode = false
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(com.cashpal.app.R.layout.activity_main)
+        setContentView(R.layout.activity_main)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
             insets
         }
-        
-        // Check for demo mode - only from explicit user action
+
+        NotificationService.createNotificationChannel(this)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
+            }
+        }
+
         isDemoMode = intent.getBooleanExtra("demo_mode", false)
-        
         if (isDemoMode) {
             showDemoModeBanner()
         }
 
-        // Check Google Play Services status
         GooglePlayServicesUtils.logGooglePlayServicesStatus(this)
-
         initializeViews()
         setupBottomNavigation()
         setupClickListeners()
         loadData()
-        showHomeContent() // Show home content by default
+        showHomeContent()
     }
-    
     private fun initializeViews() {
         firebaseRepository = ServiceLocator.getRepository()
         dataRepository = DataRepository(this, firebaseRepository)
@@ -83,7 +89,7 @@ class MainActivity : AppCompatActivity() {
         scrollView = findViewById(R.id.scrollView)
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
     }
-    //commen
+
     private fun setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -116,21 +122,17 @@ class MainActivity : AppCompatActivity() {
     
     private fun setupClickListeners() {
         viewAllText.setOnClickListener {
-            // Navigate to History page
             showFragment(HistoryFragment())
             updateBottomNavigationSelection(R.id.nav_history)
         }
     }
     
     private fun loadData() {
-        // Always try Firebase first if user is signed in
         if (dataRepository.isUserSignedIn() && !isDemoMode) {
             loadFirebaseData()
         } else if (isDemoMode) {
-            // Only load JSON data if explicitly in demo mode
             loadDataFromJSON()
         } else {
-            // User not signed in and not in demo mode - show empty state
             showEmptyState()
         }
     }
@@ -148,7 +150,6 @@ class MainActivity : AppCompatActivity() {
             try {
                 android.util.Log.d("MainActivity", "Loading Firebase data for user: $currentUserId")
                 
-                // Load user profile
                 firebaseRepository.getUserProfile(currentUserId).collect { userResult ->
                     userResult.fold(
                         onSuccess = { user ->
@@ -168,7 +169,6 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
                 
-                // Load transactions
                 firebaseRepository.getUserTransactions(currentUserId, 10).collect { transactionsResult ->
                     transactionsResult.fold(
                         onSuccess = { transactions ->
@@ -190,7 +190,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        // Always load quick actions from JSON (they're static)
         val appData = dataRepository.loadAppData()
         appData?.let { data ->
             populateQuickActions(data.quickActions)
@@ -244,8 +243,6 @@ class MainActivity : AppCompatActivity() {
             radius = 24f
             elevation = 4f
             setCardBackgroundColor(getColor(android.R.color.white))
-            
-            // Make it clickable
             isClickable = true
             isFocusable = true
             setOnClickListener {
@@ -256,7 +253,7 @@ class MainActivity : AppCompatActivity() {
         val linearLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = android.view.Gravity.CENTER
-            setPadding(24, 24, 24, 24) // Reduced padding for bigger buttons
+            setPadding(24, 24, 24, 24)
         }
         
         val iconImage = ImageView(this).apply {
@@ -267,17 +264,16 @@ class MainActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
             setColorFilter(ContextCompat.getColor(this@MainActivity, android.R.color.black))
-            // Set specific size for icons
             layoutParams.width = 32.dpToPx()
             layoutParams.height = 32.dpToPx()
         }
         
         val titleText = TextView(this).apply {
             text = action.title
-            textSize = 11f // Slightly smaller text
+            textSize = 11f
             setTextColor(getColor(android.R.color.black))
             gravity = android.view.Gravity.CENTER
-            setPadding(0, 12, 0, 0) // Reduced padding
+            setPadding(0, 12, 0, 0)
         }
         
         linearLayout.addView(iconImage)
@@ -290,12 +286,10 @@ class MainActivity : AppCompatActivity() {
     private fun handleQuickActionClick(action: com.cashpal.app.data.QuickAction) {
         when (action.id) {
             "send_money" -> {
-                // Navigate to Pay page
                 showFragment(PayFragment())
                 updateBottomNavigationSelection(R.id.nav_pay)
             }
             "qr_pay" -> {
-                // Navigate to Scan page
                 showFragment(ScanFragment())
                 updateBottomNavigationSelection(R.id.nav_scan)
             }
@@ -314,7 +308,6 @@ class MainActivity : AppCompatActivity() {
         transactionsContainer.removeAllViews()
         
         if (transactions.isEmpty()) {
-            // Show empty state for transactions (not necessarily a new user)
             showEmptyTransactionsState()
         } else {
             transactions.take(5).forEach { transaction ->
@@ -344,8 +337,6 @@ class MainActivity : AppCompatActivity() {
             radius = 24f
             elevation = 4f
             setCardBackgroundColor(getColor(android.R.color.white))
-            
-            // Make it clickable
             isClickable = true
             isFocusable = true
             setOnClickListener {
@@ -450,8 +441,6 @@ class MainActivity : AppCompatActivity() {
             radius = 24f
             elevation = 4f
             setCardBackgroundColor(getColor(android.R.color.white))
-            
-            // Make it clickable
             isClickable = true
             isFocusable = true
             setOnClickListener {
