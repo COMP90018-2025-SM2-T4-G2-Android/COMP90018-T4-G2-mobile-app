@@ -207,14 +207,48 @@ class FirestoreService {
         return try {
             val query = db.collection("contacts")
                 .whereEqualTo("userId", userId)
-                .orderBy("isFrequent", Query.Direction.DESCENDING)
-                .orderBy("lastTransactionDate", Query.Direction.DESCENDING)
             
-            val snapshot = query.get().await()
+            val snapshot = try {
+                query.get().await()
+            } catch (e: Exception) {
+                // If collection doesn't exist or query fails, return empty list
+                android.util.Log.d("FirestoreService", "Contacts collection doesn't exist or query failed, returning empty list", e)
+                return Result.success(emptyList())
+            }
+            
             val contacts = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(com.cashpal.app.models.Contact::class.java)
+                try {
+                    doc.toObject(com.cashpal.app.models.Contact::class.java)
+                } catch (e: Exception) {
+                    android.util.Log.e("FirestoreService", "Error converting contact document: ${doc.id}", e)
+                    null
+                }
             }
             Result.success(contacts)
+        } catch (e: Exception) {
+            // Return empty list instead of failure if collection doesn't exist
+            android.util.Log.d("FirestoreService", "Error getting user contacts, returning empty list", e)
+            Result.success(emptyList())
+        }
+    }
+    
+    /**
+     * Find a contact by owner userId and contactUserId
+     */
+    suspend fun findContactByUserId(userId: String, contactUserId: String): Result<com.cashpal.app.models.Contact?> {
+        return try {
+            val query = db.collection("contacts")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("contactUserId", contactUserId)
+                .limit(1)
+            
+            val snapshot = query.get().await()
+            if (snapshot.documents.isNotEmpty()) {
+                val contact = snapshot.documents[0].toObject(com.cashpal.app.models.Contact::class.java)
+                Result.success(contact)
+            } else {
+                Result.success(null)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
