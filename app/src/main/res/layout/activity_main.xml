@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA"
+    android:background="@color/app_background"
     tools:context=".MainActivity">
 
     <androidx.fragment.app.FragmentContainerView
@@ -46,7 +46,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/account_title"
                     android:textSize="20sp"
-                    android:textColor="#212529"
+                    android:textColor="@color/foreground"
                     android:textStyle="bold"/>
 
             </LinearLayout>
@@ -58,7 +58,7 @@
                 android:layout_marginBottom="24dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="@android:color/white">
+                app:cardBackgroundColor="@color/card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -71,7 +71,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/available_balance"
                         android:textSize="14sp"
-                        android:textColor="#6C757D"
+                        android:textColor="@color/muted_foreground"
                         android:layout_marginBottom="8dp"/>
 
                     <TextView
@@ -80,7 +80,7 @@
                         android:layout_height="wrap_content"
                         android:text="$1,234.56"
                         android:textSize="28sp"
-                        android:textColor="#212529"
+                        android:textColor="@color/foreground"
                         android:textStyle="bold"
                         android:layout_marginBottom="16dp"/>
 
@@ -100,7 +100,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/this_month"
                                 android:textSize="12sp"
-                                android:textColor="#6C757D"
+                                android:textColor="@color/muted_foreground"
                                 android:layout_marginBottom="4dp"/>
 
                             <TextView
@@ -109,7 +109,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="+12.5%"
                                 android:textSize="16sp"
-                                android:textColor="#28A745"
+                                android:textColor="@color/received_color"
                                 android:textStyle="bold"/>
 
                         </LinearLayout>
@@ -125,7 +125,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/pending"
                                 android:textSize="12sp"
-                                android:textColor="#6C757D"
+                                android:textColor="@color/muted_foreground"
                                 android:layout_marginBottom="4dp"/>
 
                             <TextView
@@ -134,7 +134,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="$45.20"
                                 android:textSize="16sp"
-                                android:textColor="#FFC107"
+                                android:textColor="@color/warning"
                                 android:textStyle="bold"/>
 
                         </LinearLayout>
@@ -150,7 +150,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/reserved"
                                 android:textSize="12sp"
-                                android:textColor="#6C757D"
+                                android:textColor="@color/muted_foreground"
                                 android:layout_marginBottom="4dp"/>
 
                             <TextView
@@ -159,7 +159,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="$0.00"
                                 android:textSize="16sp"
-                                android:textColor="#6C757D"
+                                android:textColor="@color/muted_foreground"
                                 android:textStyle="bold"/>
 
                         </LinearLayout>
@@ -176,7 +176,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/quick_actions"
                 android:textSize="18sp"
-                android:textColor="#212529"
+                android:textColor="@color/foreground"
                 android:textStyle="bold"
                 android:layout_marginBottom="16dp"/>
 
@@ -197,12 +197,15 @@
                     android:text="Send"
                     app:icon="@drawable/ic_send_money"
                     app:iconGravity="top"
-                    android:textSize="12sp"/>
+                    android:textSize="12sp"
+                    android:textColor="@color/primary"
+                    app:strokeColor="@color/primary"
+                    app:iconTint="@color/primary"/>
 
                 <!-- Scan QR -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnScan"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -210,7 +213,10 @@
                     app:icon="@drawable/ic_scan"
                     app:iconGravity="top"
                     app:iconPadding="8dp"
-                    app:iconSize="24dp"/>
+                    app:iconSize="24dp"
+                    android:textColor="@color/primary"
+                    app:strokeColor="@color/primary"
+                    app:iconTint="@color/primary"/>
 
             </LinearLayout>
 
@@ -228,7 +234,7 @@
                     android:layout_weight="1"
                     android:text="@string/recent_activity"
                     android:textSize="18sp"
-                    android:textColor="#212529"
+                    android:textColor="@color/foreground"
                     android:textStyle="bold"/>
 
                 <com.google.android.material.button.MaterialButton
@@ -257,7 +263,7 @@
         android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/white"
+        android:background="@color/card"
         android:elevation="8dp"
         android:fitsSystemWindows="true"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -6,6 +6,8 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.tasks.await
 
 class CashPalRepository(
@@ -18,18 +20,21 @@ class CashPalRepository(
     fun getCurrentUser(): FirebaseUser? = authService.getCurrentUser()
     fun isUserSignedIn(): Boolean = authService.isUserSignedIn()
     
-    suspend fun signUpWithEmail(email: String, password: String, displayName: String) = flow {
+    suspend fun signUpWithEmail(email: String, password: String, displayName: String, phoneNumber: String) = flow {
         try {
             val authResult = authService.signUpWithEmail(email, password).await()
             val user = authResult.user
             
             if (user != null) {
+                // Normalize phone number (remove spaces, dashes, etc. but keep + prefix)
+                val normalizedPhone = normalizePhoneNumber(phoneNumber)
+                
                 // Create user profile in Firestore with default values
                 val userProfile = com.cashpal.app.models.User(
                     id = user.uid,
                     email = user.email ?: "",
                     displayName = displayName,
-                    phoneNumber = user.phoneNumber,
+                    phoneNumber = normalizedPhone,
                     avatarUrl = user.photoUrl?.toString(),
                     balance = 0.0, // Start with 0 balance
                     currency = "AUD", // Default currency
@@ -118,7 +123,7 @@ class CashPalRepository(
                         id = user.uid,
                         email = user.email ?: "",
                         displayName = user.displayName ?: "",
-                        phoneNumber = user.phoneNumber,
+                        phoneNumber = user.phoneNumber?.let { normalizePhoneNumber(it) },
                         avatarUrl = user.photoUrl?.toString(),
                         balance = 0.0,
                         currency = "AUD",
@@ -165,12 +170,11 @@ class CashPalRepository(
     }
     
     suspend fun getUserProfile(userId: String) = flow {
-        try {
-            val result = firestoreService.getUser(userId)
-            emit(result)
-        } catch (e: Exception) {
-            emit(Result.failure(e))
-        }
+        val result = firestoreService.getUser(userId)
+        emit(result)
+    }.catch { e ->
+        android.util.Log.e("CashPalRepository", "Error getting user profile", e)
+        emit(Result.failure(e))
     }
     
     suspend fun updateUserProfile(userId: String, updates: Map<String, Any>) = flow {
@@ -203,7 +207,49 @@ class CashPalRepository(
     // Transaction Management
     suspend fun createTransaction(transaction: com.cashpal.app.models.Transaction) = flow {
         try {
+            // If transaction is completed and involves users (not system-to-system), update balances
+            if (transaction.status == com.cashpal.app.models.TransactionStatus.COMPLETED && 
+                transaction.fromUserId != "system" && transaction.toUserId != "system") {
+                // Use processTransactionWithBalanceUpdate for user-to-user transactions
+                val fromUserResult = firestoreService.getUser(transaction.fromUserId)
+                val toUserResult = firestoreService.getUser(transaction.toUserId)
+                
+                if (fromUserResult.isSuccess && toUserResult.isSuccess) {
+                    val fromUser = fromUserResult.getOrNull()
+                    val toUser = toUserResult.getOrNull()
+                    
+                    if (fromUser != null && toUser != null) {
+                        val result = firestoreService.processTransactionWithBalanceUpdate(
+                            transaction = transaction,
+                            fromUserBalance = fromUser.balance - transaction.amount,
+                            toUserBalance = toUser.balance + transaction.amount
+                        )
+                        emit(result)
+                        return@flow
+                    }
+                }
+            }
+            
+            // For system transactions or if balance update fails, just create the transaction
             val result = firestoreService.createTransaction(transaction)
+            if (result.isSuccess && transaction.status == com.cashpal.app.models.TransactionStatus.COMPLETED) {
+                // Update balance for system transactions (e.g., welcome bonus)
+                if (transaction.fromUserId == "system" && transaction.toUserId != "system") {
+                    val toUserResult = firestoreService.getUser(transaction.toUserId)
+                    toUserResult.fold(
+                        onSuccess = { user ->
+                            if (user != null) {
+                                val newBalance = user.balance + transaction.amount
+                                firestoreService.updateUser(transaction.toUserId, mapOf(
+                                    "balance" to newBalance,
+                                    "updatedAt" to com.google.firebase.Timestamp.now()
+                                ))
+                            }
+                        },
+                        onFailure = { }
+                    )
+                }
+            }
             emit(result)
         } catch (e: Exception) {
             emit(Result.failure(e))
@@ -239,17 +285,40 @@ class CashPalRepository(
     }
     
     suspend fun getUserContacts(userId: String) = flow {
+        val result = firestoreService.getUserContacts(userId)
+        emit(result)
+    }.catch { e ->
+        android.util.Log.e("CashPalRepository", "Error getting user contacts", e)
+        emit(Result.failure(e))
+    }
+    
+    /**
+     * Get all users from the database (excluding current user)
+     * Used to show all registered users in contact search
+     */
+    suspend fun getAllUsers(excludeUserId: String? = null, limit: Int = 100) = flow {
+        val result = firestoreService.getAllUsers(excludeUserId, limit)
+        emit(result)
+    }.catch { e ->
+        android.util.Log.e("CashPalRepository", "Error getting all users", e)
+        emit(Result.failure(e))
+    }
+    
+    suspend fun updateContact(contactId: String, updates: Map<String, Any>) = flow {
         try {
-            val result = firestoreService.getUserContacts(userId)
+            val result = firestoreService.updateContact(contactId, updates)
             emit(result)
         } catch (e: Exception) {
             emit(Result.failure(e))
         }
     }
     
-    suspend fun updateContact(contactId: String, updates: Map<String, Any>) = flow {
+    /**
+     * Find a contact by owner userId and contactUserId
+     */
+    suspend fun findContactByUserId(userId: String, contactUserId: String) = flow {
         try {
-            val result = firestoreService.updateContact(contactId, updates)
+            val result = firestoreService.findContactByUserId(userId, contactUserId)
             emit(result)
         } catch (e: Exception) {
             emit(Result.failure(e))
@@ -365,10 +434,119 @@ class CashPalRepository(
                 toUserBalance = toUser.balance + amount
             )
             
+            // If transaction was successful, create/update contacts
+            if (result.isSuccess) {
+                // Create/update contact for sender (showing recipient)
+                createOrUpdateContactAfterTransaction(
+                    userId = fromUserId,
+                    otherUser = toUser,
+                    transactionDate = transaction.createdAt
+                )
+                
+                // Create/update contact for receiver (showing sender)
+                createOrUpdateContactAfterTransaction(
+                    userId = toUserId,
+                    otherUser = fromUser,
+                    transactionDate = transaction.createdAt
+                )
+            }
+            
             emit(result)
             
         } catch (e: Exception) {
             emit(Result.failure(e))
+        }
+    }
+    
+    /**
+     * Create or update a contact after a successful transaction
+     * This ensures contacts are automatically created/updated when users send money
+     */
+    private suspend fun createOrUpdateContactAfterTransaction(
+        userId: String,
+        otherUser: com.cashpal.app.models.User,
+        transactionDate: com.google.firebase.Timestamp
+    ) {
+        try {
+            // Find existing contact using first() instead of collect
+            val contactResult = findContactByUserId(userId, otherUser.id).first()
+            
+            contactResult.fold(
+                onSuccess = { existingContact ->
+                    if (existingContact != null) {
+                        // Update existing contact
+                        val currentTotal = existingContact.totalTransactions
+                        val isFrequent = (currentTotal + 1) >= 3 // Mark as frequent after 3+ transactions
+                        
+                        val updates = mapOf(
+                            "lastTransactionDate" to transactionDate,
+                            "totalTransactions" to (currentTotal + 1),
+                            "isFrequent" to isFrequent,
+                            "updatedAt" to com.google.firebase.Timestamp.now()
+                        )
+                        
+                        // Update contact name/email/phone if they changed
+                        val updateMap = mutableMapOf<String, Any>()
+                        updateMap.putAll(updates)
+                        
+                        if (otherUser.displayName.isNotEmpty() && existingContact.name != otherUser.displayName) {
+                            updateMap["name"] = otherUser.displayName
+                        }
+                        if (!otherUser.email.isNullOrBlank() && existingContact.email != otherUser.email) {
+                            updateMap["email"] = otherUser.email
+                        }
+                        if (!otherUser.phoneNumber.isNullOrBlank() && existingContact.phone != otherUser.phoneNumber) {
+                            updateMap["phone"] = otherUser.phoneNumber
+                        }
+                        if (otherUser.avatarUrl != null && existingContact.avatarUrl != otherUser.avatarUrl) {
+                            updateMap["avatarUrl"] = otherUser.avatarUrl
+                        }
+                        
+                        updateContact(existingContact.id, updateMap).collect { updateResult ->
+                            updateResult.fold(
+                                onSuccess = {
+                                    android.util.Log.d("CashPalRepository", "Updated contact: ${existingContact.id}")
+                                },
+                                onFailure = { error ->
+                                    android.util.Log.w("CashPalRepository", "Failed to update contact", error)
+                                }
+                            )
+                        }
+                    } else {
+                        // Create new contact
+                        val newContact = com.cashpal.app.models.Contact(
+                            userId = userId,
+                            contactUserId = otherUser.id,
+                            name = otherUser.displayName.ifEmpty { otherUser.email },
+                            email = otherUser.email.takeIf { it.isNotEmpty() },
+                            phone = otherUser.phoneNumber,
+                            avatarUrl = otherUser.avatarUrl,
+                            isFrequent = false, // Will become frequent after 3+ transactions
+                            lastTransactionDate = transactionDate,
+                            totalTransactions = 1,
+                            createdAt = com.google.firebase.Timestamp.now(),
+                            updatedAt = com.google.firebase.Timestamp.now()
+                        )
+                        
+                        createContact(newContact).collect { createResult ->
+                            createResult.fold(
+                                onSuccess = {
+                                    android.util.Log.d("CashPalRepository", "Created contact: $it")
+                                },
+                                onFailure = { error ->
+                                    android.util.Log.w("CashPalRepository", "Failed to create contact", error)
+                                }
+                            )
+                        }
+                    }
+                },
+                onFailure = { error ->
+                    android.util.Log.w("CashPalRepository", "Failed to find contact", error)
+                }
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("CashPalRepository", "Error in createOrUpdateContactAfterTransaction", e)
+            // Don't fail the transaction if contact creation/update fails
         }
     }
     
@@ -450,6 +628,30 @@ class CashPalRepository(
             android.util.Log.e("CashPalRepository", "Failed to initialize collections for new user", e)
             // Don't fail the entire signup process if initialization fails
         }
+    }
+    
+    /**
+     * Normalize phone number by removing spaces, dashes, and parentheses
+     * but preserving the + prefix if present
+     */
+    private fun normalizePhoneNumber(phone: String): String {
+        return if (phone.startsWith("+")) {
+            "+" + phone.substring(1).filter { it.isDigit() }
+        } else {
+            phone.filter { it.isDigit() }
+        }
+    }
+    
+    /**
+     * Find user by phone number for money transfers
+     */
+    suspend fun findUserByPhoneNumber(phoneNumber: String) = flow {
+        val normalizedPhone = normalizePhoneNumber(phoneNumber)
+        val result = firestoreService.findUserByPhoneNumber(normalizedPhone)
+        emit(result)
+    }.catch { e ->
+        android.util.Log.e("CashPalRepository", "Error finding user by phone number", e)
+        emit(Result.failure(e))
     }
 }
 

@@ -184,7 +184,7 @@
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:text="Download CSV"
+                android:text="Export"
                 android:textColor="@color/primary"
                 android:drawableStart="@drawable/ic_download"
                 android:drawablePadding="8dp"

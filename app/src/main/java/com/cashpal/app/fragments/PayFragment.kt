@@ -28,7 +28,9 @@ import com.google.firebase.Timestamp
 import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.firstOrNull
 
 class PayFragment : Fragment() {
 
@@ -160,23 +162,103 @@ class PayFragment : Fragment() {
     private fun loadContacts(userId: String) {
         contactsJob?.cancel()
         contactsJob = viewLifecycleOwner.lifecycleScope.launch {
-            repository.getUserContacts(userId).collect { result ->
-                result.fold(
-                    onSuccess = { contacts ->
-                        val resolved = contacts?.takeIf { it.isNotEmpty() } ?: createDummyContacts()
-                        updateContactLists(resolved)
-                    },
-                    onFailure = { error ->
-                        val reason = error.localizedMessage?.takeIf { it.isNotBlank() }
-                        val message = reason?.let {
-                            getString(R.string.pay_contacts_error, it)
-                        } ?: getString(R.string.pay_contacts_error_generic)
-                        showMessage(message)
-                        updateContactLists(createDummyContacts())
-                    }
-                )
+            // Load both contacts and all users
+            launch {
+                repository.getUserContacts(userId).collect { contactsResult ->
+                    contactsResult.fold(
+                        onSuccess = { contacts ->
+                            android.util.Log.d("PayFragment", "Loaded ${contacts.size} contacts from Firebase")
+                            
+                            // Always load all users to show in contact list
+                            launch {
+                                repository.getAllUsers(excludeUserId = userId, limit = 100).collect { usersResult ->
+                                    usersResult.fold(
+                                        onSuccess = { users ->
+                                            android.util.Log.d("PayFragment", "Loaded ${users.size} users from Firebase")
+                                            
+                                            // Convert users to contacts and combine with existing contacts
+                                            val userContacts = users.map { user ->
+                                                convertUserToContact(user, userId)
+                                            }
+                                            
+                                            // Combine contacts and users, avoiding duplicates
+                                            // Prefer existing contacts over user conversions (contacts may have transaction history)
+                                            val contactMap = contacts.associateBy { it.contactUserId ?: it.id }
+                                            val userMap = userContacts.associateBy { it.contactUserId ?: it.id }
+                                            
+                                            // Merge: prefer contacts, then add users that aren't in contacts
+                                            val combinedContacts = contacts + userMap.values.filter { userContact ->
+                                                val key = userContact.contactUserId ?: userContact.id
+                                                !contactMap.containsKey(key)
+                                            }
+                                            
+                                            android.util.Log.d("PayFragment", "Total combined contacts: ${combinedContacts.size}")
+                                            
+                                            // Use combined contacts (don't fall back to dummy data)
+                                            updateContactLists(combinedContacts)
+                                        },
+                                        onFailure = { usersError ->
+                                            android.util.Log.e("PayFragment", "Failed to load users", usersError)
+                                            // Show contacts even if users fail (don't use dummy data)
+                                            android.util.Log.d("PayFragment", "Showing ${contacts.size} contacts only")
+                                            updateContactLists(contacts)
+                                        }
+                                    )
+                                }
+                            }
+                        },
+                        onFailure = { error ->
+                            android.util.Log.e("PayFragment", "Failed to load contacts", error)
+                            val reason = error.localizedMessage?.takeIf { it.isNotBlank() }
+                            val message = reason?.let {
+                                getString(R.string.pay_contacts_error, it)
+                            } ?: getString(R.string.pay_contacts_error_generic)
+                            showMessage(message)
+                            
+                            // Try to load users even if contacts fail
+                            launch {
+                                repository.getAllUsers(excludeUserId = userId, limit = 100).collect { usersResult ->
+                                    usersResult.fold(
+                                        onSuccess = { users ->
+                                            android.util.Log.d("PayFragment", "Loaded ${users.size} users as fallback")
+                                            val userContacts = users.map { user ->
+                                                convertUserToContact(user, userId)
+                                            }
+                                            updateContactLists(userContacts)
+                                        },
+                                        onFailure = { usersError ->
+                                            android.util.Log.e("PayFragment", "Failed to load users as fallback", usersError)
+                                            // Show empty state instead of dummy data
+                                            updateContactLists(emptyList())
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
+    }
+    
+    /**
+     * Convert a User model to a Contact model so it can be displayed in the contact list
+     */
+    private fun convertUserToContact(user: com.cashpal.app.models.User, currentUserId: String): Contact {
+        return Contact(
+            id = "user-${user.id}", // Prefix to avoid conflicts
+            userId = currentUserId,
+            contactUserId = user.id, // This is the key field - links to the user
+            name = user.displayName.ifEmpty { user.email },
+            email = user.email.takeIf { it.isNotEmpty() },
+            phone = user.phoneNumber,
+            avatarUrl = user.avatarUrl,
+            isFrequent = false, // New users won't be frequent yet
+            lastTransactionDate = null,
+            totalTransactions = 0,
+            createdAt = user.createdAt,
+            updatedAt = user.updatedAt
+        )
     }
 
     private fun updateContactLists(contacts: List<Contact>) {
@@ -334,6 +416,8 @@ class PayFragment : Fragment() {
                             playSuccessSound()
                             showMessage(getString(R.string.pay_transfer_success, recipient.name))
                             refreshContactsAfterTransfer()
+                            // Refresh balance in MainActivity
+                            (activity as? com.cashpal.app.MainActivity)?.refreshBalance()
                         },
                         onFailure = { error ->
                             playFailureSound()
@@ -383,11 +467,6 @@ class PayFragment : Fragment() {
     }
 
     private fun showContactSelectionSheet() {
-        if (!hasLoadedContacts) {
-            showMessage(getString(R.string.pay_contacts_loading))
-            return
-        }
-
         val dialog = BottomSheetDialog(requireContext())
         val sheetView = layoutInflater.inflate(R.layout.bottom_sheet_contact_list, null)
         val recyclerView = sheetView.findViewById<RecyclerView>(R.id.rv_contact_list)
@@ -411,31 +490,90 @@ class PayFragment : Fragment() {
             this.adapter = adapter
         }
 
-        val allItems = cachedContacts.map { mapToPayContactItem(it) }
+        // Show loading state initially
+        emptyView.isVisible = false
+        recyclerView.isVisible = false
 
         fun render(items: List<PayContactItem>) {
+            android.util.Log.d("PayFragment", "Rendering ${items.size} contacts in selection sheet")
             adapter.submitList(items)
             emptyView.isVisible = items.isEmpty()
+            recyclerView.isVisible = items.isNotEmpty()
         }
 
-        render(allItems)
-
-        searchInput?.addTextChangedListener { text ->
-            val query = text?.toString()?.trim().orEmpty()
-            if (query.isBlank()) {
-                render(allItems)
-            } else {
-                val filtered = allItems.filter { item ->
-                    item.name.contains(query, ignoreCase = true) ||
-                        (item.subtitle?.contains(query, ignoreCase = true) == true) ||
-                        (item.phone?.contains(query, ignoreCase = true) == true)
+        // Load contacts directly when showing the sheet
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val userId = currentUserId ?: run {
+                    showMessage(getString(R.string.pay_user_not_signed_in))
+                    dialog.dismiss()
+                    return@launch
                 }
-                render(filtered)
+
+                // Load contacts (will return empty list if collection doesn't exist)
+                val contactsResult = repository.getUserContacts(userId).first()
+                val contacts = contactsResult.getOrNull() ?: emptyList()
+                
+                android.util.Log.d("PayFragment", "Loaded ${contacts.size} contacts from Firebase")
+
+                // Always load all users to show in contact list
+                val usersResult = repository.getAllUsers(excludeUserId = userId, limit = 100).first()
+                val users = usersResult.getOrNull() ?: emptyList()
+                
+                android.util.Log.d("PayFragment", "Loaded ${users.size} users from Firebase")
+
+                // Convert users to contacts
+                val userContacts = users.map { user ->
+                    convertUserToContact(user, userId)
+                }
+
+                // Combine contacts and users, avoiding duplicates
+                val contactMap = contacts.associateBy { it.contactUserId ?: it.id }
+                val combinedContacts = contacts + userContacts.filter { userContact ->
+                    val key = userContact.contactUserId ?: userContact.id
+                    !contactMap.containsKey(key)
+                }
+
+                android.util.Log.d("PayFragment", "Total combined contacts: ${combinedContacts.size}")
+
+                // Update cached contacts
+                cachedContacts = combinedContacts
+                hasLoadedContacts = true
+
+                // Render all contacts in the sheet
+                val allItems = combinedContacts.map { mapToPayContactItem(it) }
+                render(allItems)
+
+                // Setup search
+                searchInput?.addTextChangedListener { text ->
+                    val query = text?.toString()?.trim().orEmpty()
+                    if (query.isBlank()) {
+                        render(allItems)
+                    } else {
+                        val filtered = allItems.filter { item ->
+                            item.name.contains(query, ignoreCase = true) ||
+                                (item.subtitle?.contains(query, ignoreCase = true) == true) ||
+                                (item.phone?.contains(query, ignoreCase = true) == true)
+                        }
+                        render(filtered)
+                    }
+                }
+
+            } catch (e: Exception) {
+                android.util.Log.e("PayFragment", "Error loading contacts for selection sheet", e)
+                emptyView.isVisible = true
+                recyclerView.isVisible = false
+                showMessage("Failed to load contacts: ${e.message}")
             }
         }
 
         dialog.setContentView(sheetView)
         dialog.show()
+    }
+    
+    private fun showContactSelectionSheetInternal() {
+        // This method is no longer needed, but keeping for backward compatibility
+        showContactSelectionSheet()
     }
 
     private fun showPhoneEntrySheet() {
@@ -454,9 +592,13 @@ class PayFragment : Fragment() {
             }
 
             inputLayout?.error = null
-            val normalized = digits
+            
+            // Normalize phone number (preserve + prefix if present)
+            val normalizedPhone = normalizePhoneForSearch(rawInput)
+            
+            // Check cached contacts first
             val matchedContact = cachedContacts.firstOrNull { contact ->
-                normalizePhone(contact.phone) == normalized
+                contact.phone?.let { normalizePhoneForSearch(it) == normalizedPhone } == true
             }
 
             dialog.dismiss()
@@ -464,18 +606,71 @@ class PayFragment : Fragment() {
             if (matchedContact != null) {
                 handleContactSelection(mapToPayContactItem(matchedContact))
             } else {
-                val displayNumber = if (rawInput.startsWith("+")) rawInput else "+$digits"
-                selectedRecipient = PayContactItem(
-                    id = "phone-$normalized",
-                    name = displayNumber,
-                    initials = buildInitials(displayNumber),
-                    colorHex = colorPalette.randomFromSeed(displayNumber),
-                    subtitle = getString(R.string.pay_phone_trailing_note),
-                    contactUserId = null,
-                    phone = displayNumber
-                )
-                updateSelectedRecipientUI()
-                showMessage(getString(R.string.pay_phone_contact_not_found))
+                // Try to find user by phone number in Firebase
+                viewLifecycleOwner.lifecycleScope.launch {
+                    // Try multiple formats: with +, without +, and digits only
+                    val searchVariants = mutableListOf<String>()
+                    
+                    if (normalizedPhone.startsWith("+")) {
+                        searchVariants.add(normalizedPhone) // With +
+                        searchVariants.add(normalizedPhone.substring(1)) // Without +
+                    } else {
+                        searchVariants.add("+$normalizedPhone") // Try with +
+                        searchVariants.add(normalizedPhone) // Without +
+                    }
+                    
+                    // Remove duplicates
+                    val uniqueVariants = searchVariants.distinct()
+                    
+                    var foundUser: com.cashpal.app.models.User? = null
+                    
+                    // Try each variant sequentially
+                    for (searchPhone in uniqueVariants) {
+                        if (foundUser != null) break
+                        
+                        val result = repository.findUserByPhoneNumber(searchPhone).first()
+                        result.fold(
+                            onSuccess = { user ->
+                                if (user != null) {
+                                    foundUser = user
+                                }
+                            },
+                            onFailure = { error ->
+                                android.util.Log.e("PayFragment", "Failed to find user by phone number: $searchPhone", error)
+                            }
+                        )
+                    }
+                    
+                    // Update UI based on result
+                    if (foundUser != null) {
+                        val displayNumber = if (normalizedPhone.startsWith("+")) normalizedPhone else "+$normalizedPhone"
+                        selectedRecipient = PayContactItem(
+                            id = foundUser!!.id,
+                            name = foundUser!!.displayName.ifEmpty { foundUser!!.email },
+                            initials = buildInitials(foundUser!!.displayName.ifEmpty { foundUser!!.email }),
+                            colorHex = colorPalette.randomFromSeed(foundUser!!.id),
+                            subtitle = displayNumber,
+                            contactUserId = foundUser!!.id,
+                            phone = foundUser!!.phoneNumber ?: displayNumber
+                        )
+                        updateSelectedRecipientUI()
+                        showMessage(getString(R.string.pay_phone_user_found))
+                    } else {
+                        // User not found in any variant
+                        val displayNumber = if (normalizedPhone.startsWith("+")) normalizedPhone else "+$normalizedPhone"
+                        selectedRecipient = PayContactItem(
+                            id = "phone-${normalizedPhone.hashCode()}",
+                            name = displayNumber,
+                            initials = buildInitials(displayNumber),
+                            colorHex = colorPalette.randomFromSeed(displayNumber),
+                            subtitle = getString(R.string.pay_phone_trailing_note),
+                            contactUserId = null,
+                            phone = displayNumber
+                        )
+                        updateSelectedRecipientUI()
+                        showMessage(getString(R.string.pay_phone_contact_not_found))
+                    }
+                }
             }
         }
 
@@ -490,10 +685,19 @@ class PayFragment : Fragment() {
     private fun navigateToNfcPayment() {
         (activity as? com.cashpal.app.MainActivity)?.openNfcPayment()
     }
-
-    private fun normalizePhone(phone: String?): String {
-        return phone?.filter { it.isDigit() } ?: ""
+    
+    /**
+     * Normalize phone number for search/comparison
+     * Preserves + prefix if present, removes spaces, dashes, parentheses
+     */
+    private fun normalizePhoneForSearch(phone: String): String {
+        return if (phone.startsWith("+")) {
+            "+" + phone.substring(1).filter { it.isDigit() }
+        } else {
+            phone.filter { it.isDigit() }
+        }
     }
+
 
     private fun updateSelectedRecipientUI() {
         if (!this::recipientNameTextView.isInitialized) return

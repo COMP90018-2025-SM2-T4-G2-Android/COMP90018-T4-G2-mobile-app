@@ -54,11 +54,12 @@ class SignUpActivity : AppCompatActivity() {
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
             val displayName = binding.etDisplayName.text.toString().trim()
+            val phoneNumber = binding.etPhoneNumber.text.toString().trim()
             
-            if (email.isNotEmpty() && password.isNotEmpty() && displayName.isNotEmpty()) {
-                signUp(email, password, displayName)
+            if (email.isNotEmpty() && password.isNotEmpty() && displayName.isNotEmpty() && phoneNumber.isNotEmpty()) {
+                signUp(email, password, displayName, phoneNumber)
             } else {
-                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please fill in all fields including phone number", Toast.LENGTH_SHORT).show()
             }
         }
         
@@ -71,9 +72,9 @@ class SignUpActivity : AppCompatActivity() {
         }
     }
     
-    private fun signUp(email: String, password: String, displayName: String) {
+    private fun signUp(email: String, password: String, displayName: String, phoneNumber: String) {
         lifecycleScope.launch {
-            repository.signUpWithEmail(email, password, displayName).collect { result ->
+            repository.signUpWithEmail(email, password, displayName, phoneNumber).collect { result ->
                 result.fold(
                     onSuccess = { user ->
                         Toast.makeText(this@SignUpActivity, "Account created successfully", Toast.LENGTH_SHORT).show()

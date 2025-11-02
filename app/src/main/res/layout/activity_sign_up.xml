@@ -83,6 +83,26 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- Phone Number Field -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:hint="Phone Number"
+                    app:boxStrokeColor="#6B46C1"
+                    app:hintTextColor="#6B46C1"
+                    app:helperText="Required for money transfers"
+                    app:helperTextEnabled="true">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etPhoneNumber"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="phone"
+                        android:nextFocusDown="@+id/etPassword" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
                 <!-- Password Field -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"

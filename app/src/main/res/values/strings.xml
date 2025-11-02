@@ -78,6 +78,7 @@
     <string name="pay_phone_sheet_hint">Enter phone number</string>
     <string name="pay_phone_sheet_continue">Continue</string>
     <string name="pay_phone_contact_not_found">We couldn\'t find a CashPal account for that phone number.</string>
+    <string name="pay_phone_user_found">User found! You can now send money.</string>
     <string name="pay_phone_enter_number">Please enter a valid phone number.</string>
     <string name="pay_vendor_not_available">Vendor payments are coming soon.</string>
     <string name="pay_recipient_label">Recipient</string>
