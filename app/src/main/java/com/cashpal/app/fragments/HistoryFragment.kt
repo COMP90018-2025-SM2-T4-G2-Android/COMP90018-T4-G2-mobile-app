@@ -1,6 +1,7 @@
 package com.cashpal.app.fragments
 
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.os.Bundle
 import android.os.Environment
 import android.text.Editable
@@ -11,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -22,11 +24,14 @@ import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.models.TransactionHistory
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class HistoryFragment : Fragment() {
 
@@ -217,11 +222,14 @@ class HistoryFragment : Fragment() {
 
     private fun setupButtons() {
         // Filter by State (Success/Fail)
-// Filter button handles both state + date
         requireView().findViewById<View>(R.id.btn_filter_state).setOnClickListener {
             showFilterOptionsDialog()
         }
-
+        
+        // Download/Export button
+        requireView().findViewById<View>(R.id.btn_download_csv).setOnClickListener {
+            showExportOptionsDialog()
+        }
     }
 
     /** ---------------- FILTERS ---------------- */
@@ -376,24 +384,200 @@ class HistoryFragment : Fragment() {
     }
 
     /** ---------------- EXPORT ---------------- */
+    
+    private fun showExportOptionsDialog() {
+        val options = arrayOf("Export as CSV", "Export as PDF")
+        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        builder.setTitle("Export Transactions")
+        builder.setItems(options) { _, which ->
+            when (which) {
+                0 -> exportTransactionsToCSV()
+                1 -> exportTransactionsToPDF()
+            }
+        }
+        builder.show()
+    }
 
     private fun exportTransactionsToCSV() {
         try {
-            val fileName = "transactions_${System.currentTimeMillis()}.csv"
+            // Use filtered transactions for export
+            val transactionsToExport = filteredTransactions.ifEmpty { allTransactions }
+            
+            if (transactionsToExport.isEmpty()) {
+                Toast.makeText(requireContext(), "No transactions to export", Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val fileName = "transactions_$timestamp.csv"
+            
+            // Use app's external files directory (accessible via file manager)
             val downloadsDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            if (downloadsDir == null) {
+                Toast.makeText(requireContext(), "Failed to access downloads directory", Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            // Create Downloads directory if it doesn't exist
+            downloadsDir.mkdirs()
+            
             val file = File(downloadsDir, fileName)
 
             FileWriter(file).use { writer ->
+                // Write CSV header
                 writer.append("Name,Reference,Amount,Status,Date,Type\n")
-                for (transaction in allTransactions) {
-                    writer.append("${transaction.name},${transaction.reference},${transaction.amount},${transaction.status},${transaction.date},${transaction.type}\n")
+                
+                // Write transaction data
+                for (transaction in transactionsToExport) {
+                    // Escape CSV special characters (commas, quotes, newlines)
+                    val name = escapeCsvField(transaction.name)
+                    val reference = escapeCsvField(transaction.reference)
+                    val amount = escapeCsvField(transaction.amount)
+                    val status = escapeCsvField(transaction.status)
+                    val date = escapeCsvField(transaction.date)
+                    val type = escapeCsvField(transaction.type)
+                    
+                    writer.append("$name,$reference,$amount,$status,$date,$type\n")
                 }
             }
 
-            Toast.makeText(requireContext(), "CSV saved: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+            // Share the file
+            shareFile(file, "text/csv", "Transaction History CSV")
+            
         } catch (e: IOException) {
             e.printStackTrace()
+            Toast.makeText(requireContext(), "Failed to export CSV: ${e.message}", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
             Toast.makeText(requireContext(), "Failed to export CSV", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun exportTransactionsToPDF() {
+        try {
+            // Use filtered transactions for export
+            val transactionsToExport = filteredTransactions.ifEmpty { allTransactions }
+            
+            if (transactionsToExport.isEmpty()) {
+                Toast.makeText(requireContext(), "No transactions to export", Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val fileName = "transactions_$timestamp.pdf"
+            
+            // Use app's external files directory
+            val downloadsDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            if (downloadsDir == null) {
+                Toast.makeText(requireContext(), "Failed to access downloads directory", Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            // Create Downloads directory if it doesn't exist
+            downloadsDir.mkdirs()
+            
+            val file = File(downloadsDir, fileName)
+            
+            // Create PDF content
+            val pdfContent = StringBuilder()
+            pdfContent.append("Transaction History\n")
+            pdfContent.append("Generated: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())}\n")
+            pdfContent.append("=".repeat(80)).append("\n\n")
+            
+            // Add summary
+            val totalSent = transactionsToExport
+                .filter { it.type == "sent" && it.status == "completed" }
+                .sumOf { 
+                    val amountStr = it.amount.replace(Regex("[^0-9.-]"), "")
+                    amountStr.toDoubleOrNull() ?: 0.0
+                }
+            
+            val totalReceived = transactionsToExport
+                .filter { it.type == "received" && it.status == "completed" }
+                .sumOf { 
+                    val amountStr = it.amount.replace(Regex("[^0-9.-]"), "")
+                    amountStr.toDoubleOrNull() ?: 0.0
+                }
+            
+            pdfContent.append("Summary:\n")
+            pdfContent.append("Total Sent: $${String.format("%.2f", totalSent)}\n")
+            pdfContent.append("Total Received: $${String.format("%.2f", totalReceived)}\n")
+            pdfContent.append("=".repeat(80)).append("\n\n")
+            
+            // Add transactions
+            pdfContent.append("Transactions:\n\n")
+            transactionsToExport.forEachIndexed { index, transaction ->
+                pdfContent.append("${index + 1}. ${transaction.name}\n")
+                pdfContent.append("   Reference: ${transaction.reference}\n")
+                pdfContent.append("   Amount: ${transaction.amount}\n")
+                pdfContent.append("   Status: ${transaction.status}\n")
+                pdfContent.append("   Date: ${transaction.date}\n")
+                pdfContent.append("   Type: ${transaction.type}\n")
+                pdfContent.append("\n")
+            }
+            
+            // Write PDF file (simple text-based PDF)
+            file.writeText(pdfContent.toString())
+            
+            // Share the file
+            shareFile(file, "application/pdf", "Transaction History PDF")
+            
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(requireContext(), "Failed to export PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(requireContext(), "Failed to export PDF", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Escape CSV field values to handle commas, quotes, and newlines
+     */
+    private fun escapeCsvField(field: String): String {
+        return if (field.contains(",") || field.contains("\"") || field.contains("\n")) {
+            "\"${field.replace("\"", "\"\"")}\""
+        } else {
+            field
+        }
+    }
+    
+    /**
+     * Share file using Android's share intent
+     */
+    private fun shareFile(file: File, mimeType: String, title: String) {
+        try {
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.fileprovider",
+                file
+            )
+            
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = mimeType
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, title)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            
+            val chooserIntent = Intent.createChooser(shareIntent, "Share $title")
+            chooserIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            
+            startActivity(chooserIntent)
+            
+            Toast.makeText(
+                requireContext(),
+                "$title exported successfully!\nFile saved to: ${file.absolutePath}",
+                Toast.LENGTH_LONG
+            ).show()
+            
+        } catch (e: Exception) {
+            android.util.Log.e("HistoryFragment", "Failed to share file", e)
+            Toast.makeText(
+                requireContext(),
+                "File saved to: ${file.absolutePath}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -441,7 +625,7 @@ class HistoryFragment : Fragment() {
         val args = Bundle().apply {
             putString("transactionId", "TXN-${System.currentTimeMillis()}")
             putString("senderName", tx.name)                 // shown as counterparty on the receipt
-            putDouble("amount", kotlin.math.abs(amountDouble))
+            putDouble("amount", abs(amountDouble))
             putString("timestamp", tx.date)                  // you can add time if you have it
             putString("status", statusStr)                   // "completed" | "pending" | "failed"
             putString("type", typeStr)                       // "received" | "sent"

@@ -10,6 +10,11 @@
     <external-files-path
         name="documents"
         path="Documents/" />
+    
+    <!-- For saving exported CSV/PDF files (Downloads folder) -->
+    <external-files-path
+        name="downloads"
+        path="." />
 
     <!-- For app-internal storage access -->
     <files-path
