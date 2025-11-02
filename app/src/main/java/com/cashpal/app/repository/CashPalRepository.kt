@@ -18,18 +18,21 @@ class CashPalRepository(
     fun getCurrentUser(): FirebaseUser? = authService.getCurrentUser()
     fun isUserSignedIn(): Boolean = authService.isUserSignedIn()
     
-    suspend fun signUpWithEmail(email: String, password: String, displayName: String) = flow {
+    suspend fun signUpWithEmail(email: String, password: String, displayName: String, phoneNumber: String) = flow {
         try {
             val authResult = authService.signUpWithEmail(email, password).await()
             val user = authResult.user
             
             if (user != null) {
+                // Normalize phone number (remove spaces, dashes, etc. but keep + prefix)
+                val normalizedPhone = normalizePhoneNumber(phoneNumber)
+                
                 // Create user profile in Firestore with default values
                 val userProfile = com.cashpal.app.models.User(
                     id = user.uid,
                     email = user.email ?: "",
                     displayName = displayName,
-                    phoneNumber = user.phoneNumber,
+                    phoneNumber = normalizedPhone,
                     avatarUrl = user.photoUrl?.toString(),
                     balance = 0.0, // Start with 0 balance
                     currency = "AUD", // Default currency
@@ -118,7 +121,7 @@ class CashPalRepository(
                         id = user.uid,
                         email = user.email ?: "",
                         displayName = user.displayName ?: "",
-                        phoneNumber = user.phoneNumber,
+                        phoneNumber = user.phoneNumber?.let { normalizePhoneNumber(it) },
                         avatarUrl = user.photoUrl?.toString(),
                         balance = 0.0,
                         currency = "AUD",
@@ -283,6 +286,19 @@ class CashPalRepository(
     suspend fun getUserContacts(userId: String) = flow {
         try {
             val result = firestoreService.getUserContacts(userId)
+            emit(result)
+        } catch (e: Exception) {
+            emit(Result.failure(e))
+        }
+    }
+    
+    /**
+     * Get all users from the database (excluding current user)
+     * Used to show all registered users in contact search
+     */
+    suspend fun getAllUsers(excludeUserId: String? = null, limit: Int = 100) = flow {
+        try {
+            val result = firestoreService.getAllUsers(excludeUserId, limit)
             emit(result)
         } catch (e: Exception) {
             emit(Result.failure(e))
@@ -491,6 +507,31 @@ class CashPalRepository(
         } catch (e: Exception) {
             android.util.Log.e("CashPalRepository", "Failed to initialize collections for new user", e)
             // Don't fail the entire signup process if initialization fails
+        }
+    }
+    
+    /**
+     * Normalize phone number by removing spaces, dashes, and parentheses
+     * but preserving the + prefix if present
+     */
+    private fun normalizePhoneNumber(phone: String): String {
+        return if (phone.startsWith("+")) {
+            "+" + phone.substring(1).filter { it.isDigit() }
+        } else {
+            phone.filter { it.isDigit() }
+        }
+    }
+    
+    /**
+     * Find user by phone number for money transfers
+     */
+    suspend fun findUserByPhoneNumber(phoneNumber: String) = flow {
+        try {
+            val normalizedPhone = normalizePhoneNumber(phoneNumber)
+            val result = firestoreService.findUserByPhoneNumber(normalizedPhone)
+            emit(result)
+        } catch (e: Exception) {
+            emit(Result.failure(e))
         }
     }
 }

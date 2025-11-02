@@ -99,6 +99,32 @@ class FirestoreService {
         }
     }
     
+    /**
+     * Find user by phone number for money transfers
+     */
+    suspend fun findUserByPhoneNumber(phoneNumber: String): Result<com.cashpal.app.models.User?> {
+        return try {
+            // Query users collection by phoneNumber field
+            val query = db.collection("users")
+                .whereEqualTo("phoneNumber", phoneNumber)
+                .limit(1)
+            
+            val snapshot = query.get().await()
+            
+            if (snapshot.documents.isNotEmpty()) {
+                val user = snapshot.documents[0].toUserModel()
+                android.util.Log.d("FirestoreService", "Found user by phone number: ${user.id}")
+                Result.success(user)
+            } else {
+                android.util.Log.d("FirestoreService", "No user found with phone number: $phoneNumber")
+                Result.success(null)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FirestoreService", "Error finding user by phone number: $phoneNumber", e)
+            Result.failure(e)
+        }
+    }
+    
     // Transaction Operations
     suspend fun createTransaction(transaction: com.cashpal.app.models.Transaction): Result<String> {
         return try {
@@ -190,6 +216,37 @@ class FirestoreService {
             }
             Result.success(contacts)
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * Get all users from the database (excluding the current user)
+     * This is used to show all registered users in the contact search
+     */
+    suspend fun getAllUsers(excludeUserId: String? = null, limit: Int = 100): Result<List<com.cashpal.app.models.User>> {
+        return try {
+            var query: Query = db.collection("users")
+            
+            query = query.limit(limit.toLong())
+            
+            val snapshot = query.get().await()
+            val users = snapshot.documents.mapNotNull { doc ->
+                try {
+                    // Exclude current user if specified (filter by document ID)
+                    if (!excludeUserId.isNullOrBlank() && doc.id == excludeUserId) {
+                        null
+                    } else {
+                        doc.toUserModel()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("FirestoreService", "Error converting user document: ${doc.id}", e)
+                    null
+                }
+            }
+            Result.success(users)
+        } catch (e: Exception) {
+            android.util.Log.e("FirestoreService", "Error getting all users", e)
             Result.failure(e)
         }
     }
