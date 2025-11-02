@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
@@ -17,12 +18,19 @@ data class HuggingFaceRequest(
 
 data class HuggingFaceResponse(
     @SerializedName("generated_text")
-    val generatedText: String?
+    val generatedText: String?,
+    @SerializedName("error")
+    val error: String? = null
 )
 
 interface HuggingFaceApi {
-    @POST("models/microsoft/DialoGPT-medium")
-    suspend fun chat(@Body request: HuggingFaceRequest): List<HuggingFaceResponse>
+    // Note: If you get 404 errors, try these alternative models:
+    // - "models/microsoft/DialoGPT-small" (smaller but more reliable)
+    // - "models/gpt2" (basic text generation)
+    // - "models/distilgpt2" (faster version)
+    // Make sure the model exists on HuggingFace: https://huggingface.co/models
+    @POST("models/microsoft/DialoGPT-small")
+    suspend fun chat(@Body request: HuggingFaceRequest): retrofit2.Response<List<HuggingFaceResponse>>
 }
 
 object HuggingFaceService {

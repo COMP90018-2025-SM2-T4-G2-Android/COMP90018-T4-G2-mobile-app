@@ -29,6 +29,10 @@ android {
         
         val hfApiKey = localProperties.getProperty("HF_API_KEY", "")
         buildConfigField("String", "HF_API_KEY", "\"$hfApiKey\"")
+        
+        // Read Gemini API key from local.properties
+        val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY", "")
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     buildTypes {
