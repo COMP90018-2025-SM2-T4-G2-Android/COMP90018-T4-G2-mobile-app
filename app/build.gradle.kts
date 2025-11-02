@@ -30,34 +30,32 @@ android {
         geminiApiKey = System.getenv("GEMINI_API_KEY") ?: ""
         
         // Try gradle.properties (project-level properties)
-        if (hfApiKey.isEmpty() || geminiApiKey.isEmpty()) {
-            val gradleProperties = rootProject.file("gradle.properties")
-            if (gradleProperties.exists()) {
-                gradleProperties.readLines().forEach { line ->
-                    when {
-                        line.startsWith("HF_API_KEY=") && hfApiKey.isEmpty() -> {
-                            hfApiKey = line.substringAfter("=").trim()
-                        }
-                        line.startsWith("GEMINI_API_KEY=") && geminiApiKey.isEmpty() -> {
-                            geminiApiKey = line.substringAfter("=").trim()
-                        }
+        // Check each key independently to maintain proper precedence
+        val gradleProperties = rootProject.file("gradle.properties")
+        if (gradleProperties.exists()) {
+            gradleProperties.readLines().forEach { line ->
+                when {
+                    line.startsWith("HF_API_KEY=") && hfApiKey.isEmpty() -> {
+                        hfApiKey = line.substringAfter("=").trim()
+                    }
+                    line.startsWith("GEMINI_API_KEY=") && geminiApiKey.isEmpty() -> {
+                        geminiApiKey = line.substringAfter("=").trim()
                     }
                 }
             }
         }
         
         // Fallback to local.properties (for local development)
-        if (hfApiKey.isEmpty() || geminiApiKey.isEmpty()) {
-            val localPropertiesFile = rootProject.file("local.properties")
-            if (localPropertiesFile.exists()) {
-                localPropertiesFile.readLines().forEach { line ->
-                    when {
-                        line.startsWith("HF_API_KEY=") && hfApiKey.isEmpty() -> {
-                            hfApiKey = line.substringAfter("=").trim()
-                        }
-                        line.startsWith("GEMINI_API_KEY=") && geminiApiKey.isEmpty() -> {
-                            geminiApiKey = line.substringAfter("=").trim()
-                        }
+        // Check each key independently to maintain proper precedence
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.readLines().forEach { line ->
+                when {
+                    line.startsWith("HF_API_KEY=") && hfApiKey.isEmpty() -> {
+                        hfApiKey = line.substringAfter("=").trim()
+                    }
+                    line.startsWith("GEMINI_API_KEY=") && geminiApiKey.isEmpty() -> {
+                        geminiApiKey = line.substringAfter("=").trim()
                     }
                 }
             }

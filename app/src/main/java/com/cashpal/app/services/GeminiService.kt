@@ -106,16 +106,17 @@ suspend fun GeminiApi.generateContentWithFallback(request: GeminiRequest): Respo
         val modelsResponse = listModels()
         if (modelsResponse.isSuccessful && modelsResponse.body()?.models != null) {
             val availableModels = modelsResponse.body()!!.models!!.map { it.name }
-            android.util.Log.e("GeminiService", "Available models: ${availableModels.joinToString()}")
+            val availableModelsStr = availableModels.joinToString()
+            android.util.Log.d("GeminiService", "Available models: $availableModelsStr")
         } else {
-            android.util.Log.e("GeminiService", "Failed to list models: ${modelsResponse.code()}")
+            android.util.Log.w("GeminiService", "Failed to list models: ${modelsResponse.code()}")
         }
     } catch (e: Exception) {
         android.util.Log.e("GeminiService", "Exception listing models: ${e.message}", e)
     }
     
     // Try gemini-2.5-flash first (confirmed available via API)
-    android.util.Log.e("GeminiService", "Attempting v1/models/gemini-2.5-flash")
+    android.util.Log.d("GeminiService", "Attempting v1/models/gemini-2.5-flash")
     val response1 = try {
         generateContent25Flash(request)
     } catch (e: Exception) {
@@ -123,20 +124,20 @@ suspend fun GeminiApi.generateContentWithFallback(request: GeminiRequest): Respo
         null
     }
     if (response1 != null && response1.isSuccessful) {
-        android.util.Log.e("GeminiService", "✅ SUCCESS with v1/models/gemini-2.5-flash")
+        android.util.Log.i("GeminiService", "✅ SUCCESS with v1/models/gemini-2.5-flash")
         return response1
     }
-    android.util.Log.e("GeminiService", "❌ Failed v1/models/gemini-2.5-flash: ${response1?.code()}")
+    android.util.Log.w("GeminiService", "❌ Failed v1/models/gemini-2.5-flash: ${response1?.code()}")
     response1?.errorBody()?.let { errorBody ->
         try {
-            android.util.Log.e("GeminiService", "Error body: ${errorBody.string()}")
+            android.util.Log.d("GeminiService", "Error body: ${errorBody.string()}")
         } catch (e: Exception) {
             android.util.Log.e("GeminiService", "Error reading error body: ${e.message}")
         }
     }
     
     // Try gemini-2.5-pro
-    android.util.Log.e("GeminiService", "Attempting v1/models/gemini-2.5-pro")
+    android.util.Log.d("GeminiService", "Attempting v1/models/gemini-2.5-pro")
     val response2 = try {
         generateContent25Pro(request)
     } catch (e: Exception) {
@@ -144,10 +145,10 @@ suspend fun GeminiApi.generateContentWithFallback(request: GeminiRequest): Respo
         null
     }
     if (response2 != null && response2.isSuccessful) {
-        android.util.Log.e("GeminiService", "✅ SUCCESS with v1/models/gemini-2.5-pro")
+        android.util.Log.i("GeminiService", "✅ SUCCESS with v1/models/gemini-2.5-pro")
         return response2
     }
-    android.util.Log.e("GeminiService", "❌ Failed v1/models/gemini-2.5-pro: ${response2?.code()}")
+    android.util.Log.w("GeminiService", "❌ Failed v1/models/gemini-2.5-pro: ${response2?.code()}")
     
     // Return the last response (or create a failed response if all failed)
     val mediaType = "application/json".toMediaTypeOrNull()!!

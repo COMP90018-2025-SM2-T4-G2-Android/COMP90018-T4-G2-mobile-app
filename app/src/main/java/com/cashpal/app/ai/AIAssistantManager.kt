@@ -71,12 +71,12 @@ class AIAssistantManager {
                 // Build context-aware system prompt
                 val systemPrompt = buildContext()
                 val systemMessage = """
-                    You are CashPal AI Assistant, a helpful financial assistant for the CashPal mobile payment app.
-                    
-                    $systemPrompt
-                    
-                    Please respond to the user's messages in a friendly, helpful, and concise manner.
-                """.trimIndent()
+                    |You are CashPal AI Assistant, a helpful financial assistant for the CashPal mobile payment app.
+                    |
+                    |$systemPrompt
+                    |
+                    |Please respond to the user's messages in a friendly, helpful, and concise manner.
+                """.trimMargin()
                 
                 // Build full conversation with system context
                 val fullConversation = mutableListOf<GeminiRequest.Content>().apply {
