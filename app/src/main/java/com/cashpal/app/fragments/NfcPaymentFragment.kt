@@ -4,6 +4,7 @@ import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.media.MediaPlayer
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.os.Bundle
@@ -96,6 +97,7 @@ class NfcPaymentFragment : Fragment() {
 
     private fun handleDetectedTag(@Suppress("UNUSED_PARAMETER") tag: Tag) {
         view?.post {
+            playSuccessSound()
             statusText.text = getString(R.string.nfc_payment_received)
             infoText.isVisible = true
             infoText.text = getString(R.string.nfc_payment_processing)
@@ -105,6 +107,16 @@ class NfcPaymentFragment : Fragment() {
                 statusText.text = getString(R.string.nfc_payment_status_ready)
             }
             infoText.postDelayed(resetStatusRunnable!!, 2000)
+        }
+    }
+    
+    private fun playSuccessSound() {
+        try {
+            val successSound = MediaPlayer.create(requireContext(), R.raw.success_sound)
+            successSound?.start()
+            successSound?.setOnCompletionListener { it.release() }
+        } catch (e: Exception) {
+            // Silently fail if sound can't be played
         }
     }
 

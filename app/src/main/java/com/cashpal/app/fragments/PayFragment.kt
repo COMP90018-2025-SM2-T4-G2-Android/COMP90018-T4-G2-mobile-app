@@ -1,5 +1,6 @@
 package com.cashpal.app.fragments
 
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -330,10 +331,12 @@ class PayFragment : Fragment() {
                     result.fold(
                         onSuccess = {
                             amountEditText.text?.clear()
+                            playSuccessSound()
                             showMessage(getString(R.string.pay_transfer_success, recipient.name))
                             refreshContactsAfterTransfer()
                         },
                         onFailure = { error ->
+                            playFailureSound()
                             val reason = error.localizedMessage?.takeIf { it.isNotBlank() }
                             val message = reason?.let {
                                 getString(R.string.pay_transfer_failed, it)
@@ -343,6 +346,7 @@ class PayFragment : Fragment() {
                     )
                 }
             } catch (e: Exception) {
+                playFailureSound()
                 val reason = e.localizedMessage?.takeIf { it.isNotBlank() }
                 val message = reason?.let {
                     getString(R.string.pay_transfer_failed, it)
@@ -356,6 +360,26 @@ class PayFragment : Fragment() {
 
     private fun refreshContactsAfterTransfer() {
         currentUserId?.let { loadContacts(it) }
+    }
+
+    private fun playSuccessSound() {
+        try {
+            val successSound = MediaPlayer.create(requireContext(), R.raw.success_sound)
+            successSound?.start()
+            successSound?.setOnCompletionListener { it.release() }
+        } catch (e: Exception) {
+            // Silently fail if sound can't be played
+        }
+    }
+
+    private fun playFailureSound() {
+        try {
+            val failSound = MediaPlayer.create(requireContext(), R.raw.failure_sound)
+            failSound?.start()
+            failSound?.setOnCompletionListener { it.release() }
+        } catch (e: Exception) {
+            // Silently fail if sound can't be played
+        }
     }
 
     private fun showContactSelectionSheet() {
