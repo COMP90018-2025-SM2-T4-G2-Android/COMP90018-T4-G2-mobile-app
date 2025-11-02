@@ -1,6 +1,8 @@
 package com.cashpal.app.fragments
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -26,7 +28,6 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.cashpal.app.adapters.RecentScanAdapter
 import com.cashpal.app.models.RecentScan
 
-
 class ScanFragment : Fragment() {
 
     private lateinit var startScanButton: Button
@@ -38,6 +39,8 @@ class ScanFragment : Fragment() {
 
     private lateinit var cameraExecutor: ExecutorService
     private var hasScanned = false  // prevent multiple triggers
+    
+    private val CAMERA_PERMISSION_REQUEST_CODE = 1001
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -59,9 +62,13 @@ class ScanFragment : Fragment() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        // Start camera on button click
+        // Start camera on button click or automatically if permissions granted
         startScanButton.setOnClickListener {
-            startCamera()
+            if (hasCameraPermission()) {
+                startCamera()
+            } else {
+                requestCameraPermission()
+            }
         }
 
         qrOption.setOnClickListener {
@@ -73,7 +80,6 @@ class ScanFragment : Fragment() {
         }
 
         // RecyclerView setup
-// Generate dummy list with 20 items for testing scroll
         val sampleScans = List(20) { i ->
             RecentScan(
                 vendor = "Vendor #$i",
@@ -88,10 +94,51 @@ class ScanFragment : Fragment() {
             Toast.makeText(requireContext(), "Scan Again: ${scan.vendor}", Toast.LENGTH_SHORT).show()
         }
 
-
-
         // Animate scanning line
         startScanningLineAnimation()
+        
+        // Check and request camera permission, then start camera automatically
+        if (hasCameraPermission()) {
+            startCamera()
+        } else {
+            requestCameraPermission()
+        }
+    }
+    
+    private fun hasCameraPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+    
+    private fun requestCameraPermission() {
+        requestPermissions(
+            arrayOf(Manifest.permission.CAMERA),
+            CAMERA_PERMISSION_REQUEST_CODE
+        )
+    }
+    
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, start camera
+                startCamera()
+            } else {
+                // Permission denied
+                Toast.makeText(
+                    requireContext(),
+                    "Camera permission is required to scan QR codes",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
     private fun startCamera() {
@@ -142,8 +189,16 @@ class ScanFragment : Fragment() {
                     preview,
                     imageAnalysis
                 )
+                
+                // Hide the start button and show camera is active
+                startScanButton.visibility = View.GONE
             } catch (exc: Exception) {
                 exc.printStackTrace()
+                Toast.makeText(
+                    requireContext(),
+                    "Failed to start camera: ${exc.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
 
         }, ContextCompat.getMainExecutor(requireContext()))
@@ -165,6 +220,16 @@ class ScanFragment : Fragment() {
         animation.repeatMode = Animation.REVERSE
         animation.repeatCount = Animation.INFINITE
         scanningLine.startAnimation(animation)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Reset scan flag when fragment resumes so user can scan again
+        hasScanned = false
+        // Ensure camera is started if permission is granted
+        if (hasCameraPermission() && ::previewView.isInitialized) {
+            startCamera()
+        }
     }
 
     override fun onDestroyView() {
