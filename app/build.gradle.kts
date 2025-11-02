@@ -4,9 +4,6 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-import java.util.Properties
-import java.io.FileInputStream
-
 android {
     namespace = "com.cashpal.app"
     compileSdk = 36
@@ -20,18 +17,25 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        // Read HF API key from local.properties
-        val localProperties = Properties()
+        // Read API keys from local.properties using Gradle-compatible method
         val localPropertiesFile = rootProject.file("local.properties")
+        var hfApiKey = ""
+        var geminiApiKey = ""
+        
         if (localPropertiesFile.exists()) {
-            localProperties.load(FileInputStream(localPropertiesFile))
+            localPropertiesFile.readLines().forEach { line ->
+                when {
+                    line.startsWith("HF_API_KEY=") -> {
+                        hfApiKey = line.substringAfter("=").trim()
+                    }
+                    line.startsWith("GEMINI_API_KEY=") -> {
+                        geminiApiKey = line.substringAfter("=").trim()
+                    }
+                }
+            }
         }
         
-        val hfApiKey = localProperties.getProperty("HF_API_KEY", "")
         buildConfigField("String", "HF_API_KEY", "\"$hfApiKey\"")
-        
-        // Read Gemini API key from local.properties
-        val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY", "")
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 

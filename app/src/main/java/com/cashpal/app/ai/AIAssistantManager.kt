@@ -100,7 +100,7 @@ class AIAssistantManager {
                     )
                 )
                 
-                val response = GeminiService.api.generateContent(request)
+                val response = GeminiService.generateContent(request)
                 
                 // Handle response
                 val aiResponse = if (response.isSuccessful && response.body() != null) {
