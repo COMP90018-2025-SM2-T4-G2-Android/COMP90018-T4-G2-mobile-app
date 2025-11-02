@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.RemoteViews
@@ -13,7 +14,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.cashpal.app.BuildConfig
 import java.util.Locale
 import android.annotation.SuppressLint
 
@@ -169,7 +169,14 @@ object NotificationService {
      */
     fun simulatePaymentReceived(context: Context) {
         // Only allow simulation in debug builds to prevent spam in production
-        if (!BuildConfig.DEBUG) {
+        // Check if app is debuggable as alternative to BuildConfig.DEBUG
+        val isDebugBuild = try {
+            (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        } catch (e: Exception) {
+            false
+        }
+        
+        if (!isDebugBuild) {
             android.util.Log.w("NotificationService", "simulatePaymentReceived called in production build - ignoring")
             return
         }
