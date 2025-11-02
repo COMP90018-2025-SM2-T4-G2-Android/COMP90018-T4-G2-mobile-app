@@ -27,8 +27,6 @@ import com.cashpal.app.adapters.RecentScanAdapter
 import com.cashpal.app.models.RecentScan
 
 
-
-
 class ScanFragment : Fragment() {
 
     private lateinit var startScanButton: Button
@@ -67,7 +65,7 @@ class ScanFragment : Fragment() {
         }
 
         qrOption.setOnClickListener {
-            Toast.makeText(requireContext(), "QR Code option clicked", Toast.LENGTH_SHORT).show()
+            openPersonalQR()
         }
 
         vendorOption.setOnClickListener {
@@ -118,10 +116,21 @@ class ScanFragment : Fragment() {
                         if (!hasScanned) {
                             hasScanned = true
                             requireActivity().runOnUiThread {
-                                Toast.makeText(requireContext(), "QR Scanned: $qrText", Toast.LENGTH_LONG).show()
-                                // TODO: navigate or trigger payment with qrText
+                                // Navigate to the Scan Result Fragment
+                                val bundle = Bundle().apply {
+                                    putString("qrData", qrText)
+                                }
+                                val resultFragment = ScanResultFragment().apply {
+                                    arguments = bundle
+                                }
+
+                                parentFragmentManager.beginTransaction()
+                                    .replace(R.id.fragmentContainer, resultFragment)
+                                    .addToBackStack("scan_result")
+                                    .commit()
                             }
                         }
+
                     })
                 }
 
@@ -138,6 +147,13 @@ class ScanFragment : Fragment() {
             }
 
         }, ContextCompat.getMainExecutor(requireContext()))
+    }
+
+    private fun openPersonalQR() {
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, PersonalQRFragment())
+            .addToBackStack("personal_qr")
+            .commit()
     }
 
     private fun startScanningLineAnimation() {
@@ -190,4 +206,7 @@ class QRCodeAnalyzerMLKit(
             imageProxy.close()
         }
     }
+
+
+
 }

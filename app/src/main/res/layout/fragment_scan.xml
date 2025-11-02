@@ -106,6 +106,7 @@
                     android:drawableStart="@drawable/ic_camera"
                     android:drawablePadding="12dp"
                     android:gravity="center" />
+
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
