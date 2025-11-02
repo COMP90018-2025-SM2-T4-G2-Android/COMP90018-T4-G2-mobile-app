@@ -93,4 +93,7 @@
     <string name="nfc_payment_no_support">This device does not support NFC payments.</string>
     <string name="nfc_payment_disabled">Turn on NFC in your device settings to receive payments.</string>
     <string name="nfc_payment_icon_content_desc">Tap to pay icon</string>
+    
+    <!-- AI Chat -->
+    <string name="send">Send</string>
 </resources>

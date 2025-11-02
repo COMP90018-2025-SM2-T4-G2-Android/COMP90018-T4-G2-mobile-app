@@ -31,6 +31,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import com.cashpal.app.services.FirebaseConfigService
 import com.cashpal.app.utils.NotificationService
 
 class MainActivity : AppCompatActivity() {
@@ -74,6 +75,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         GooglePlayServicesUtils.logGooglePlayServicesStatus(this)
+        
+        // Initialize Firebase Remote Config for API keys
+        lifecycleScope.launch {
+            FirebaseConfigService.fetchApiKeys().onSuccess {
+                android.util.Log.d("MainActivity", "Firebase Remote Config initialized successfully")
+            }.onFailure {
+                android.util.Log.w("MainActivity", "Firebase Remote Config initialization failed, using fallback keys")
+            }
+        }
+        
         initializeViews()
         setupBottomNavigation()
         setupClickListeners()

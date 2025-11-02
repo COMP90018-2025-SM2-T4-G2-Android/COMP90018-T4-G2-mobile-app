@@ -5,6 +5,9 @@ build/
 # Local configuration file (sdk path, etc)
 local.properties
 
+# API Keys - uncomment to prevent committing gradle.properties with keys
+# gradle.properties
+
 # Log/OS Files
 *.log
 

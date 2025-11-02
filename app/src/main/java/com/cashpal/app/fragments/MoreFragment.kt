@@ -54,7 +54,8 @@ class MoreFragment : Fragment() {
     private fun setupClickListeners() {
         // AI Assistant
         requireView().findViewById<View>(R.id.card_ai_assistant)?.setOnClickListener {
-            showToast("AI Assistant - Coming Soon!")
+            val userId = ServiceLocator.getRepository().getCurrentUser()?.uid
+            com.cashpal.app.AIChatActivity.start(requireContext(), userId)
         }
         
         // Account Management
