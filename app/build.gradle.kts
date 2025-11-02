@@ -17,34 +17,65 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        // Read API keys from local.properties using Gradle-compatible method
-        val localPropertiesFile = rootProject.file("local.properties")
+        // Read API keys from multiple sources (priority order):
+        // 1. Environment variables (CI/CD, secure)
+        // 2. gradle.properties (can be committed, with example file)
+        // 3. local.properties (local development only, gitignored)
+        
         var hfApiKey = ""
         var geminiApiKey = ""
         
-        if (localPropertiesFile.exists()) {
-            localPropertiesFile.readLines().forEach { line ->
-                when {
-                    line.startsWith("HF_API_KEY=") -> {
-                        hfApiKey = line.substringAfter("=").trim()
-                    }
-                    line.startsWith("GEMINI_API_KEY=") -> {
-                        geminiApiKey = line.substringAfter("=").trim()
+        // Try environment variables first (for CI/CD)
+        hfApiKey = System.getenv("HF_API_KEY") ?: ""
+        geminiApiKey = System.getenv("GEMINI_API_KEY") ?: ""
+        
+        // Try gradle.properties (project-level properties)
+        if (hfApiKey.isEmpty() || geminiApiKey.isEmpty()) {
+            val gradleProperties = rootProject.file("gradle.properties")
+            if (gradleProperties.exists()) {
+                gradleProperties.readLines().forEach { line ->
+                    when {
+                        line.startsWith("HF_API_KEY=") && hfApiKey.isEmpty() -> {
+                            hfApiKey = line.substringAfter("=").trim()
+                        }
+                        line.startsWith("GEMINI_API_KEY=") && geminiApiKey.isEmpty() -> {
+                            geminiApiKey = line.substringAfter("=").trim()
+                        }
                     }
                 }
             }
         }
         
+        // Fallback to local.properties (for local development)
+        if (hfApiKey.isEmpty() || geminiApiKey.isEmpty()) {
+            val localPropertiesFile = rootProject.file("local.properties")
+            if (localPropertiesFile.exists()) {
+                localPropertiesFile.readLines().forEach { line ->
+                    when {
+                        line.startsWith("HF_API_KEY=") && hfApiKey.isEmpty() -> {
+                            hfApiKey = line.substringAfter("=").trim()
+                        }
+                        line.startsWith("GEMINI_API_KEY=") && geminiApiKey.isEmpty() -> {
+                            geminiApiKey = line.substringAfter("=").trim()
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Set BuildConfig fields - these will be compiled into the APK
         buildConfigField("String", "HF_API_KEY", "\"$hfApiKey\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true  // Enable code obfuscation
+            isShrinkResources = true  // Remove unused resources
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
+                "proguard-rules-api-keys.pro"
             )
         }
     }

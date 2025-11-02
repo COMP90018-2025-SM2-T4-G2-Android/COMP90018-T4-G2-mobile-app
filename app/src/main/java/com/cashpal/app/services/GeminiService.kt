@@ -2,6 +2,7 @@ package com.cashpal.app.services
 
 import com.cashpal.app.BuildConfig
 import com.google.gson.annotations.SerializedName
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -155,11 +156,24 @@ suspend fun GeminiApi.generateContentWithFallback(request: GeminiRequest): Respo
 }
 
 object GeminiService {
+    /**
+     * Get API key from Firebase Remote Config, fallback to BuildConfig
+     */
+    private fun getApiKey(): String {
+        val remoteConfigKey = FirebaseConfigService.getGeminiApiKey()
+        return if (remoteConfigKey.isNotEmpty()) {
+            remoteConfigKey
+        } else {
+            BuildConfig.GEMINI_API_KEY // Fallback for development
+        }
+    }
+    
     private val authInterceptor = Interceptor { chain ->
         val originalRequest = chain.request()
+        val apiKey = getApiKey()
         val newRequest = originalRequest.newBuilder()
             .header("Content-Type", "application/json")
-            .url(originalRequest.url.newBuilder().addQueryParameter("key", BuildConfig.GEMINI_API_KEY).build())
+            .url(originalRequest.url.newBuilder().addQueryParameter("key", apiKey).build())
             .build()
         chain.proceed(newRequest)
     }

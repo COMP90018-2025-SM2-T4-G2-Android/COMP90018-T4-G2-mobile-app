@@ -119,7 +119,7 @@ class AIAssistantManager {
                     val apiError = response.body()?.error?.message
                     val errorMsg = apiError ?: when (response.code()) {
                         400 -> "Invalid request. Please check your prompt."
-                        401 -> "Authentication failed. Please check your GEMINI_API_KEY in local.properties."
+                        401 -> "Authentication failed. Please check Firebase Remote Config for GEMINI_API_KEY."
                         403 -> "Permission denied. Please check your API key permissions and enable Generative Language API in Google Cloud Console."
                         404 -> "Model not found. The model may not be available for your API key. Check: https://ai.google.dev/gemini-api/docs/models"
                         429 -> "Rate limit exceeded. Please try again later."
