@@ -52,6 +52,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnScan: com.google.android.material.button.MaterialButton
     private var isDemoMode = false
 
+    override fun onResume() {
+        super.onResume()
+        // Refresh balance when returning to MainActivity
+        if (::firebaseRepository.isInitialized && dataRepository.isUserSignedIn() && !isDemoMode) {
+            android.util.Log.d("MainActivity", "onResume: Refreshing balance...")
+            loadData()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -830,6 +839,13 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
             .commit()
+    }
+
+    fun refreshBalance() {
+        android.util.Log.d("MainActivity", "refreshBalance called")
+        if (::firebaseRepository.isInitialized && dataRepository.isUserSignedIn() && !isDemoMode) {
+            loadData()
+        }
     }
 
     private fun showHomeContent() {

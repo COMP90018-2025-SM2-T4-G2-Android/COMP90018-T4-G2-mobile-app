@@ -398,6 +398,9 @@ class FirestoreService {
         toUserBalance: Double
     ): Result<String> {
         return try {
+            android.util.Log.d("FirestoreService", "Processing transaction: fromUserId=${transaction.fromUserId}, toUserId=${transaction.toUserId}, amount=${transaction.amount}")
+            android.util.Log.d("FirestoreService", "Updating balances: fromUserBalance=$fromUserBalance, toUserBalance=$toUserBalance")
+            
             val batch = db.batch()
             
             // Create transaction document
@@ -407,6 +410,7 @@ class FirestoreService {
             
             // Update sender balance
             val fromUserRef = db.collection("users").document(transaction.fromUserId)
+            android.util.Log.d("FirestoreService", "Updating sender balance: ${transaction.fromUserId} -> $fromUserBalance")
             batch.update(fromUserRef, mapOf(
                 "balance" to fromUserBalance,
                 "updatedAt" to com.google.firebase.Timestamp.now()
@@ -414,16 +418,20 @@ class FirestoreService {
             
             // Update receiver balance
             val toUserRef = db.collection("users").document(transaction.toUserId)
+            android.util.Log.d("FirestoreService", "Updating receiver balance: ${transaction.toUserId} -> $toUserBalance")
             batch.update(toUserRef, mapOf(
                 "balance" to toUserBalance,
                 "updatedAt" to com.google.firebase.Timestamp.now()
             ))
             
             // Commit the batch
+            android.util.Log.d("FirestoreService", "Committing batch transaction...")
             batch.commit().await()
+            android.util.Log.d("FirestoreService", "Batch transaction committed successfully. Transaction ID: ${transactionWithId.id}")
             
             Result.success(transactionWithId.id)
         } catch (e: Exception) {
+            android.util.Log.e("FirestoreService", "Failed to process transaction with balance update", e)
             Result.failure(e)
         }
     }

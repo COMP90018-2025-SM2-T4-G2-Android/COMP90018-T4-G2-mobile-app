@@ -416,6 +416,8 @@ class PayFragment : Fragment() {
                             playSuccessSound()
                             showMessage(getString(R.string.pay_transfer_success, recipient.name))
                             refreshContactsAfterTransfer()
+                            // Refresh balance in MainActivity
+                            (activity as? com.cashpal.app.MainActivity)?.refreshBalance()
                         },
                         onFailure = { error ->
                             playFailureSound()
