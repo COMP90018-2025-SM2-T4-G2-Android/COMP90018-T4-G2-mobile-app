@@ -3,6 +3,7 @@ package com.cashpal.app.auth
 import android.content.Context
 import android.content.SharedPreferences
 import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.edit
@@ -60,9 +61,22 @@ object BiometricPasswordStore {
     fun createDecryptCipher(ctx: Context): Cipher? {
         val iv = prefs(ctx).getString(PREF_PW_IV, null)?.let { Base64.decode(it, Base64.DEFAULT) }
             ?: return null
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, getKey(), GCMParameterSpec(128, iv))
-        return cipher
+        
+        return try {
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.DECRYPT_MODE, getKey(), GCMParameterSpec(128, iv))
+            cipher
+        } catch (e: KeyPermanentlyInvalidatedException) {
+            // Key was invalidated (e.g., user changed biometrics or device credentials)
+            // Clear stored credentials and disable biometric login
+            disable(ctx)
+            null
+        } catch (e: Exception) {
+            // Handle other KeyStore exceptions (e.g., key not found, initialization failed)
+            // Clear stored credentials to prevent repeated failures
+            disable(ctx)
+            null
+        }
     }
 
     /** Persist encrypted password + email */

@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.cashpal.app.R
 import com.cashpal.app.auth.BiometricAuthManager
+import com.cashpal.app.auth.BiometricPasswordStore
 import com.cashpal.app.auth.SignInActivity
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.utils.BiometricPreferences
@@ -135,6 +136,8 @@ class MoreFragment : Fragment() {
                 if (!isChecked) {
                     // Clear biometric data when disabled
                     biometricPreferences.clearCredentials()
+                    // Also disable BiometricPasswordStore to prevent biometric login
+                    BiometricPasswordStore.disable(requireContext())
                 }
             } else {
                 showToast("Biometric authentication not available on this device")
