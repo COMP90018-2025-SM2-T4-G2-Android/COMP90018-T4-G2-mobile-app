@@ -1,4 +1,4 @@
-package com.cashpal.app.utils
+package com.cashpal.app
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.RemoteViews
@@ -15,8 +16,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import java.util.Locale
 import android.annotation.SuppressLint
-import com.cashpal.app.MainActivity
-import com.cashpal.app.R
 
 
 object NotificationService {
@@ -24,24 +23,8 @@ object NotificationService {
     private const val CHANNEL_ID = "cashpal_payments"
     private const val CHANNEL_NAME = "Payment Notifications"
     private const val CHANNEL_DESCRIPTION = "Notifications for received payments"
-    private const val SECURITY_CHANNEL_ID = "cashpal_security"
-    private const val SECURITY_CHANNEL_NAME = "Security Alerts"
-    private const val SECURITY_CHANNEL_DESCRIPTION = "Notifications for security and fraud alerts"
-
-    const val EXTRA_FRAUD_ALERT = "extra_fraud_alert"
-    const val EXTRA_FRAUD_TITLE = "extra_fraud_title"
-    const val EXTRA_FRAUD_MESSAGE = "extra_fraud_message"
-    const val EXTRA_FRAUD_LOCATION = "extra_fraud_location"
-    const val EXTRA_FRAUD_DEVICE = "extra_fraud_device"
-    const val EXTRA_FRAUD_TIMESTAMP = "extra_fraud_timestamp"
 
     private var notificationId = 1000
-
-    data class FraudAlertMetadata(
-        val locationLabel: String? = null,
-        val deviceName: String? = null,
-        val occurredAt: String? = null
-    )
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -52,19 +35,8 @@ object NotificationService {
                 enableVibration(true)
                 setShowBadge(true)
             }
-            val securityChannel = NotificationChannel(
-                SECURITY_CHANNEL_ID,
-                SECURITY_CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = SECURITY_CHANNEL_DESCRIPTION
-                enableVibration(true)
-                setShowBadge(true)
-                enableLights(true)
-            }
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(channel)
-            nm.createNotificationChannel(securityChannel)
         }
     }
 
@@ -76,6 +48,8 @@ object NotificationService {
     ) {
         // Create transaction ID
         val transactionId = "TXN-${System.currentTimeMillis()}"
+        // Use unique notification ID as request code to ensure each PendingIntent is unique
+        val id = notificationId++
 
         // Intent to open Receipt page
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -89,7 +63,7 @@ object NotificationService {
             putExtra("type", "received")
         }
         val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
+            context, id, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -119,7 +93,7 @@ object NotificationService {
             .setLights(ContextCompat.getColor(context, R.color.received_color), 1000, 3000)
             .build()
 
-        post(context, notification)
+        post(context, id, notification)
     }
 
     fun showPaymentSentNotification(
@@ -127,12 +101,15 @@ object NotificationService {
         recipientName: String,
         amount: Double
     ) {
+        // Use unique notification ID as request code to ensure each PendingIntent is unique
+        val id = notificationId++
+        
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("openTab", "history")
         }
         val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
+            context, id, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -148,7 +125,7 @@ object NotificationService {
             .setColor(ContextCompat.getColor(context, R.color.sent_color))
             .build()
 
-        post(context, notification)
+        post(context, id, notification)
     }
 
     fun showPaymentFailedNotification(
@@ -157,12 +134,15 @@ object NotificationService {
         amount: Double,
         reason: String
     ) {
+        // Use unique notification ID as request code to ensure each PendingIntent is unique
+        val id = notificationId++
+        
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("openTab", "history")
         }
         val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
+            context, id, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -180,11 +160,27 @@ object NotificationService {
             .setColor(ContextCompat.getColor(context, R.color.error))
             .build()
 
-        post(context, notification)
+        post(context, id, notification)
     }
 
-    /** Demo helper to simulate a payment push inside the app */
+    /** 
+     * Demo helper to simulate a payment push inside the app.
+     * Only works in debug builds - will be ignored in production.
+     */
     fun simulatePaymentReceived(context: Context) {
+        // Only allow simulation in debug builds to prevent spam in production
+        // Check if app is debuggable as alternative to BuildConfig.DEBUG
+        val isDebugBuild = try {
+            (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        } catch (e: Exception) {
+            false
+        }
+        
+        if (!isDebugBuild) {
+            android.util.Log.w("NotificationService", "simulatePaymentReceived called in production build - ignoring")
+            return
+        }
+        
         val senders = listOf("Sarah Johnson", "John Doe", "Mike Wilson", "Emma Brown")
         val amounts = listOf(25.50, 50.00, 75.25, 100.00, 15.75)
         showPaymentReceivedNotification(
@@ -196,48 +192,6 @@ object NotificationService {
 
     // ---- internal helpers ----
 
-    fun showFraudAlert(
-        context: Context,
-        title: String? = null,
-        message: String,
-        metadata: FraudAlertMetadata? = null,
-        deepLink: String? = null
-    ) {
-        createNotificationChannel(context)
-
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("openTab", deepLink ?: "security")
-            putExtra(EXTRA_FRAUD_ALERT, true)
-            putExtra(EXTRA_FRAUD_TITLE, title ?: context.getString(R.string.fraud_alert_title))
-            putExtra(EXTRA_FRAUD_MESSAGE, message)
-            metadata?.locationLabel?.let { putExtra(EXTRA_FRAUD_LOCATION, it) }
-            metadata?.deviceName?.let { putExtra(EXTRA_FRAUD_DEVICE, it) }
-            metadata?.occurredAt?.let { putExtra(EXTRA_FRAUD_TIMESTAMP, it) }
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            1,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, SECURITY_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_shield)
-            .setContentTitle(title ?: context.getString(R.string.fraud_alert_title))
-            .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-            .setColor(ContextCompat.getColor(context, R.color.error))
-            .setVibrate(longArrayOf(0, 300, 200, 300))
-            .build()
-
-        post(context, notification)
-    }
-
     private fun canPostNotifications(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= 33) {
             ActivityCompat.checkSelfPermission(
@@ -247,13 +201,13 @@ object NotificationService {
     }
 
     @SuppressLint("MissingPermission")
-    private fun post(context: Context, notification: android.app.Notification) {
+    private fun post(context: Context, id: Int, notification: android.app.Notification) {
         // Runtime guard – if user denied POST_NOTIFICATIONS on API 33+, do nothing
         if (!canPostNotifications(context)) return
 
         try {
             NotificationManagerCompat.from(context)
-                .notify(notificationId++, notification)
+                .notify(id, notification)
         } catch (se: SecurityException) {
             // Extra safety on odd OEMs
         }
