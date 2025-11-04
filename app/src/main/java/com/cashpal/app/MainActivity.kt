@@ -1,6 +1,8 @@
 package com.cashpal.app
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -15,7 +17,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.cashpal.app.data.DataRepository
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.fragments.HistoryFragment
@@ -23,17 +26,17 @@ import com.cashpal.app.fragments.MoreFragment
 import com.cashpal.app.fragments.PayFragment
 import com.cashpal.app.fragments.ScanFragment
 import com.cashpal.app.fragments.ReceiptFragment
-import com.cashpal.app.fragments.NfcPaymentFragment
-import com.cashpal.app.utils.BiometricPreferences
 import com.cashpal.app.utils.GooglePlayServicesUtils
+import com.cashpal.app.dialogs.FraudAlertDialogFragment
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
-import com.cashpal.app.services.FirebaseConfigService
 import com.cashpal.app.utils.NotificationService
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import java.text.DateFormat
+import java.util.Date
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,18 +51,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewAllText: TextView
     private lateinit var scrollView: ScrollView
     private lateinit var bottomNavigationView: BottomNavigationView
-    private lateinit var btnSendMoney: com.google.android.material.button.MaterialButton
-    private lateinit var btnScan: com.google.android.material.button.MaterialButton
+    private lateinit var securityRepository: com.cashpal.app.repository.SecurityRepository
     private var isDemoMode = false
-
-    override fun onResume() {
-        super.onResume()
-        // Refresh balance when returning to MainActivity
-        if (::firebaseRepository.isInitialized && dataRepository.isUserSignedIn() && !isDemoMode) {
-            android.util.Log.d("MainActivity", "onResume: Refreshing balance...")
-            loadData()
-        }
-    }
+    private val isDebugBuild: Boolean
+        get() = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,12 +63,14 @@ class MainActivity : AppCompatActivity() {
 
         NotificationService.createNotificationChannel(this)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
-            }
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+        } else {
+            NotificationService.simulatePaymentReceived(this)
+            showLocalFraudAlertDemo()
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -81,23 +78,17 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
             insets
         }
+
         isDemoMode = intent.getBooleanExtra("demo_mode", false)
         if (isDemoMode) {
             showDemoModeBanner()
         }
 
         GooglePlayServicesUtils.logGooglePlayServicesStatus(this)
-        
-        // Initialize Firebase Remote Config for API keys
-        lifecycleScope.launch {
-            FirebaseConfigService.fetchApiKeys().onSuccess {
-                android.util.Log.d("MainActivity", "Firebase Remote Config initialized successfully")
-            }.onFailure {
-                android.util.Log.w("MainActivity", "Firebase Remote Config initialization failed, using fallback keys")
-            }
-        }
-        
+
         initializeViews()
+        val toolbar = findViewById<MaterialToolbar>(R.id.topAppBar)
+        setSupportActionBar(toolbar)
         setupBottomNavigation()
         setupClickListeners()
         loadData()
@@ -112,8 +103,10 @@ class MainActivity : AppCompatActivity() {
         showHomeContent()
         openFromIntent(intent)
     }
+
     private fun initializeViews() {
         firebaseRepository = ServiceLocator.getRepository()
+        securityRepository = ServiceLocator.getSecurityRepository()
         dataRepository = DataRepository(this, firebaseRepository)
         balanceValue = findViewById(R.id.balanceValue)
         monthlyChange = findViewById(R.id.monthlyChange)
@@ -124,8 +117,6 @@ class MainActivity : AppCompatActivity() {
         viewAllText = findViewById(R.id.viewAllText)
         scrollView = findViewById(R.id.scrollView)
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
-        btnSendMoney = findViewById(R.id.btnSendMoney)
-        btnScan = findViewById(R.id.btnScan)
     }
 
     private fun setupBottomNavigation() {
@@ -163,25 +154,9 @@ class MainActivity : AppCompatActivity() {
             showFragment(HistoryFragment())
             updateBottomNavigationSelection(R.id.nav_history)
         }
-        
-        btnSendMoney.setOnClickListener {
-            showFragment(PayFragment())
-            updateBottomNavigationSelection(R.id.nav_pay)
-        }
-        
-        btnScan.setOnClickListener {
-            showFragment(ScanFragment())
-            updateBottomNavigationSelection(R.id.nav_scan)
-        }
     }
 
     private fun loadData() {
-        // Always clear previous values first to avoid showing stale data
-        balanceValue.text = "$0.00"
-        monthlyChange.text = "+$0.00"
-        pendingAmount.text = "$0.00"
-        reservedAmount.text = "$0.00"
-        
         if (dataRepository.isUserSignedIn() && !isDemoMode) {
             loadFirebaseData()
         } else if (isDemoMode) {
@@ -204,144 +179,51 @@ class MainActivity : AppCompatActivity() {
             try {
                 android.util.Log.d("MainActivity", "Loading Firebase data for user: $currentUserId")
 
-                // Fetch user profile first to get stored balance
-                launch {
-                    firebaseRepository.getUserProfile(currentUserId).collect { userResult ->
-                        userResult.fold(
-                            onSuccess = { user ->
-                                user?.let {
-                                    android.util.Log.d(
-                                        "MainActivity",
-                                        "User profile loaded: ${it.email}, balance: ${it.balance}, currency: ${it.currency}"
-                                    )
-                                    // Show stored balance immediately, then update with calculated if different
-                                    populateBalanceFromFirebase(it, it.balance)
-                                } ?: run {
-                                    android.util.Log.w("MainActivity", "User profile is null")
-                                    showEmptyState()
-                                }
-                            },
-                            onFailure = { error ->
-                                android.util.Log.e("MainActivity", "Failed to load user profile", error)
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    "Failed to load user data: ${error.message}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                firebaseRepository.getUserProfile(currentUserId).collect { userResult ->
+                    userResult.fold(
+                        onSuccess = { user ->
+                            user?.let {
+                                android.util.Log.d(
+                                    "MainActivity",
+                                    "User profile loaded: ${it.email}, balance: ${it.balance} ${it.currency}"
+                                )
+                                populateBalanceFromFirebase(it)
+                            } ?: run {
+                                android.util.Log.w("MainActivity", "User profile is null")
                                 showEmptyState()
                             }
-                        )
-                    }
+                        },
+                        onFailure = { error ->
+                            android.util.Log.e("MainActivity", "Failed to load user profile", error)
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Failed to load user data: ${error.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            showEmptyState()
+                        }
+                    )
                 }
 
-                // Fetch all transactions for balance calculation
-                launch {
-                    firebaseRepository.getUserTransactions(currentUserId, 1000).collect { allTransactionsResult ->
-                        allTransactionsResult.fold(
-                            onSuccess = { allTransactions ->
-                                android.util.Log.d(
-                                    "MainActivity",
-                                    "Loaded ${allTransactions.size} transactions for balance calculation"
-                                )
-                                
-                                // Log transaction details for debugging
-                                allTransactions.forEach { transaction ->
-                                    android.util.Log.d(
-                                        "MainActivity",
-                                        "Transaction: ${transaction.description} - Amount: ${transaction.amount} - " +
-                                                "Status: ${transaction.status} - From: ${transaction.fromUserId} - To: ${transaction.toUserId}"
-                                    )
-                                }
-                                
-                                // Calculate balance from completed transactions
-                                val calculatedBalance = calculateBalanceFromTransactions(
-                                    allTransactions,
-                                    currentUserId
-                                )
-                                
-                                android.util.Log.d(
-                                    "MainActivity",
-                                    "Calculated balance: $calculatedBalance for user: $currentUserId"
-                                )
-                                
-                                // Get user profile to get currency
-                                try {
-                                    val userResult = firebaseRepository.getUserProfile(currentUserId).first()
-                                    userResult.fold(
-                                        onSuccess = { user ->
-                                            user?.let {
-                                                android.util.Log.d(
-                                                    "MainActivity",
-                                                    "User balance in Firestore: ${it.balance}"
-                                                )
-                                                populateBalanceFromFirebase(it, calculatedBalance)
-                                                
-                                                // Always sync calculated balance to Firestore if different
-                                                if (Math.abs(it.balance - calculatedBalance) > 0.01) {
-                                                    android.util.Log.d(
-                                                        "MainActivity",
-                                                        "Updating user balance in Firestore from ${it.balance} to $calculatedBalance"
-                                                    )
-                                                    lifecycleScope.launch {
-                                                        firebaseRepository.updateUserProfile(
-                                                            currentUserId,
-                                                            mapOf("balance" to calculatedBalance)
-                                                        ).collect { }
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        onFailure = { error ->
-                                            android.util.Log.e("MainActivity", "Failed to get user profile", error)
-                                        }
-                                    )
-                                } catch (e: Exception) {
-                                    android.util.Log.e("MainActivity", "Failed to get user profile", e)
-                                }
-                            },
-                            onFailure = { error ->
-                                android.util.Log.e("MainActivity", "Failed to load transactions for balance", error)
-                                // Still try to show user balance even if transactions fail
-                                try {
-                                    val userResult = firebaseRepository.getUserProfile(currentUserId).first()
-                                    userResult.fold(
-                                        onSuccess = { user ->
-                                            user?.let {
-                                                populateBalanceFromFirebase(it, it.balance)
-                                            }
-                                        },
-                                        onFailure = { }
-                                    )
-                                } catch (e: Exception) {
-                                    android.util.Log.e("MainActivity", "Failed to get user profile as fallback", e)
-                                }
-                            }
-                        )
-                    }
-                }
-
-                // Fetch recent transactions for display
-                launch {
-                    firebaseRepository.getUserTransactions(currentUserId, 10).collect { transactionsResult ->
-                        transactionsResult.fold(
-                            onSuccess = { transactions ->
-                                android.util.Log.d(
-                                    "MainActivity",
-                                    "Loaded ${transactions.size} recent transactions from Firebase"
-                                )
-                                populateTransactionsFromFirebase(transactions)
-                            },
-                            onFailure = { error ->
-                                android.util.Log.e("MainActivity", "Failed to load transactions", error)
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    "Failed to load transactions: ${error.message}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                showEmptyState()
-                            }
-                        )
-                    }
+                firebaseRepository.getUserTransactions(currentUserId, 10).collect { transactionsResult ->
+                    transactionsResult.fold(
+                        onSuccess = { transactions ->
+                            android.util.Log.d(
+                                "MainActivity",
+                                "Loaded ${transactions.size} transactions from Firebase"
+                            )
+                            populateTransactionsFromFirebase(transactions)
+                        },
+                        onFailure = { error ->
+                            android.util.Log.e("MainActivity", "Failed to load transactions", error)
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Failed to load transactions: ${error.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            showEmptyState()
+                        }
+                    )
                 }
 
             } catch (e: Exception) {
@@ -355,17 +237,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Quick actions are UI elements, load them statically (not from Firebase)
-        populateQuickActions(getDefaultQuickActions())
-    }
-    
-    private fun getDefaultQuickActions(): List<com.cashpal.app.data.QuickAction> {
-        return listOf(
-            com.cashpal.app.data.QuickAction("send_money", "Send Money", "ic_send_money"),
-            com.cashpal.app.data.QuickAction("qr_pay", "QR Pay", "ic_qr_pay"),
-            com.cashpal.app.data.QuickAction("nfc_pay", "NFC Pay", "ic_nfc_pay"),
-            com.cashpal.app.data.QuickAction("add_money", "Add Money", "ic_add_money")
-        )
+        val appData = dataRepository.loadAppData()
+        appData?.let { data ->
+            populateQuickActions(data.quickActions)
+        }
     }
 
     private fun loadDataFromJSON() {
@@ -379,92 +254,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun populateBalanceFromFirebase(user: com.cashpal.app.models.User, calculatedBalance: Double) {
+    private fun populateBalanceFromFirebase(user: com.cashpal.app.models.User) {
         android.util.Log.d(
             "MainActivity",
-            "Populating balance: stored=${user.balance}, calculated=$calculatedBalance"
+            "Populating balance from Firebase: ${user.balance} ${user.currency}"
         )
-        
-        // Priority: Use stored balance from Firestore first (most reliable)
-        // If stored balance is 0 or invalid, use calculated balance from transactions
-        val displayBalance = when {
-            user.balance > 0 -> {
-                android.util.Log.d("MainActivity", "Using stored balance from Firestore: ${user.balance}")
-                user.balance
-            }
-            calculatedBalance > 0 -> {
-                android.util.Log.d("MainActivity", "Using calculated balance from transactions: $calculatedBalance")
-                calculatedBalance
-            }
-            else -> {
-                android.util.Log.w("MainActivity", "Both stored and calculated balances are 0")
-                0.0
-            }
-        }
-        
-        // Format balance properly - ensure we're setting text, not appending
-        balanceValue.text = "$${String.format("%.2f", displayBalance)} ${user.currency}"
+        balanceValue.text = "$${String.format("%.2f", user.balance)} ${user.currency}"
         monthlyChange.text = "+$0.00"
         pendingAmount.text = "$0.00"
         reservedAmount.text = "$0.00"
-        
-        android.util.Log.d(
-            "MainActivity",
-            "Balance displayed: ${balanceValue.text}"
-        )
-    }
-
-    private fun calculateBalanceFromTransactions(
-        transactions: List<com.cashpal.app.models.Transaction>,
-        currentUserId: String
-    ): Double {
-        var balance = 0.0
-        
-        android.util.Log.d("MainActivity", "Calculating balance for user: $currentUserId from ${transactions.size} transactions")
-        
-        transactions.forEach { transaction ->
-            // Only count COMPLETED transactions
-            if (transaction.status == com.cashpal.app.models.TransactionStatus.COMPLETED) {
-                val isReceived = transaction.toUserId == currentUserId
-                val isSent = transaction.fromUserId == currentUserId
-                
-                android.util.Log.d(
-                    "MainActivity",
-                    "Processing transaction: ${transaction.description} - " +
-                            "Amount: ${transaction.amount} - " +
-                            "From: ${transaction.fromUserId} - " +
-                            "To: ${transaction.toUserId} - " +
-                            "IsReceived: $isReceived - " +
-                            "IsSent: $isSent"
-                )
-                
-                when {
-                    isReceived -> {
-                        // Received transaction - add to balance
-                        balance += transaction.amount
-                        android.util.Log.d("MainActivity", "Added ${transaction.amount}, balance now: $balance")
-                    }
-                    isSent && transaction.fromUserId != "system" -> {
-                        // Sent transaction - subtract from balance (but not system transactions)
-                        balance -= transaction.amount
-                        android.util.Log.d("MainActivity", "Subtracted ${transaction.amount}, balance now: $balance")
-                    }
-                    // System transactions where user is sender are not counted (system gives money)
-                }
-            } else {
-                android.util.Log.d(
-                    "MainActivity",
-                    "Skipping transaction ${transaction.id} - status: ${transaction.status}"
-                )
-            }
-        }
-        
-        android.util.Log.d(
-            "MainActivity",
-            "Final calculated balance: $balance from ${transactions.size} transactions"
-        )
-        
-        return balance
     }
 
     private fun populateBalanceInfo(balanceInfo: com.cashpal.app.data.BalanceInfo) {
@@ -494,7 +292,7 @@ class MainActivity : AppCompatActivity() {
             }
             radius = 24f
             elevation = 4f
-            setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.card))
+            setCardBackgroundColor(getColor(android.R.color.white))
             isClickable = true
             isFocusable = true
             setOnClickListener {
@@ -515,7 +313,7 @@ class MainActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setColorFilter(ContextCompat.getColor(this@MainActivity, R.color.primary))
+            setColorFilter(ContextCompat.getColor(this@MainActivity, android.R.color.black))
             layoutParams.width = 32.dpToPx()
             layoutParams.height = 32.dpToPx()
         }
@@ -523,7 +321,7 @@ class MainActivity : AppCompatActivity() {
         val titleText = TextView(this).apply {
             text = action.title
             textSize = 11f
-            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.foreground))
+            setTextColor(getColor(android.R.color.black))
             gravity = android.view.Gravity.CENTER
             setPadding(0, 12, 0, 0)
         }
@@ -546,7 +344,7 @@ class MainActivity : AppCompatActivity() {
                 updateBottomNavigationSelection(R.id.nav_scan)
             }
             "nfc_pay" -> {
-                openNfcPayment()
+                Toast.makeText(this, "NFC Pay clicked", Toast.LENGTH_SHORT).show()
             }
             "add_money" -> {
                 Toast.makeText(this, "Add Money clicked", Toast.LENGTH_SHORT).show()
@@ -586,7 +384,7 @@ class MainActivity : AppCompatActivity() {
             }
             radius = 24f
             elevation = 4f
-            setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.card))
+            setCardBackgroundColor(getColor(android.R.color.white))
             isClickable = true
             isFocusable = true
             setOnClickListener {
@@ -608,7 +406,7 @@ class MainActivity : AppCompatActivity() {
             ).apply {
                 marginEnd = 32
             }
-            setColorFilter(ContextCompat.getColor(this@MainActivity, R.color.foreground))
+            setColorFilter(ContextCompat.getColor(this@MainActivity, android.R.color.black))
         }
 
         val detailsLayout = LinearLayout(this).apply {
@@ -623,14 +421,14 @@ class MainActivity : AppCompatActivity() {
         val merchantText = TextView(this).apply {
             text = transaction.description
             textSize = 16f
-            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.foreground))
+            setTextColor(getColor(android.R.color.black))
             setTypeface(null, android.graphics.Typeface.BOLD)
         }
 
         val timeText = TextView(this).apply {
             text = formatTimestamp(transaction.createdAt)
             textSize = 12f
-            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.muted_foreground))
+            setTextColor(getColor(android.R.color.darker_gray))
             setPadding(0, 8, 0, 0)
         }
 
@@ -690,7 +488,7 @@ class MainActivity : AppCompatActivity() {
             }
             radius = 24f
             elevation = 4f
-            setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.card))
+            setCardBackgroundColor(getColor(android.R.color.white))
             isClickable = true
             isFocusable = true
             setOnClickListener {
@@ -713,7 +511,7 @@ class MainActivity : AppCompatActivity() {
             ).apply {
                 marginEnd = 32
             }
-            setColorFilter(ContextCompat.getColor(this@MainActivity, R.color.foreground))
+            setColorFilter(ContextCompat.getColor(this@MainActivity, android.R.color.black))
         }
 
         val detailsLayout = LinearLayout(this).apply {
@@ -728,14 +526,14 @@ class MainActivity : AppCompatActivity() {
         val merchantText = TextView(this).apply {
             text = transaction.merchant
             textSize = 16f
-            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.foreground))
+            setTextColor(getColor(android.R.color.black))
             setTypeface(null, android.graphics.Typeface.BOLD)
         }
 
         val timeText = TextView(this).apply {
             text = transaction.timeAgo
             textSize = 12f
-            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.muted_foreground))
+            setTextColor(getColor(android.R.color.darker_gray))
             setPadding(0, 8, 0, 0)
         }
 
@@ -841,13 +639,6 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    fun refreshBalance() {
-        android.util.Log.d("MainActivity", "refreshBalance called")
-        if (::firebaseRepository.isInitialized && dataRepository.isUserSignedIn() && !isDemoMode) {
-            loadData()
-        }
-    }
-
     private fun showHomeContent() {
         scrollView.visibility = View.VISIBLE
         val fragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
@@ -858,19 +649,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun openScanTab() {
-        updateBottomNavigationSelection(R.id.nav_scan)
-    }
-
-    fun openNfcPayment() {
-        updateBottomNavigationSelection(R.id.nav_pay)
-        scrollView.visibility = View.GONE
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, NfcPaymentFragment())
-            .addToBackStack("nfcPayment")
-            .commit()
-    }
-    
     private fun updateBottomNavigationSelection(selectedItemId: Int) {
         bottomNavigationView.selectedItemId = selectedItemId
     }
@@ -884,7 +662,51 @@ class MainActivity : AppCompatActivity() {
         openFromIntent(intent)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        return if (isDebugBuild) {
+            menuInflater.inflate(R.menu.debug_security_menu, menu)
+            true
+        } else {
+            super.onCreateOptionsMenu(menu)
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (isDebugBuild && item.itemId == R.id.action_simulate_remote_login) {
+            simulateFraudAlertForTesting()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1001) {
+            val granted = grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED
+            if (granted) {
+                NotificationService.simulatePaymentReceived(this)
+                showLocalFraudAlertDemo()
+            } else {
+                Toast.makeText(
+                    this,
+                    "Notifications are disabled; cannot show alerts.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
     private fun openFromIntent(intent: Intent) {
+        if (intent.getBooleanExtra(NotificationService.EXTRA_FRAUD_ALERT, false)) {
+            showFraudAlertDialog(intent)
+            intent.removeExtra(NotificationService.EXTRA_FRAUD_ALERT)
+        }
+
         if (intent.getStringExtra("openTab") == "receipt") {
             scrollView.visibility = View.GONE
             findViewById<View>(R.id.fragmentContainer).bringToFront()
@@ -906,6 +728,75 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.fragmentContainer, receiptFragment)
                 .addToBackStack(null)
                 .commit()
+        }
+    }
+
+    private fun showFraudAlertDialog(intent: Intent) {
+        val alreadyVisible = supportFragmentManager.findFragmentByTag("FraudAlertDialogFragment")
+        if (alreadyVisible != null) return
+
+        val title = intent.getStringExtra(NotificationService.EXTRA_FRAUD_TITLE)
+        val message = intent.getStringExtra(NotificationService.EXTRA_FRAUD_MESSAGE)
+            ?: getString(R.string.fraud_alert_generic_message)
+        val location = intent.getStringExtra(NotificationService.EXTRA_FRAUD_LOCATION)
+        val device = intent.getStringExtra(NotificationService.EXTRA_FRAUD_DEVICE)
+        val timestamp = intent.getStringExtra(NotificationService.EXTRA_FRAUD_TIMESTAMP)
+
+        FraudAlertDialogFragment
+            .newInstance(title, message, location, device, timestamp)
+            .show(supportFragmentManager, "FraudAlertDialogFragment")
+    }
+
+    private fun showLocalFraudAlertDemo() {
+        val formattedTime = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+            .format(Date())
+
+        val metadata = NotificationService.FraudAlertMetadata(
+            locationLabel = "Sydney, AU (simulated)",
+            deviceName = "[TEST] Remote Device",
+            occurredAt = formattedTime
+        )
+
+        NotificationService.showFraudAlert(
+            context = this,
+            message = "Test fraud alert — simulated suspicious login.",
+            metadata = metadata
+        )
+
+        if (supportFragmentManager.findFragmentByTag("FraudAlertDialogFragment") == null) {
+            FraudAlertDialogFragment
+                .newInstance(
+                    title = getString(R.string.fraud_alert_title),
+                    message = "Test fraud alert — simulated suspicious login.",
+                    location = metadata.locationLabel,
+                    device = metadata.deviceName,
+                    timestamp = metadata.occurredAt
+                )
+                .show(supportFragmentManager, "FraudAlertDialogFragment")
+        }
+    }
+
+    private fun simulateFraudAlertForTesting() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val result = securityRepository.simulateRemoteLoginForTesting(applicationContext)
+            withContext(Dispatchers.Main) {
+                result.fold(
+                    onSuccess = {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Simulated suspicious login recorded. Watch for the push notification.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    },
+                    onFailure = { error ->
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Simulation failed: ${error.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                )
+            }
         }
     }
 

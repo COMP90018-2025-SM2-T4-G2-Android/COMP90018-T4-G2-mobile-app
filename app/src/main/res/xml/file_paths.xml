@@ -10,15 +10,15 @@
     <external-files-path
         name="documents"
         path="Documents/" />
-    
-    <!-- For saving exported CSV/PDF files (Downloads folder) -->
-    <external-files-path
-        name="downloads"
-        path="." />
 
     <!-- For app-internal storage access -->
     <files-path
         name="internal"
+        path="." />
+
+    <!-- Allow sharing files stored on external storage (e.g. Downloads/CashPal) -->
+    <external-path
+        name="external"
         path="." />
 
 </paths>
