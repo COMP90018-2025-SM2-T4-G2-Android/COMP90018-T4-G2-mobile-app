@@ -88,8 +88,7 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/ic_trending_up"
-                        android:rotation="45"
+                        android:src="@drawable/ic_check_circle"
                         app:tint="@color/success" />
 
                 </FrameLayout>
@@ -274,6 +273,35 @@
 
                         </LinearLayout>
 
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:hint="Enter amount"
+                            app:boxBackgroundMode="filled"
+                            app:boxCornerRadiusTopStart="16dp"
+                            app:boxCornerRadiusTopEnd="16dp"
+                            app:boxCornerRadiusBottomStart="16dp"
+                            app:boxCornerRadiusBottomEnd="16dp"
+                            app:boxBackgroundColor="@color/card">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/et_transfer_amount"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="numberDecimal"
+                                android:maxLines="1"
+                                android:drawableStart="@drawable/ic_send"
+                                android:drawablePadding="12dp"
+                                android:paddingStart="12dp"
+                                android:gravity="center_vertical"
+                                android:textColor="@color/foreground"
+                                android:textColorHint="@color/muted_foreground"
+                                android:textSize="16sp"
+                                android:padding="12dp" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
                     </LinearLayout>
 
                 </LinearLayout>
@@ -287,99 +315,61 @@
 
                 <!-- Action Buttons -->
                 <LinearLayout
+                    android:id="@+id/ll_action_buttons"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <!-- Person Actions -->
-                    <LinearLayout
-                        android:id="@+id/ll_person_actions"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone">
-
-                        <Button
-                            android:id="@+id/btn_send_money"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:background="@drawable/primary_button_background"
-                            android:text="Send Money"
-                            android:textColor="@android:color/white"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:drawableStart="@drawable/ic_send"
-                            android:drawablePadding="12dp"
-                            android:gravity="center"
-                            android:layout_marginBottom="12dp" />
-
-                        <Button
-                            android:id="@+id/btn_add_contact"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:background="@drawable/scan_option_background"
-                            android:text="Add to Contacts"
-                            android:textColor="@color/foreground"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:drawableStart="@drawable/ic_person"
-                            android:drawablePadding="12dp"
-                            android:gravity="center"
-                            android:layout_marginBottom="12dp" />
-
-                    </LinearLayout>
-
-                    <!-- Store/Payment Actions -->
-                    <LinearLayout
-                        android:id="@+id/ll_payment_actions"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone">
-
-                        <Button
-                            android:id="@+id/btn_make_payment"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:background="@drawable/primary_button_background"
-                            android:text="Make Payment"
-                            android:textColor="@android:color/white"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:drawableStart="@drawable/ic_send"
-                            android:drawablePadding="12dp"
-                            android:gravity="center"
-                            android:layout_marginBottom="12dp" />
-
-                        <Button
-                            android:id="@+id/btn_save_favorite"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:background="@drawable/scan_option_background"
-                            android:text="Save to Favorites"
-                            android:textColor="@color/foreground"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:drawableStart="@drawable/ic_store"
-                            android:drawablePadding="12dp"
-                            android:gravity="center"
-                            android:layout_marginBottom="12dp" />
-
-                    </LinearLayout>
-
-                    <!-- Scan Another Code Button -->
                     <Button
-                        android:id="@+id/btn_scan_another"
+                        android:id="@+id/btn_send_money"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:background="@android:color/transparent"
-                        android:text="Scan Another Code"
-                        android:textColor="@color/muted_foreground"
+                        android:background="@drawable/primary_button_background"
+                        android:text="Send Money"
+                        android:textColor="@android:color/white"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:gravity="center" />
+                        android:drawableStart="@drawable/ic_send"
+                        android:drawablePadding="12dp"
+                        android:gravity="center"
+                        android:layout_marginBottom="12dp" />
+
+                    <Button
+                        android:id="@+id/btn_save_favorite"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/scan_option_background"
+                        android:text="Save to Favorites"
+                        android:textColor="@color/foreground"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:drawableStart="@drawable/ic_store"
+                        android:drawablePadding="12dp"
+                        android:gravity="center"
+                        android:layout_marginBottom="12dp"
+                        android:visibility="gone" />
 
                 </LinearLayout>
+
+                <ProgressBar
+                    android:id="@+id/progress_send_money"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:visibility="gone" />
+
+                <!-- Scan Another Code Button -->
+                <Button
+                    android:id="@+id/btn_scan_another"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@android:color/transparent"
+                    android:text="Scan Another Code"
+                    android:textColor="@color/muted_foreground"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:gravity="center" />
 
             </LinearLayout>
 
