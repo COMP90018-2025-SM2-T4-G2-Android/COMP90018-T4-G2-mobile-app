@@ -14,7 +14,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cashpal.app.R
@@ -106,36 +108,41 @@ class HistoryFragment : Fragment() {
         }
 
         // Load transactions from Firebase
-        lifecycleScope.launch {
-            repository.getUserTransactions(currentUserId, 1000).collect { result ->
-                result.fold(
-                    onSuccess = { transactions ->
-                        android.util.Log.d("HistoryFragment", "Loaded ${transactions.size} transactions from Firebase")
-                        // Convert Firebase Transaction to TransactionHistory
-                        allTransactions = transactions.map { transaction ->
-                            convertToTransactionHistory(transaction, currentUserId)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                repository.getUserTransactions(currentUserId, 1000).collect { result ->
+                    result.fold(
+                        onSuccess = { transactions ->
+                            android.util.Log.d(
+                                "HistoryFragment",
+                                "Loaded ${transactions.size} transactions from Firebase"
+                            )
+                            // Convert Firebase Transaction to TransactionHistory
+                            allTransactions = transactions.map { transaction ->
+                                convertToTransactionHistory(transaction, currentUserId)
+                            }
+                            filteredTransactions = allTransactions // Initialize filtered list
+                            activeMonthFilter = null
+                            activeDateFilter = null
+                            activeStateFilter = null
+                            transactionAdapter.updateTransactions(allTransactions)
+                            calculateTotals(filteredTransactions)
+                            filterTransactions("all", searchEditText.text.toString())
+                        },
+                        onFailure = { error ->
+                            android.util.Log.e("HistoryFragment", "Failed to load transactions", error)
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to load transactions: ${error.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            allTransactions = emptyList()
+                            transactionAdapter.updateTransactions(emptyList())
+                            filteredTransactions = emptyList()
+                            calculateTotals(emptyList())
                         }
-                        filteredTransactions = allTransactions // Initialize filtered list
-                        activeMonthFilter = null
-                        activeDateFilter = null
-                        activeStateFilter = null
-                        transactionAdapter.updateTransactions(allTransactions)
-                        calculateTotals(filteredTransactions)
-                        filterTransactions("all", searchEditText.text.toString())
-                    },
-                    onFailure = { error ->
-                        android.util.Log.e("HistoryFragment", "Failed to load transactions", error)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to load transactions: ${error.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        allTransactions = emptyList()
-                        transactionAdapter.updateTransactions(emptyList())
-                        filteredTransactions = emptyList()
-                        calculateTotals(emptyList())
-                    }
-                )
+                    )
+                }
             }
         }
     }
