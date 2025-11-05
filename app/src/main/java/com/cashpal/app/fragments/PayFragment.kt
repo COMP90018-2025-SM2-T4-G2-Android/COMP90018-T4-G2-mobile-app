@@ -16,15 +16,20 @@ import androidx.recyclerview.widget.RecyclerView
 import com.cashpal.app.R
 import com.cashpal.app.adapters.ContactAdapter
 import com.cashpal.app.adapters.PayContactItem
+import com.cashpal.app.data.Contact as GuardContact
+import com.cashpal.app.data.PaymentRequest as GuardPaymentRequest
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.models.Contact
+import com.cashpal.app.utils.DuplicatePaymentGuard
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.Timestamp
+import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -366,8 +371,7 @@ class PayFragment : Fragment() {
     private fun performTransfer() {
         if (isProcessingTransfer) return
 
-        val recipient = selectedRecipient
-        if (recipient == null) {
+        val recipient = selectedRecipient ?: run {
             showMessage(getString(R.string.pay_select_recipient_prompt))
             return
         }
@@ -400,6 +404,32 @@ class PayFragment : Fragment() {
 
         amountEditText.error = null
         view?.clearFocus()
+
+        val guardRequest = createDuplicateGuardRequest(recipient, amount)
+        val proceed = {
+            executeTransfer(
+                senderId = senderId,
+                recipientId = recipientId,
+                recipient = recipient,
+                amount = amount,
+                guardRequest = guardRequest
+            )
+        }
+
+        if (DuplicatePaymentGuard.isDuplicate(requireContext(), guardRequest)) {
+            showDuplicatePaymentAlert(guardRequest, recipient.name, proceed)
+        } else {
+            proceed()
+        }
+    }
+
+    private fun executeTransfer(
+        senderId: String,
+        recipientId: String,
+        recipient: PayContactItem,
+        amount: Double,
+        guardRequest: GuardPaymentRequest
+    ) {
         toggleProcessing(true)
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -415,6 +445,7 @@ class PayFragment : Fragment() {
                             amountEditText.text?.clear()
                             playSuccessSound()
                             showMessage(getString(R.string.pay_transfer_success, recipient.name))
+                            DuplicatePaymentGuard.save(requireContext(), guardRequest)
                             refreshContactsAfterTransfer()
                             // Refresh balance in MainActivity
                             (activity as? com.cashpal.app.MainActivity)?.refreshBalance()
@@ -444,6 +475,49 @@ class PayFragment : Fragment() {
 
     private fun refreshContactsAfterTransfer() {
         currentUserId?.let { loadContacts(it) }
+    }
+
+    private fun createDuplicateGuardRequest(
+        recipient: PayContactItem,
+        amount: Double
+    ): GuardPaymentRequest {
+        val contactId = when {
+            !recipient.contactUserId.isNullOrBlank() -> recipient.contactUserId
+            recipient.id.isNotBlank() -> recipient.id
+            else -> recipient.name
+        }
+
+        val guardContact = GuardContact(
+            id = contactId ?: recipient.name,
+            name = recipient.name,
+            phone = recipient.phone
+        )
+        return GuardPaymentRequest(
+            contact = guardContact,
+            amount = amount
+        )
+    }
+
+    private fun showDuplicatePaymentAlert(
+        guardRequest: GuardPaymentRequest,
+        recipientName: String,
+        onConfirm: () -> Unit
+    ) {
+        val formattedAmount = NumberFormat.getCurrencyInstance().format(guardRequest.amount)
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.pay_duplicate_alert_title)
+            .setMessage(
+                getString(
+                    R.string.pay_duplicate_alert_message,
+                    formattedAmount,
+                    recipientName
+                )
+            )
+            .setNegativeButton(R.string.pay_duplicate_alert_cancel, null)
+            .setPositiveButton(R.string.pay_duplicate_alert_continue) { _, _ ->
+                onConfirm()
+            }
+            .show()
     }
 
     private fun playSuccessSound() {
