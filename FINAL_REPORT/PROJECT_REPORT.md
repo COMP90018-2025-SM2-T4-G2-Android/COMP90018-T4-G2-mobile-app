@@ -73,7 +73,9 @@ cd COMP90018-T4-G2-mobile-app
 
 #### Step 2: Configure API Keys
 
-The application requires API keys for external services (Gemini AI and HuggingFace). These can be configured in three ways (in priority order):
+The application requires API keys for external services (Gemini AI and HuggingFace). **API keys are automatically retrieved from Firebase Remote Config** (configured in Step 3), so manual configuration is typically not required.
+
+However, if you need to override these values locally or for CI/CD purposes, you can configure them manually in three ways (in priority order):
 
 1. **Environment Variables** (Recommended for CI/CD):
    ```bash
@@ -170,7 +172,9 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 ### Troubleshooting Common Issues
 
 #### Issue: API Keys Not Found
-**Solution**: Ensure API keys are set in one of the three locations mentioned in Step 2. Check `app/build.gradle.kts` to verify keys are being read correctly.
+**Solution**: 
+- **Primary**: API keys are automatically retrieved from Firebase Remote Config. Ensure Firebase Remote Config is properly set up in Step 3 and the keys are configured in your Firebase Console.
+- **Fallback**: If you need to override locally, ensure API keys are set in one of the three locations mentioned in Step 2. Check `app/build.gradle.kts` to verify keys are being read correctly.
 
 #### Issue: Firebase Connection Errors
 **Solution**: 
