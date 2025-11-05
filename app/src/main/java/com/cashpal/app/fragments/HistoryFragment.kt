@@ -23,6 +23,8 @@ import com.cashpal.app.data.DataRepository
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.models.TransactionHistory
 import com.google.android.material.tabs.TabLayout
+import com.cashpal.app.MainActivity
+import com.cashpal.app.utils.HeaderActionsController
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import java.io.File
@@ -40,6 +42,7 @@ class HistoryFragment : Fragment() {
     private lateinit var transactionsRecyclerView: RecyclerView
     private lateinit var totalSentTextView: TextView
     private lateinit var totalReceivedTextView: TextView
+    private var headerActionsController: HeaderActionsController? = null
 
     private lateinit var transactionAdapter: TransactionHistoryAdapter
     private var allTransactions = listOf<TransactionHistory>()
@@ -70,6 +73,7 @@ class HistoryFragment : Fragment() {
         setupSearch()
         setupTabs()
         setupButtons()
+        bindHeaderActions(view)
     }
 
     private fun initViews() {
@@ -86,6 +90,16 @@ class HistoryFragment : Fragment() {
             openReceipt(tx)
         }
         transactionsRecyclerView.adapter = transactionAdapter
+    }
+
+    private fun bindHeaderActions(root: View) {
+        val headerActionsView = root.findViewById<View>(R.id.header_actions_history) ?: return
+        headerActionsController = HeaderActionsController(
+            headerActionsView,
+            requireContext()
+        ) {
+            (activity as? MainActivity)?.openMoreTab(showProfile = true)
+        }
     }
 
     private fun setupData() {
@@ -642,6 +656,12 @@ class HistoryFragment : Fragment() {
             .replace(R.id.fragmentContainer, receiptFragment)
             .addToBackStack(null)
             .commit()
+    }
+
+    override fun onDestroyView() {
+        headerActionsController?.detach()
+        headerActionsController = null
+        super.onDestroyView()
     }
 
 }

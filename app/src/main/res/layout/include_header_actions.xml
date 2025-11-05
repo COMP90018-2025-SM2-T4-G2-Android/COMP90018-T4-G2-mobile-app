@@ -6,32 +6,32 @@
     android:orientation="horizontal">
 
     <ImageButton
+        android:id="@+id/button_dark_mode"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:background="@drawable/pay_header_icon_background"
         android:contentDescription="@string/accessibility_toggle_theme"
         android:padding="8dp"
-        android:src="@drawable/ic_moon"
-        android:tint="@android:color/white" />
+        android:src="@drawable/ic_moon" />
 
     <ImageButton
+        android:id="@+id/button_notifications"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginStart="12dp"
         android:background="@drawable/pay_header_icon_background"
         android:contentDescription="@string/accessibility_notifications"
         android:padding="8dp"
-        android:src="@drawable/ic_notifications"
-        android:tint="@android:color/white" />
+        android:src="@drawable/ic_notifications" />
 
     <ImageButton
+        android:id="@+id/button_profile"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginStart="12dp"
         android:background="@drawable/pay_header_icon_background"
         android:contentDescription="@string/accessibility_profile"
         android:padding="8dp"
-        android:src="@drawable/ic_person"
-        android:tint="@android:color/white" />
+        android:src="@drawable/ic_person" />
 
 </LinearLayout>

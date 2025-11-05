@@ -25,8 +25,10 @@ import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import com.google.mlkit.vision.barcode.common.Barcode
+import com.cashpal.app.MainActivity
 import com.cashpal.app.adapters.RecentScanAdapter
 import com.cashpal.app.models.RecentScan
+import com.cashpal.app.utils.HeaderActionsController
 
 class ScanFragment : Fragment() {
 
@@ -39,6 +41,7 @@ class ScanFragment : Fragment() {
 
     private lateinit var cameraExecutor: ExecutorService
     private var hasScanned = false  // prevent multiple triggers
+    private var headerActionsController: HeaderActionsController? = null
     
     private val CAMERA_PERMISSION_REQUEST_CODE = 1001
 
@@ -59,6 +62,7 @@ class ScanFragment : Fragment() {
         recentScans = view.findViewById(R.id.rv_recent_scans)
         previewView = view.findViewById(R.id.previewView)
         scanningLine = view.findViewById(R.id.scanningLine)
+        bindHeaderActions(view)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -102,6 +106,16 @@ class ScanFragment : Fragment() {
             startCamera()
         } else {
             requestCameraPermission()
+        }
+    }
+
+    private fun bindHeaderActions(root: View) {
+        val headerActionsView = root.findViewById<View>(R.id.header_actions_scan) ?: return
+        headerActionsController = HeaderActionsController(
+            headerActionsView,
+            requireContext()
+        ) {
+            (activity as? MainActivity)?.openMoreTab(showProfile = true)
         }
     }
     
@@ -247,6 +261,8 @@ class ScanFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        headerActionsController?.detach()
+        headerActionsController = null
         super.onDestroyView()
         cameraExecutor.shutdown()
     }

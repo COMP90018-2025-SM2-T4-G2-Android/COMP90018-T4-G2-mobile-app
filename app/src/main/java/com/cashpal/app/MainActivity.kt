@@ -26,6 +26,8 @@ import com.cashpal.app.fragments.ReceiptFragment
 import com.cashpal.app.fragments.NfcPaymentFragment
 import com.cashpal.app.utils.BiometricPreferences
 import com.cashpal.app.utils.GooglePlayServicesUtils
+import com.cashpal.app.utils.AppPreferences
+import com.cashpal.app.utils.HeaderActionsController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
 import android.Manifest
@@ -49,6 +51,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scrollView: ScrollView
     private lateinit var bottomNavigationView: BottomNavigationView
     private var isDemoMode = false
+    private var pendingOpenProfile = false
+    private var homeHeaderActionsController: HeaderActionsController? = null
+    private var currentTabId: Int = R.id.nav_home
 
     override fun onResume() {
         super.onResume()
@@ -96,8 +101,11 @@ class MainActivity : AppCompatActivity() {
         }
         
         initializeViews()
+        currentTabId = AppPreferences.getLastSelectedTab(R.id.nav_home)
+        bindHomeHeaderActions()
         setupBottomNavigation()
         setupClickListeners()
+        restoreSelectedTab()
         loadData()
 
         supportFragmentManager.addOnBackStackChangedListener {
@@ -107,7 +115,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        showHomeContent()
         openFromIntent(intent)
     }
     private fun initializeViews() {
@@ -124,34 +131,59 @@ class MainActivity : AppCompatActivity() {
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
     }
 
+    private fun bindHomeHeaderActions() {
+        val headerActions = findViewById<View>(R.id.header_actions_home) ?: return
+        homeHeaderActionsController = HeaderActionsController(
+            headerActions,
+            this
+        ) {
+            openMoreTab(showProfile = true)
+        }
+    }
+
     private fun setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    showHomeContent()
-                    true
-                }
-                R.id.nav_pay -> {
-                    showFragment(PayFragment())
-                    true
-                }
-                R.id.nav_scan -> {
-                    showFragment(ScanFragment())
-                    true
-                }
-                R.id.nav_history -> {
-                    showFragment(HistoryFragment())
-                    true
-                }
-                R.id.nav_more -> {
-                    showFragment(MoreFragment())
-                    true
-                }
-                else -> false
-            }
+            navigateToTab(item.itemId)
         }
+    }
 
-        bottomNavigationView.selectedItemId = R.id.nav_home
+    private fun navigateToTab(itemId: Int): Boolean {
+        currentTabId = itemId
+        AppPreferences.setLastSelectedTab(itemId)
+
+        return when (itemId) {
+            R.id.nav_home -> {
+                showHomeContent()
+                true
+            }
+            R.id.nav_pay -> {
+                showFragment(PayFragment())
+                true
+            }
+            R.id.nav_scan -> {
+                showFragment(ScanFragment())
+                true
+            }
+            R.id.nav_history -> {
+                showFragment(HistoryFragment())
+                true
+            }
+            R.id.nav_more -> {
+                showFragment(MoreFragment.newInstance(pendingOpenProfile))
+                pendingOpenProfile = false
+                true
+            }
+            else -> false
+        }
+    }
+
+    private fun restoreSelectedTab() {
+        val lastTab = currentTabId
+        if (bottomNavigationView.selectedItemId == lastTab) {
+            navigateToTab(lastTab)
+        } else {
+            bottomNavigationView.selectedItemId = lastTab
+        }
     }
 
     private fun setupClickListeners() {
@@ -159,6 +191,18 @@ class MainActivity : AppCompatActivity() {
             showFragment(HistoryFragment())
             updateBottomNavigationSelection(R.id.nav_history)
         }
+    }
+
+    fun openMoreTab(showProfile: Boolean = false) {
+        if (bottomNavigationView.selectedItemId == R.id.nav_more) {
+            if (showProfile) {
+                (supportFragmentManager.findFragmentById(R.id.fragmentContainer) as? MoreFragment)
+                    ?.openProfileFromHeader()
+            }
+            return
+        }
+        pendingOpenProfile = showProfile
+        bottomNavigationView.selectedItemId = R.id.nav_more
     }
 
     private fun loadData() {
@@ -858,7 +902,11 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun updateBottomNavigationSelection(selectedItemId: Int) {
-        bottomNavigationView.selectedItemId = selectedItemId
+        if (bottomNavigationView.selectedItemId == selectedItemId) {
+            navigateToTab(selectedItemId)
+        } else {
+            bottomNavigationView.selectedItemId = selectedItemId
+        }
     }
 
     private fun Int.dpToPx(): Int {
@@ -868,6 +916,11 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         openFromIntent(intent)
+    }
+
+    override fun onDestroy() {
+        homeHeaderActionsController?.detach()
+        super.onDestroy()
     }
 
     private fun openFromIntent(intent: Intent) {

@@ -55,5 +55,13 @@
     <color name="surface_container">#211F26</color>
     <color name="surface_container_high">#2B2930</color>
     <color name="surface_container_highest">#36343B</color>
-</resources>
 
+    <!-- Custom App Colors (Dark Mode Overrides) -->
+    <color name="app_background">#121212</color>
+    <color name="pay_header_end">#2F245C</color>
+    <color name="pay_soft_surface">#1F1A2F</color>
+    <color name="pay_option_border">#3D3554</color>
+    <color name="pay_option_icon_surface">#2A2340</color>
+    <color name="pay_nfc_start">#28213C</color>
+    <color name="pay_nfc_end">#1A2030</color>
+</resources>

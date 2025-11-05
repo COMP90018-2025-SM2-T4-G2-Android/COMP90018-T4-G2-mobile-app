@@ -35,6 +35,12 @@
     <!-- Firebase Configuration -->
     <string name="default_web_client_id">860245071011-d7q3s0om7mdq6povpifaeprau9hq9a9b.apps.googleusercontent.com</string>
 
+    <!-- Header Actions -->
+    <string name="dark_mode_enabled_message">Dark mode enabled</string>
+    <string name="dark_mode_disabled_message">Dark mode disabled</string>
+    <string name="notifications_enabled_message">Notifications enabled</string>
+    <string name="notifications_disabled_message">Notifications disabled</string>
+
     <!-- Pay Screen -->
     <string name="accessibility_toggle_theme">Toggle theme</string>
     <string name="accessibility_notifications">Notifications</string>
