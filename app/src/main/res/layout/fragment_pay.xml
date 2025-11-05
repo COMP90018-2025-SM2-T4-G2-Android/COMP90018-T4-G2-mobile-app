@@ -33,49 +33,24 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/app_name"
-                    android:src="@drawable/cashpal_logo"
-                    android:scaleType="fitCenter"
-                    android:adjustViewBounds="true" />
-
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:gravity="end"
-                    android:orientation="horizontal">
+                    android:layout_weight="1"
+                    android:gravity="center_vertical">
 
-                    <ImageButton
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/pay_header_icon_background"
-                        android:contentDescription="@string/accessibility_toggle_theme"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_moon"
-                        android:tint="@android:color/white" />
-
-                    <ImageButton
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="12dp"
-                        android:background="@drawable/pay_header_icon_background"
-                        android:contentDescription="@string/accessibility_notifications"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_notifications"
-                        android:tint="@android:color/white" />
-
-                    <ImageButton
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="12dp"
-                        android:background="@drawable/pay_header_icon_background"
-                        android:contentDescription="@string/accessibility_profile"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_person"
-                        android:tint="@android:color/white" />
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:adjustViewBounds="true"
+                        android:contentDescription="@string/app_name"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/cashpal_logo" />
                 </LinearLayout>
+
+                <include
+                    android:id="@+id/header_actions"
+                    layout="@layout/include_header_actions" />
             </LinearLayout>
 
             <TextView

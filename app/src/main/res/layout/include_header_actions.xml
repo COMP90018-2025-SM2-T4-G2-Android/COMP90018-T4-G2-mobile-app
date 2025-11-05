@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="end|center_vertical"
+    android:orientation="horizontal">
+
+    <ImageButton
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/pay_header_icon_background"
+        android:contentDescription="@string/accessibility_toggle_theme"
+        android:padding="8dp"
+        android:src="@drawable/ic_moon"
+        android:tint="@android:color/white" />
+
+    <ImageButton
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="12dp"
+        android:background="@drawable/pay_header_icon_background"
+        android:contentDescription="@string/accessibility_notifications"
+        android:padding="8dp"
+        android:src="@drawable/ic_notifications"
+        android:tint="@android:color/white" />
+
+    <ImageButton
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="12dp"
+        android:background="@drawable/pay_header_icon_background"
+        android:contentDescription="@string/accessibility_profile"
+        android:padding="8dp"
+        android:src="@drawable/ic_person"
+        android:tint="@android:color/white" />
+
+</LinearLayout>
