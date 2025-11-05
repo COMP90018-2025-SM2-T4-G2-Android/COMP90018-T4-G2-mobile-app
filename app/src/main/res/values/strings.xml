@@ -66,6 +66,10 @@
     <string name="pay_transfer_success">Sent successfully to %1$s.</string>
     <string name="pay_transfer_failed">Payment failed: %1$s</string>
     <string name="pay_transfer_failed_generic">Payment failed. Please try again.</string>
+    <string name="pay_duplicate_alert_title">Possible duplicate payment</string>
+    <string name="pay_duplicate_alert_message">You recently sent %1$s to %2$s. Do you want to send it again?</string>
+    <string name="pay_duplicate_alert_cancel">Cancel</string>
+    <string name="pay_duplicate_alert_continue">Send anyway</string>
     <string name="pay_no_favorites">No favourite contacts yet.</string>
     <string name="pay_no_favorites_search">No favourite contacts match your search.</string>
     <string name="pay_no_recent_contacts">No recent contacts to show.</string>
