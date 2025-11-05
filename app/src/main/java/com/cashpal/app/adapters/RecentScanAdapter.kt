@@ -38,6 +38,9 @@ class RecentScanAdapter(
         holder.location.text = scan.location
         holder.time.text = scan.time
         holder.amount.text = scan.amount
+        val canResend = scan.targetUserId != null
+        holder.scanAgainButton.isEnabled = canResend
+        holder.scanAgainButton.alpha = if (canResend) 1f else 0.5f
 
         holder.scanAgainButton.setOnClickListener {
             onScanAgainClick(scan)

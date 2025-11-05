@@ -112,14 +112,23 @@ class DebugSeedActivity : AppCompatActivity() {
                 // Create mock users
                 val mockUsers = createMockUsers()
                 logMessage("Created ${mockUsers.size} mock users")
+
+                // Create mock vendors
+                val vendorUsers = createMockVendors()
+                logMessage("Created ${vendorUsers.size} mock vendors")
+
+                val allUsers = (mockUsers + vendorUsers).distinctBy { it.id }
                 
                 // Create mock contacts
-                createMockContacts(mockUsers)
+                createMockContacts(allUsers)
                 logMessage("Created mock contacts")
                 
                 // Create mock transactions
-                createMockTransactions(mockUsers)
+                createMockTransactions(allUsers)
                 logMessage("Created mock transactions")
+
+                createVendorTransactions(mockUsers.firstOrNull(), vendorUsers)
+                logMessage("Created vendor QR transactions")
                 
                 // Create mock payment requests
                 createMockPaymentRequests(mockUsers)
@@ -169,6 +178,69 @@ class DebugSeedActivity : AppCompatActivity() {
         }
         
         return users
+    }
+
+    private suspend fun createMockVendors(): List<User> {
+        val vendors = mutableListOf<User>()
+        val vendorSeeds = listOf(
+            VendorSeed(
+                id = "vendor_demo_6",
+                name = "Vendor #6",
+                email = "vendor6@cashpal.com",
+                phone = "+61400000006"
+            ),
+            VendorSeed(
+                id = "vendor_demo_7",
+                name = "Vendor #7",
+                email = "vendor7@cashpal.com",
+                phone = "+61400000007"
+            ),
+            VendorSeed(
+                id = "vendor_demo_8",
+                name = "Vendor #8",
+                email = "vendor8@cashpal.com",
+                phone = "+61400000008"
+            ),
+            VendorSeed(
+                id = "vendor_demo_9",
+                name = "Vendor #9",
+                email = "vendor9@cashpal.com",
+                phone = "+61400000009"
+            ),
+            VendorSeed(
+                id = "vendor_demo_10",
+                name = "Vendor #10",
+                email = "vendor10@cashpal.com",
+                phone = "+61400000010"
+            )
+        )
+
+        vendorSeeds.forEach { seed ->
+            val vendorUser = User(
+                id = seed.id,
+                email = seed.email,
+                displayName = seed.name,
+                phoneNumber = seed.phone,
+                balance = 0.0,
+                currency = "AUD",
+                isVerified = true,
+                preferences = UserPreferences(currency = "AUD")
+            )
+
+            repository.createUser(vendorUser).collect { result ->
+                result.fold(
+                    onSuccess = {
+                        vendors.add(vendorUser)
+                        logMessage("Created vendor: ${vendorUser.displayName}")
+                    },
+                    onFailure = { error ->
+                        logMessage("Failed to create vendor ${vendorUser.displayName}: ${error.message}")
+                    }
+                )
+            }
+        }
+
+        return vendors
     }
     
     private suspend fun createMockContacts(users: List<User>) {
@@ -239,7 +311,64 @@ class DebugSeedActivity : AppCompatActivity() {
             }
         }
     }
-    
+
+    private suspend fun createVendorTransactions(baseUser: User?, vendors: List<User>) {
+        if (baseUser == null || vendors.isEmpty()) {
+            logMessage("Skipping vendor transactions - missing base user or vendors")
+            return
+        }
+
+        val random = Random()
+        vendors.forEachIndexed { index, vendor ->
+            val amount = 10.0 + random.nextDouble() * 40.0 // $10-$50 AUD
+            val metadata = mutableMapOf<String, Any>(
+                "qrSource" to "scan",
+                "qrType" to "store",
+                "rescanVendor" to vendor.displayName,
+                "rescanAmount" to amount,
+                "rescanCurrency" to vendor.currency,
+                "originalVendorSeed" to true,
+                "seedIndex" to index
+            )
+
+            val qrPayload = """{"id":"${vendor.id}","name":"${vendor.displayName}","type":"store","merchantId":"SEED-${vendor.id}"}"""
+
+            val transaction = Transaction(
+                fromUserId = baseUser.id,
+                toUserId = vendor.id,
+                amount = amount,
+                currency = baseUser.currency,
+                description = "Payment to ${vendor.displayName}",
+                category = TransactionCategory.SHOPPING,
+                status = TransactionStatus.COMPLETED,
+                type = TransactionType.PAYMENT,
+                createdAt = Timestamp.now(),
+                completedAt = Timestamp.now(),
+                qrCodeData = qrPayload,
+                metadata = metadata
+            )
+
+            repository.createTransaction(transaction).collect { result ->
+                result.fold(
+                    onSuccess = {
+                        val formattedAmount = String.format(java.util.Locale.getDefault(), "%.2f", amount)
+                        logMessage("Created vendor transaction to ${vendor.displayName} (${formattedAmount} AUD)")
+                    },
+                    onFailure = { error ->
+                        logMessage("Failed to create vendor transaction for ${vendor.displayName}: ${error.message}")
+                    }
+                )
+            }
+        }
+    }
+
+    private data class VendorSeed(
+        val id: String,
+        val name: String,
+        val email: String,
+        val phone: String
+    )
+
     private suspend fun createMockPaymentRequests(users: List<User>) {
         val random = Random()
         

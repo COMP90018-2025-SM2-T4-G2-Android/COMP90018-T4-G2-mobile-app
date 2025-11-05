@@ -19,12 +19,14 @@ import com.cashpal.app.NotificationService
 import com.cashpal.app.BuildConfig
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.models.QRPayload
+import com.cashpal.app.models.TransactionType
 import com.google.android.material.textfield.TextInputEditText
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.util.Locale
 
 class ScanResultFragment : Fragment() {
 
@@ -35,6 +37,7 @@ class ScanResultFragment : Fragment() {
     private lateinit var saveFavoriteButton: Button
     private lateinit var sendProgress: ProgressBar
     private var isProcessingTransfer = false
+    private var rawQrData: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,6 +48,7 @@ class ScanResultFragment : Fragment() {
 
         // ----- get data from arguments -----
         val qrData = arguments?.getString("qrData")
+        rawQrData = qrData
 
         amountInput = view.findViewById(R.id.et_transfer_amount)
         sendButton = view.findViewById(R.id.btn_send_money)
@@ -250,6 +254,23 @@ class ScanResultFragment : Fragment() {
 
         val description = getString(R.string.send_money_default_note, payload.name)
         val recipientContact = qrContact ?: payload.phone.takeIf { it.isNotBlank() }
+        val metadata = mutableMapOf<String, Any>(
+            "qrSource" to "scan"
+        ).apply {
+            val qrType = payload.type.takeIf { it.isNotBlank() }?.lowercase(Locale.getDefault())
+            if (!qrType.isNullOrBlank()) {
+                this["qrType"] = qrType
+            }
+            qrContact?.takeIf { it.isNotBlank() }?.let { contact ->
+                this["qrContact"] = contact
+            }
+            payload.phone.takeIf { it.isNotBlank() }?.let { phone ->
+                this["qrPhone"] = phone
+            }
+            payload.id.takeIf { it.isNotBlank() }?.let { id ->
+                this["qrRecipientId"] = id
+            }
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -257,7 +278,10 @@ class ScanResultFragment : Fragment() {
                     fromUserId = currentUser.uid,
                     toUserId = payload.id,
                     amount = amount,
-                    description = description
+                    description = description,
+                    transactionType = TransactionType.PAYMENT,
+                    qrCodeData = rawQrData,
+                    metadata = if (metadata.isEmpty()) emptyMap() else metadata
                 ).collect { result ->
                     result.fold(
                         onSuccess = { transactionId ->

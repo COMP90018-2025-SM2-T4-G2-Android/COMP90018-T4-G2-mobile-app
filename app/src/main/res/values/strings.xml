@@ -109,6 +109,12 @@
     <string name="send_money_success">Payment sent to %1$s.</string>
     <string name="send_money_payment_method">CashPal Balance</string>
     <string name="send_money_currency_format">$%.2f</string>
+    <string name="scan_quick_pay_title">Send to %1$s again</string>
+    <string name="scan_quick_pay_message">Enter the amount you want to send to %1$s.</string>
+    <string name="scan_quick_pay_amount_hint">Amount (%1$s)</string>
+    <string name="scan_quick_pay_insufficient_balance">You only have %1$s available.</string>
+    <string name="scan_quick_pay_send">Send</string>
+    <string name="scan_quick_pay_failed">Could not repeat this payment. Please try again.</string>
     
     <!-- Vendor QR -->
     <string name="personal_qr_default_name">CashPal User</string>

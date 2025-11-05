@@ -387,7 +387,10 @@ class CashPalRepository(
         toUserId: String,
         amount: Double,
         description: String,
-        category: com.cashpal.app.models.TransactionCategory = com.cashpal.app.models.TransactionCategory.OTHER
+        category: com.cashpal.app.models.TransactionCategory = com.cashpal.app.models.TransactionCategory.OTHER,
+        transactionType: com.cashpal.app.models.TransactionType = com.cashpal.app.models.TransactionType.TRANSFER,
+        qrCodeData: String? = null,
+        metadata: Map<String, Any> = emptyMap()
     ) = flow {
         try {
             // Get both users' current balances
@@ -422,9 +425,11 @@ class CashPalRepository(
                 description = description,
                 category = category,
                 status = com.cashpal.app.models.TransactionStatus.COMPLETED,
-                type = com.cashpal.app.models.TransactionType.TRANSFER,
+                type = transactionType,
                 createdAt = com.google.firebase.Timestamp.now(),
-                completedAt = com.google.firebase.Timestamp.now()
+                completedAt = com.google.firebase.Timestamp.now(),
+                qrCodeData = qrCodeData,
+                metadata = metadata
             )
             
             // Process transaction with atomic balance updates
@@ -654,4 +659,3 @@ class CashPalRepository(
         emit(Result.failure(e))
     }
 }
-
