@@ -48,8 +48,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewAllText: TextView
     private lateinit var scrollView: ScrollView
     private lateinit var bottomNavigationView: BottomNavigationView
-    private lateinit var btnSendMoney: com.google.android.material.button.MaterialButton
-    private lateinit var btnScan: com.google.android.material.button.MaterialButton
     private var isDemoMode = false
 
     override fun onResume() {
@@ -124,8 +122,6 @@ class MainActivity : AppCompatActivity() {
         viewAllText = findViewById(R.id.viewAllText)
         scrollView = findViewById(R.id.scrollView)
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
-        btnSendMoney = findViewById(R.id.btnSendMoney)
-        btnScan = findViewById(R.id.btnScan)
     }
 
     private fun setupBottomNavigation() {
@@ -162,16 +158,6 @@ class MainActivity : AppCompatActivity() {
         viewAllText.setOnClickListener {
             showFragment(HistoryFragment())
             updateBottomNavigationSelection(R.id.nav_history)
-        }
-        
-        btnSendMoney.setOnClickListener {
-            showFragment(PayFragment())
-            updateBottomNavigationSelection(R.id.nav_pay)
-        }
-        
-        btnScan.setOnClickListener {
-            showFragment(ScanFragment())
-            updateBottomNavigationSelection(R.id.nav_scan)
         }
     }
 

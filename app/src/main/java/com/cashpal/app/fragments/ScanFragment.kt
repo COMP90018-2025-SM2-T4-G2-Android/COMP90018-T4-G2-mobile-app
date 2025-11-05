@@ -142,46 +142,58 @@ class ScanFragment : Fragment() {
     }
 
     private fun startCamera() {
+        // Check if fragment is attached and view exists
+        if (!isAdded || view == null) {
+            return
+        }
+
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
 
         cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
-
-            val preview = Preview.Builder()
-                .build()
-                .also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
-
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-            val imageAnalysis = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .also {
-                    it.setAnalyzer(cameraExecutor, QRCodeAnalyzerMLKit { qrText ->
-                        if (!hasScanned) {
-                            hasScanned = true
-                            requireActivity().runOnUiThread {
-                                // Navigate to the Scan Result Fragment
-                                val bundle = Bundle().apply {
-                                    putString("qrData", qrText)
-                                }
-                                val resultFragment = ScanResultFragment().apply {
-                                    arguments = bundle
-                                }
-
-                                parentFragmentManager.beginTransaction()
-                                    .replace(R.id.fragmentContainer, resultFragment)
-                                    .addToBackStack("scan_result")
-                                    .commit()
-                            }
-                        }
-
-                    })
-                }
+            // Check again before accessing view lifecycle owner
+            if (!isAdded || view == null) {
+                return@addListener
+            }
 
             try {
+                val cameraProvider = cameraProviderFuture.get()
+
+                val preview = Preview.Builder()
+                    .build()
+                    .also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
+                    }
+
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                val imageAnalysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also {
+                        it.setAnalyzer(cameraExecutor, QRCodeAnalyzerMLKit { qrText ->
+                            if (!hasScanned && isAdded) {
+                                hasScanned = true
+                                requireActivity().runOnUiThread {
+                                    if (isAdded) {
+                                        // Navigate to the Scan Result Fragment
+                                        val bundle = Bundle().apply {
+                                            putString("qrData", qrText)
+                                        }
+                                        val resultFragment = ScanResultFragment().apply {
+                                            arguments = bundle
+                                        }
+
+                                        parentFragmentManager.beginTransaction()
+                                            .replace(R.id.fragmentContainer, resultFragment)
+                                            .addToBackStack("scan_result")
+                                            .commit()
+                                    }
+                                }
+                            }
+
+                        })
+                    }
+
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
                     viewLifecycleOwner,
@@ -194,11 +206,13 @@ class ScanFragment : Fragment() {
                 startScanButton.visibility = View.GONE
             } catch (exc: Exception) {
                 exc.printStackTrace()
-                Toast.makeText(
-                    requireContext(),
-                    "Failed to start camera: ${exc.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
+                if (isAdded && context != null) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Failed to start camera: ${exc.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
 
         }, ContextCompat.getMainExecutor(requireContext()))

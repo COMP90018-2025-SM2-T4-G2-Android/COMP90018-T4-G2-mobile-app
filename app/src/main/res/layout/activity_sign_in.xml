@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA"
+    android:background="@color/app_background"
     tools:context=".auth.SignInActivity">
 
     <LinearLayout
@@ -13,34 +13,56 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="24dp"
-        android:gravity="center">
+        android:gravity="center_horizontal">
 
-        <!-- Logo/Title -->
+        <!-- Logo Section -->
         <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:layout_marginTop="48dp"
-            android:layout_marginBottom="24dp"
-            android:src="@mipmap/ic_launcher"
-            android:contentDescription="CashPal Logo" />
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="64dp"
+            android:layout_marginBottom="16dp"
+            android:src="@drawable/cashpal_icon"
+            android:contentDescription="CashPal Logo"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true" />
 
-        <TextView
+        <!-- App Name: Cash in black, Pal in purple -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="CashPal"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="#6B46C1"
-            android:layout_marginBottom="16dp" />
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cash"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                android:textColor="#E6000000"
+                android:fontFamily="sans-serif" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pal"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary"
+                android:fontFamily="sans-serif" />
+
+        </LinearLayout>
 
         <!-- Welcome Back -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Welcome Back"
-            android:textSize="24sp"
+            android:textSize="28sp"
             android:textStyle="bold"
-            android:textColor="#1F2937"
+            android:textColor="#E6000000"
+            android:fontFamily="sans-serif"
             android:layout_marginBottom="8dp" />
 
         <!-- Subtitle -->
@@ -48,144 +70,189 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sign in to continue to CashPal"
-            android:textSize="14sp"
-            android:textColor="#6B7280"
+            android:textSize="16sp"
+            android:textColor="#E6000000"
+            android:fontFamily="sans-serif"
             android:layout_marginBottom="48dp" />
 
-        <!-- Auth Form -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- Input Fields Container -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            android:padding="24dp">
+            android:orientation="vertical"
+            android:layout_marginBottom="24dp">
 
-            <LinearLayout
+            <!-- Email Field -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Email"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#E6000000"
+                android:fontFamily="sans-serif"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_marginBottom="24dp"
+                app:boxBackgroundMode="filled"
+                app:boxBackgroundColor="#F5F5F5"
+                app:boxStrokeColor="@color/primary"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="2dp"
+                app:hintTextColor="@color/primary"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
-                <!-- Email Field -->
-                <com.google.android.material.textfield.TextInputLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
+                    android:inputType="textEmailAddress"
+                    android:textSize="16sp"
+                    android:textColor="#E6000000"
+                    android:fontFamily="sans-serif"
                     android:hint="your.email@example.com"
-                    app:boxStrokeColor="#6B46C1"
-                    app:hintTextColor="#6B46C1">
+                    android:padding="16dp" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etEmail"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textEmailAddress" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-                </com.google.android.material.textfield.TextInputLayout>
+            <!-- Password Field -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Password"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#E6000000"
+                android:fontFamily="sans-serif"
+                android:layout_marginBottom="8dp" />
 
-                <!-- Password Field -->
-                <com.google.android.material.textfield.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:boxBackgroundMode="filled"
+                app:boxBackgroundColor="#F5F5F5"
+                app:boxStrokeColor="@color/primary"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="2dp"
+                app:hintTextColor="@color/primary"
+                app:endIconMode="password_toggle"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
+                    android:inputType="textPassword"
+                    android:textSize="16sp"
+                    android:textColor="#E6000000"
+                    android:fontFamily="sans-serif"
                     android:hint="Enter your password"
-                    app:boxStrokeColor="#6B46C1"
-                    app:hintTextColor="#6B46C1"
-                    app:endIconMode="password_toggle">
+                    android:padding="16dp" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etPassword"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textPassword" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-                </com.google.android.material.textfield.TextInputLayout>
+            <!-- Forgot Password Link -->
+            <TextView
+                android:id="@+id/tvForgotPassword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:text="Forgot password?"
+                android:textSize="14sp"
+                android:textColor="@color/primary"
+                android:fontFamily="sans-serif"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground"
+                android:padding="8dp" />
 
-                <!-- Forgot Password Link -->
-                <TextView
-                    android:id="@+id/tvForgotPassword"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_marginBottom="24dp"
-                    android:text="Forgot password?"
-                    android:textSize="14sp"
-                    android:textColor="#6B46C1"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:padding="8dp" />
+        </LinearLayout>
 
-                <!-- Sign In Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSignIn"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginBottom="12dp"
-                    android:text="Sign In"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="#6B46C1"
-                    app:cornerRadius="28dp" />
+        <!-- Sign In Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSignIn"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="24dp"
+            android:text="Sign In"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:fontFamily="sans-serif"
+            app:backgroundTint="@color/primary"
+            app:cornerRadius="12dp"
+            app:elevation="0dp" />
 
-                <!-- Divider -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginVertical="16dp">
+        <!-- Divider -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp">
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"
-                        android:background="#E5E7EB" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="#E5E7EB" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Or continue with"
-                        android:textSize="12sp"
-                        android:textColor="#6B7280"
-                        android:layout_marginHorizontal="16dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Or continue with"
+                android:textSize="14sp"
+                android:textColor="#E6000000"
+                android:fontFamily="sans-serif"
+                android:layout_marginHorizontal="16dp" />
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"
-                        android:background="#E5E7EB" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="#E5E7EB" />
 
-                </LinearLayout>
+        </LinearLayout>
 
-                <!-- Google Sign-In Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnGoogleSignIn"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginBottom="24dp"
-                    android:text="Continue with Google"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#FFFFFF"
-                    app:backgroundTint="#4285F4"
-                    app:cornerRadius="28dp"
-                    app:icon="@drawable/ic_google"
-                    app:iconGravity="textStart"
-                    app:iconPadding="12dp" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
+        <!-- Google Sign-In Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoogleSignIn"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="24dp"
+            android:text="Continue with Google"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:fontFamily="sans-serif"
+            app:backgroundTint="#4285F4"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/ic_google"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:elevation="0dp" />
 
         <!-- Biometric Login Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardBiometric"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="24dp"
             app:cardCornerRadius="12dp"
-            app:cardElevation="2dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#E5E7EB"
+            app:cardBackgroundColor="#FFFFFF"
             android:padding="20dp"
             android:clickable="true"
             android:focusable="true"
@@ -201,6 +268,7 @@
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:src="@drawable/ic_fingerprint"
+                    android:tint="@color/primary"
                     android:layout_marginEnd="16dp" />
 
                 <LinearLayout
@@ -215,14 +283,16 @@
                         android:text="Use Biometric Login"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#1F2937" />
+                        android:textColor="#E6000000"
+                        android:fontFamily="sans-serif" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Secure • Fast • Easy"
                         android:textSize="12sp"
-                        android:textColor="#6B7280" />
+                        android:textColor="#E6000000"
+                        android:fontFamily="sans-serif" />
 
                 </LinearLayout>
 
@@ -236,7 +306,9 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
             app:cardCornerRadius="12dp"
-            app:cardElevation="2dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#E5E7EB"
             app:cardBackgroundColor="#FEF3C7"
             android:padding="20dp">
 
@@ -263,7 +335,8 @@
                     android:textSize="14sp"
                     android:textStyle="bold"
                     app:backgroundTint="#F59E0B"
-                    app:cornerRadius="24dp" />
+                    app:cornerRadius="12dp"
+                    app:elevation="0dp" />
 
             </LinearLayout>
 
@@ -276,7 +349,8 @@
             android:layout_height="wrap_content"
             android:text="Don't have an account? Sign up"
             android:textSize="14sp"
-            android:textColor="#6B46C1"
+            android:textColor="@color/primary"
+            android:fontFamily="sans-serif"
             android:layout_marginTop="24dp"
             android:clickable="true"
             android:focusable="true"
@@ -289,12 +363,14 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginTop="24dp">
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="32dp">
 
             <ImageView
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:src="@drawable/ic_lock"
+                android:tint="#6C7293"
                 android:layout_marginEnd="8dp" />
 
             <TextView
@@ -302,7 +378,8 @@
                 android:layout_height="wrap_content"
                 android:text="Your data is encrypted and secure"
                 android:textSize="12sp"
-                android:textColor="#6B7280" />
+                android:textColor="#6C7293"
+                android:fontFamily="sans-serif" />
 
         </LinearLayout>
 
