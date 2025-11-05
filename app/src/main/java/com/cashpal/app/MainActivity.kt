@@ -49,6 +49,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scrollView: ScrollView
     private lateinit var bottomNavigationView: BottomNavigationView
     private var isDemoMode = false
+    private var isRestoringBottomNavState = false
+
+    companion object {
+        private const val KEY_SELECTED_NAV_ITEM = "selected_nav_item"
+        private const val KEY_IS_HOME_VISIBLE = "is_home_visible"
+    }
 
     override fun onResume() {
         super.onResume()
@@ -107,9 +113,32 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        showHomeContent()
-        openFromIntent(intent)
+        if (savedInstanceState == null) {
+            updateBottomNavigationSelection(R.id.nav_home)
+            openFromIntent(intent)
+        } else {
+            val selectedItemId = savedInstanceState.getInt(KEY_SELECTED_NAV_ITEM, R.id.nav_home)
+            val isHomeVisible =
+                savedInstanceState.getBoolean(KEY_IS_HOME_VISIBLE, selectedItemId == R.id.nav_home)
+
+            isRestoringBottomNavState = true
+            bottomNavigationView.selectedItemId = selectedItemId
+            isRestoringBottomNavState = false
+
+            scrollView.visibility = if (isHomeVisible) View.VISIBLE else View.GONE
+        }
     }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        if (::bottomNavigationView.isInitialized) {
+            outState.putInt(KEY_SELECTED_NAV_ITEM, bottomNavigationView.selectedItemId)
+        }
+        if (::scrollView.isInitialized) {
+            outState.putBoolean(KEY_IS_HOME_VISIBLE, scrollView.visibility == View.VISIBLE)
+        }
+        super.onSaveInstanceState(outState)
+    }
+
     private fun initializeViews() {
         firebaseRepository = ServiceLocator.getRepository()
         dataRepository = DataRepository(this, firebaseRepository)
@@ -126,6 +155,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener { item ->
+            if (isRestoringBottomNavState) {
+                return@setOnItemSelectedListener true
+            }
             when (item.itemId) {
                 R.id.nav_home -> {
                     showHomeContent()
@@ -150,8 +182,6 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
-
-        bottomNavigationView.selectedItemId = R.id.nav_home
     }
 
     private fun setupClickListeners() {
