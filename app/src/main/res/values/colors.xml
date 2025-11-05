@@ -68,4 +68,12 @@
 <color name="pay_nfc_start">#F5F0FF</color>
 <color name="pay_nfc_end">#E9F1FF</color>
 
+<color name="menu_item_background">#F8F9FA</color>
+<color name="menu_icon_background">#E8E6FF</color>
+<color name="tab_background">#F2F3F5</color>
+<color name="history_filter_background">#F2F3F5</color>
+<color name="home_balance_title_text">#FFFFFFFF</color>
+<color name="home_balance_primary_text">#FFFFFFFF</color>
+<color name="home_balance_secondary_text">#E6FFFFFF</color>
+
 </resources>

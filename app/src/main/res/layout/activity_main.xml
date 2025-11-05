@@ -102,7 +102,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/available_balance"
                         android:textSize="14sp"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/home_balance_title_text"
                         android:alpha="0.9"
                         android:layout_marginBottom="8dp"/>
 
@@ -112,7 +112,7 @@
                         android:layout_height="wrap_content"
                         android:text="$1,234.56"
                         android:textSize="36sp"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/home_balance_primary_text"
                         android:textStyle="bold"
                         android:layout_marginBottom="16dp"/>
 
@@ -132,7 +132,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/this_month"
                                 android:textSize="12sp"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/home_balance_secondary_text"
                                 android:alpha="0.9"
                                 android:layout_marginBottom="4dp"/>
 
@@ -158,7 +158,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/pending"
                                 android:textSize="12sp"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/home_balance_secondary_text"
                                 android:alpha="0.9"
                                 android:layout_marginBottom="4dp"/>
 
@@ -168,7 +168,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="$0.00"
                                 android:textSize="16sp"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/home_balance_primary_text"
                                 android:textStyle="bold"/>
 
                         </LinearLayout>
@@ -184,7 +184,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/reserved"
                                 android:textSize="12sp"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/home_balance_secondary_text"
                                 android:alpha="0.9"
                                 android:layout_marginBottom="4dp"/>
 
@@ -194,7 +194,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="$0.00"
                                 android:textSize="16sp"
-                                android:textColor="@android:color/white"
+                                android:textColor="@color/home_balance_primary_text"
                                 android:textStyle="bold"/>
 
                         </LinearLayout>
