@@ -11,7 +11,7 @@ import com.cashpal.app.R
 import com.cashpal.app.models.RecentScan
 
 class RecentScanAdapter(
-    private val scans: List<RecentScan>,
+    private var scans: List<RecentScan>,
     private val onScanAgainClick: (RecentScan) -> Unit
 ) : RecyclerView.Adapter<RecentScanAdapter.ViewHolder>() {
 
@@ -49,4 +49,9 @@ class RecentScanAdapter(
     }
 
     override fun getItemCount() = scans.size
+
+    fun updateScans(newScans: List<RecentScan>) {
+        scans = newScans
+        notifyDataSetChanged()
+    }
 }
