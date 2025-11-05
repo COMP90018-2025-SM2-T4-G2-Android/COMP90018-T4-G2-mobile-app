@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/container_transaction"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="16dp"
-    android:gravity="center_vertical">
+    android:padding="16dp">
 
     <!-- Avatar -->
     <TextView
@@ -16,42 +15,61 @@
         android:gravity="center"
         android:textColor="@color/primary"
         android:textStyle="bold"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Transaction details -->
-    <LinearLayout
+    <!-- Transaction Name -->
+    <TextView
+        android:id="@+id/tv_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:layout_marginStart="12dp">
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="8dp"
+        android:text="Transaction Name"
+        android:textColor="@color/foreground"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end"
+        app:layout_constraintStart_toEndOf="@id/tv_avatar"
+        app:layout_constraintEnd_toStartOf="@id/tv_amount"
+        app:layout_constraintTop_toTopOf="@id/tv_avatar" />
 
-        <TextView
-            android:id="@+id/tv_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Transaction Name"
-            android:textColor="@color/foreground"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+    <!-- Transaction Reference -->
+    <TextView
+        android:id="@+id/tv_reference"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="8dp"
+        android:text="TXN-123456"
+        android:textColor="@color/muted_foreground"
+        android:textSize="14sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        app:layout_constraintStart_toEndOf="@id/tv_avatar"
+        app:layout_constraintEnd_toStartOf="@id/tv_amount"
+        app:layout_constraintTop_toBottomOf="@id/tv_name" />
 
-        <TextView
-            android:id="@+id/tv_reference"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Order #12345"
-            android:textColor="@color/muted_foreground"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/tv_date"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="2024-01-15"
-            android:textColor="@color/muted_foreground"
-            android:textSize="12sp" />
-
-    </LinearLayout>
+    <!-- Transaction Date -->
+    <TextView
+        android:id="@+id/tv_date"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="8dp"
+        android:text="2024-01-15"
+        android:textColor="@color/muted_foreground"
+        android:textSize="12sp"
+        android:maxLines="1"
+        app:layout_constraintStart_toEndOf="@id/tv_avatar"
+        app:layout_constraintEnd_toStartOf="@id/tv_amount"
+        app:layout_constraintTop_toBottomOf="@id/tv_reference"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <!-- Amount -->
     <TextView
@@ -61,20 +79,28 @@
         android:text="$0.00"
         android:textStyle="bold"
         android:textSize="16sp"
-        android:layout_marginEnd="12dp" />
+        android:gravity="end"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tv_name"
+        app:layout_constraintBottom_toTopOf="@id/tv_status" />
 
     <!-- Status -->
     <TextView
         android:id="@+id/tv_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
         android:paddingTop="4dp"
         android:paddingBottom="4dp"
         android:background="@drawable/status_completed_background"
-        android:text="completed"
-        android:textSize="12sp"
-        android:textStyle="bold" />
+        android:text="COMPLETED"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:minWidth="80dp"
+        android:gravity="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_amount"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -187,14 +187,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
-                app:boxBackgroundColor="@color/pay_soft_surface"
+                app:boxBackgroundColor="@color/card"
                 app:boxCornerRadiusBottomEnd="20dp"
                 app:boxCornerRadiusBottomStart="20dp"
                 app:boxCornerRadiusTopEnd="20dp"
                 app:boxCornerRadiusTopStart="20dp"
                 app:boxStrokeColor="@android:color/transparent"
                 app:boxStrokeWidth="0dp"
-                app:startIconDrawable="@drawable/ic_search">
+                app:startIconDrawable="@drawable/ic_search"
+                app:startIconTint="@color/muted_foreground">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_search"
@@ -229,7 +230,9 @@
                     android:drawableTint="@color/primary"
                     android:clickable="true"
                     android:focusable="true"
-                    android:gravity="start|center_vertical"/>
+                    android:gravity="start|center_vertical"
+                    android:background="@drawable/filter_action_background"
+                    android:padding="8dp" />
 
                 <TextView
                     android:id="@+id/btn_download_csv"
@@ -243,7 +246,9 @@
                     android:drawableTint="@color/primary"
                     android:clickable="true"
                     android:focusable="true"
-                    android:gravity="start|center_vertical"/>
+                    android:gravity="start|center_vertical"
+                    android:background="@drawable/filter_action_background"
+                    android:padding="8dp" />
             </LinearLayout>
 
             <!-- Tabs -->
@@ -253,7 +258,7 @@
                 android:layout_height="48dp"
                 android:layout_marginBottom="24dp"
                 app:tabIndicatorColor="@android:color/white"
-                app:tabSelectedTextColor="@android:color/white"
+                app:tabSelectedTextColor="@color/foreground"
                 app:tabTextColor="@color/muted_foreground"
                 app:tabIndicator="@drawable/tab_indicator"
                 app:tabMode="fixed"
