@@ -52,12 +52,12 @@
     <!-- Splash screen theme -->
     <style name="Theme.CashPal.Splash" parent="Theme.CashPal">
         <!-- Splash on Android 12+ -->
-        <item name="windowSplashScreenBackground">@color/splash_bg</item>
+        <item name="windowSplashScreenBackground">@color/app_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/transparent</item>
         <item name="windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
         <item name="windowSplashScreenAnimationDuration">0</item>
         <!-- Launch window background that shows your wordmark until first draw -->
-        <item name="android:windowBackground">@drawable/splash_bg</item>
+        <item name="android:windowBackground">@color/app_background</item>
     </style>
 
     <!-- Bottom Navigation Text Styles -->
