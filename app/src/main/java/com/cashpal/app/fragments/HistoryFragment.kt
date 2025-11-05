@@ -23,11 +23,15 @@ import com.cashpal.app.data.DataRepository
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.models.TransactionHistory
 import com.google.android.material.tabs.TabLayout
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
+import kotlin.io.bufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -454,80 +458,80 @@ class HistoryFragment : Fragment() {
     }
     
     private fun exportTransactionsToPDF() {
-        try {
-            // Use filtered transactions for export
+        lifecycleScope.launch {
             val transactionsToExport = filteredTransactions.ifEmpty { allTransactions }
-            
             if (transactionsToExport.isEmpty()) {
                 Toast.makeText(requireContext(), "No transactions to export", Toast.LENGTH_SHORT).show()
-                return
+                return@launch
             }
-            
+
+            val context = requireContext()
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             val fileName = "transactions_$timestamp.pdf"
-            
-            // Use app's external files directory
-            val downloadsDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            val downloadsDir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
             if (downloadsDir == null) {
-                Toast.makeText(requireContext(), "Failed to access downloads directory", Toast.LENGTH_SHORT).show()
-                return
+                Toast.makeText(context, "Failed to access downloads directory", Toast.LENGTH_SHORT).show()
+                return@launch
             }
-            
-            // Create Downloads directory if it doesn't exist
-            downloadsDir.mkdirs()
-            
+
             val file = File(downloadsDir, fileName)
-            
-            // Create PDF content
-            val pdfContent = StringBuilder()
-            pdfContent.append("Transaction History\n")
-            pdfContent.append("Generated: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())}\n")
-            pdfContent.append("=".repeat(80)).append("\n\n")
-            
-            // Add summary
-            val totalSent = transactionsToExport
-                .filter { it.type == "sent" && it.status == "completed" }
-                .sumOf { 
-                    val amountStr = it.amount.replace(Regex("[^0-9.-]"), "")
-                    amountStr.toDoubleOrNull() ?: 0.0
+
+            try {
+                withContext(Dispatchers.IO) {
+                    if (!downloadsDir.exists()) {
+                        downloadsDir.mkdirs()
+                    }
+
+                    FileOutputStream(file).bufferedWriter().use { writer ->
+                        val generatedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                        writer.appendLine("Transaction History")
+                        writer.appendLine("Generated: $generatedAt")
+                        writer.appendLine("=".repeat(80))
+                        writer.appendLine()
+
+                        val totalSent = transactionsToExport
+                            .filter { it.type == "sent" && it.status == "completed" }
+                            .sumOf {
+                                val amountStr = it.amount.replace(Regex("[^0-9.-]"), "")
+                                amountStr.toDoubleOrNull() ?: 0.0
+                            }
+
+                        val totalReceived = transactionsToExport
+                            .filter { it.type == "received" && it.status == "completed" }
+                            .sumOf {
+                                val amountStr = it.amount.replace(Regex("[^0-9.-]"), "")
+                                amountStr.toDoubleOrNull() ?: 0.0
+                            }
+
+                        writer.appendLine("Summary:")
+                        writer.appendLine("Total Sent: $${String.format("%.2f", totalSent)}")
+                        writer.appendLine("Total Received: $${String.format("%.2f", totalReceived)}")
+                        writer.appendLine("=".repeat(80))
+                        writer.appendLine()
+
+                        writer.appendLine("Transactions:")
+                        writer.appendLine()
+
+                        transactionsToExport.forEachIndexed { index, transaction ->
+                            writer.appendLine("${index + 1}. ${transaction.name}")
+                            writer.appendLine("   Reference: ${transaction.reference}")
+                            writer.appendLine("   Amount: ${transaction.amount}")
+                            writer.appendLine("   Status: ${transaction.status}")
+                            writer.appendLine("   Date: ${transaction.date}")
+                            writer.appendLine("   Type: ${transaction.type}")
+                            writer.appendLine()
+                        }
+                    }
                 }
-            
-            val totalReceived = transactionsToExport
-                .filter { it.type == "received" && it.status == "completed" }
-                .sumOf { 
-                    val amountStr = it.amount.replace(Regex("[^0-9.-]"), "")
-                    amountStr.toDoubleOrNull() ?: 0.0
-                }
-            
-            pdfContent.append("Summary:\n")
-            pdfContent.append("Total Sent: $${String.format("%.2f", totalSent)}\n")
-            pdfContent.append("Total Received: $${String.format("%.2f", totalReceived)}\n")
-            pdfContent.append("=".repeat(80)).append("\n\n")
-            
-            // Add transactions
-            pdfContent.append("Transactions:\n\n")
-            transactionsToExport.forEachIndexed { index, transaction ->
-                pdfContent.append("${index + 1}. ${transaction.name}\n")
-                pdfContent.append("   Reference: ${transaction.reference}\n")
-                pdfContent.append("   Amount: ${transaction.amount}\n")
-                pdfContent.append("   Status: ${transaction.status}\n")
-                pdfContent.append("   Date: ${transaction.date}\n")
-                pdfContent.append("   Type: ${transaction.type}\n")
-                pdfContent.append("\n")
+
+                shareFile(file, "application/pdf", "Transaction History PDF")
+            } catch (e: IOException) {
+                e.printStackTrace()
+                Toast.makeText(context, "Failed to export PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(context, "Failed to export PDF", Toast.LENGTH_SHORT).show()
             }
-            
-            // Write PDF file (simple text-based PDF)
-            file.writeText(pdfContent.toString())
-            
-            // Share the file
-            shareFile(file, "application/pdf", "Transaction History PDF")
-            
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Toast.makeText(requireContext(), "Failed to export PDF: ${e.message}", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(requireContext(), "Failed to export PDF", Toast.LENGTH_SHORT).show()
         }
     }
     
