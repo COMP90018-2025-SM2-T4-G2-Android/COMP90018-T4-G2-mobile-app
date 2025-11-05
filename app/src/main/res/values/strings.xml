@@ -21,7 +21,16 @@
     <string name="quick_actions">Quick Actions</string>
     <string name="recent_activity">Recent Activity</string>
     <string name="view_all">View All</string>
-    
+    <string name="daily_sales_section_title">Daily Sales</string>
+    <string name="daily_sales_today_label">Today's sales</string>
+    <string name="daily_sales_change_placeholder">-- vs yesterday</string>
+    <string name="daily_sales_period_summary_placeholder">Last 7 days · $0.00</string>
+    <string name="daily_sales_change_template">%1$s vs yesterday</string>
+    <string name="daily_sales_change_no_data">No sales yesterday</string>
+    <string name="daily_sales_period_summary">Last 7 days · %1$s</string>
+    <string name="daily_sales_empty">No sales recorded for this period yet.</string>
+    <string name="daily_sales_chart_content_desc">Bar chart of sales for the last 7 days.</string>
+
     <!-- Fragment Placeholders -->
     <string name="pay_coming_soon">Payment features coming soon...</string>
     <string name="scan_coming_soon">QR Code scanner coming soon...</string>

@@ -187,6 +187,112 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Daily Sales Section -->
+            <TextView
+                android:id="@+id/dailySalesTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/daily_sales_section_title"
+                android:textSize="20sp"
+                android:textColor="@color/foreground"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dailySalesCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/dailySalesTodayLabel"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/daily_sales_today_label"
+                                android:textSize="14sp"
+                                android:textColor="@color/muted_foreground"/>
+
+                            <TextView
+                                android:id="@+id/dailySalesTodayAmount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="$0.00"
+                                android:textStyle="bold"
+                                android:textColor="@color/foreground"
+                                android:textSize="28sp"/>
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/dailySalesChange"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:paddingTop="8dp"
+                            android:paddingBottom="8dp"
+                            android:background="@drawable/daily_sales_trend_background"
+                            android:text="@string/daily_sales_change_placeholder"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/foreground"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/dailySalesPeriodSummary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/daily_sales_period_summary_placeholder"
+                        android:textSize="12sp"
+                        android:textColor="@color/muted_foreground"/>
+
+                    <LinearLayout
+                        android:id="@+id/dailySalesChartContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="140dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="8dp"
+                        android:orientation="horizontal"
+                        android:gravity="bottom"
+                        android:baselineAligned="false"
+                        android:contentDescription="@string/daily_sales_chart_content_desc"/>
+
+                    <TextView
+                        android:id="@+id/dailySalesEmpty"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/daily_sales_empty"
+                        android:textColor="@color/muted_foreground"
+                        android:textSize="14sp"
+                        android:visibility="gone"/>
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Quick Actions Section -->
             <TextView
                 android:layout_width="wrap_content"

@@ -11,6 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.isVisible
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -31,9 +32,21 @@ import com.google.android.material.card.MaterialCardView
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.os.Build
 import com.cashpal.app.services.FirebaseConfigService
 import com.cashpal.app.utils.NotificationService
+import com.cashpal.app.utils.DailySalesSummary
+import com.cashpal.app.utils.SalesAnalytics
+import com.cashpal.app.utils.SalesEntry
+import java.text.NumberFormat
+import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Currency
+import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,7 +61,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewAllText: TextView
     private lateinit var scrollView: ScrollView
     private lateinit var bottomNavigationView: BottomNavigationView
+    private lateinit var dailySalesCard: MaterialCardView
+    private lateinit var dailySalesTodayAmount: TextView
+    private lateinit var dailySalesChange: TextView
+    private lateinit var dailySalesPeriodSummary: TextView
+    private lateinit var dailySalesEmpty: TextView
+    private lateinit var dailySalesChartContainer: LinearLayout
     private var isDemoMode = false
+    private var userCurrencyCode: String = "AUD"
+    private var latestTransactions: List<com.cashpal.app.models.Transaction> = emptyList()
 
     override fun onResume() {
         super.onResume()
@@ -122,6 +143,14 @@ class MainActivity : AppCompatActivity() {
         viewAllText = findViewById(R.id.viewAllText)
         scrollView = findViewById(R.id.scrollView)
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
+        dailySalesCard = findViewById(R.id.dailySalesCard)
+        dailySalesTodayAmount = findViewById(R.id.dailySalesTodayAmount)
+        dailySalesChange = findViewById(R.id.dailySalesChange)
+        dailySalesPeriodSummary = findViewById(R.id.dailySalesPeriodSummary)
+        dailySalesEmpty = findViewById(R.id.dailySalesEmpty)
+        dailySalesChartContainer = findViewById(R.id.dailySalesChartContainer)
+
+        showDailySalesEmptyState()
     }
 
     private fun setupBottomNavigation() {
@@ -238,6 +267,8 @@ class MainActivity : AppCompatActivity() {
                                                 "Status: ${transaction.status} - From: ${transaction.fromUserId} - To: ${transaction.toUserId}"
                                     )
                                 }
+
+                                updateDailySalesCard(allTransactions)
                                 
                                 // Calculate balance from completed transactions
                                 val calculatedBalance = calculateBalanceFromTransactions(
@@ -287,6 +318,7 @@ class MainActivity : AppCompatActivity() {
                             },
                             onFailure = { error ->
                                 android.util.Log.e("MainActivity", "Failed to load transactions for balance", error)
+                                showDailySalesEmptyState()
                                 // Still try to show user balance even if transactions fail
                                 try {
                                     val userResult = firebaseRepository.getUserProfile(currentUserId).first()
@@ -360,6 +392,7 @@ class MainActivity : AppCompatActivity() {
             populateBalanceInfo(data.balanceInfo)
             populateQuickActions(data.quickActions)
             populateRecentTransactions(data.recentTransactions)
+            populateDemoDailySales()
         } ?: run {
             Toast.makeText(this, "Failed to load data", Toast.LENGTH_SHORT).show()
         }
@@ -370,6 +403,11 @@ class MainActivity : AppCompatActivity() {
             "MainActivity",
             "Populating balance: stored=${user.balance}, calculated=$calculatedBalance"
         )
+
+        updateUserCurrency(user.currency)
+        if (latestTransactions.isNotEmpty()) {
+            updateDailySalesCard(latestTransactions)
+        }
         
         // Priority: Use stored balance from Firestore first (most reliable)
         // If stored balance is 0 or invalid, use calculated balance from transactions
@@ -454,10 +492,198 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun populateBalanceInfo(balanceInfo: com.cashpal.app.data.BalanceInfo) {
+        updateUserCurrency(null)
         balanceValue.text = balanceInfo.availableBalance
         monthlyChange.text = balanceInfo.thisMonthChange
         pendingAmount.text = balanceInfo.pendingAmount
         reservedAmount.text = balanceInfo.reservedAmount
+    }
+
+    private fun updateUserCurrency(currencyCode: String?) {
+        userCurrencyCode = currencyCode
+            ?.takeIf { it.length >= 3 }
+            ?.uppercase(Locale.ROOT)
+            ?: run {
+                try {
+                    Currency.getInstance(Locale.getDefault()).currencyCode
+                } catch (e: Exception) {
+                    "AUD"
+                }
+            }
+    }
+
+    private fun updateDailySalesCard(transactions: List<com.cashpal.app.models.Transaction>) {
+        latestTransactions = transactions
+        val summary = buildDailySalesSummary(transactions)
+        if (summary != null) {
+            renderDailySalesSummary(summary)
+        } else {
+            showDailySalesEmptyState()
+        }
+    }
+
+    private fun buildDailySalesSummary(
+        transactions: List<com.cashpal.app.models.Transaction>
+    ): DailySalesSummary? {
+        val currentUserId = dataRepository.getCurrentUserId() ?: return null
+        val entries = transactions.asSequence()
+            .filter { it.status == com.cashpal.app.models.TransactionStatus.COMPLETED }
+            .filter { it.toUserId == currentUserId }
+            .mapNotNull { transaction ->
+                if (transaction.amount <= 0) {
+                    return@mapNotNull null
+                }
+                val timestamp = transaction.completedAt ?: transaction.createdAt
+                val instant = timestamp.toDate().toInstant()
+                SalesEntry(instant, transaction.amount)
+            }
+            .toList()
+
+        if (entries.isEmpty()) return null
+
+        return SalesAnalytics.calculateDailySales(
+            entries = entries,
+            zoneId = ZoneId.systemDefault()
+        )
+    }
+
+    private fun renderDailySalesSummary(summary: DailySalesSummary) {
+        dailySalesChartContainer.isVisible = true
+        dailySalesEmpty.isVisible = false
+        dailySalesTodayAmount.text = formatCurrency(summary.todayTotal)
+        dailySalesPeriodSummary.text = getString(
+            R.string.daily_sales_period_summary,
+            formatCurrency(summary.totalForPeriod)
+        )
+        dailySalesChange.text = formatTrendLabel(summary)
+        applyTrendStyle(summary.trendDirection)
+        renderDailySalesChart(summary.buckets)
+    }
+
+    private fun formatTrendLabel(summary: DailySalesSummary): String {
+        val changePercent = summary.changePercent ?: return getString(R.string.daily_sales_change_no_data)
+        val sign = if (summary.absoluteChange >= 0) "+" else "-"
+        val absoluteText = formatCurrency(abs(summary.absoluteChange))
+        val percentText = String.format(Locale.getDefault(), "%.1f%%", abs(changePercent))
+        val combined = "$sign$absoluteText ($sign$percentText)"
+        return getString(R.string.daily_sales_change_template, combined)
+    }
+
+    private fun applyTrendStyle(direction: DailySalesSummary.TrendDirection?) {
+        val (backgroundRes, textRes) = when (direction) {
+            DailySalesSummary.TrendDirection.UP -> R.color.received_background to R.color.received_color
+            DailySalesSummary.TrendDirection.DOWN -> R.color.sent_background to R.color.sent_color
+            else -> R.color.pay_soft_surface to R.color.muted_foreground
+        }
+
+        val backgroundColor = ContextCompat.getColor(this, backgroundRes)
+        val textColor = ContextCompat.getColor(this, textRes)
+        dailySalesChange.backgroundTintList = ColorStateList.valueOf(backgroundColor)
+        dailySalesChange.setTextColor(textColor)
+    }
+
+    private fun renderDailySalesChart(buckets: List<com.cashpal.app.utils.DailySalesBucket>) {
+        dailySalesChartContainer.removeAllViews()
+        if (buckets.isEmpty()) {
+            dailySalesChartContainer.isVisible = false
+            dailySalesEmpty.isVisible = true
+            return
+        }
+
+        val maxTotal = buckets.maxOfOrNull { it.total } ?: 0.0
+        val maxHeight = 96.dpToPx()
+        val minBarHeight = 6.dpToPx()
+
+        buckets.forEach { bucket ->
+            val columnLayout = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = android.view.Gravity.BOTTOM or android.view.Gravity.CENTER_HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    1f
+                ).apply {
+                    val horizontalMargin = 6.dpToPx()
+                    setMargins(horizontalMargin, 0, horizontalMargin, 0)
+                }
+            }
+
+            val amountText = TextView(this).apply {
+                text = if (bucket.total > 0) formatCurrency(bucket.total) else ""
+                textSize = 12f
+                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.muted_foreground))
+                visibility = if (bucket.total > 0) View.VISIBLE else View.INVISIBLE
+            }
+
+            val ratio = if (maxTotal > 0) bucket.total / maxTotal else 0.0
+            val barHeight = when {
+                bucket.total <= 0 -> minBarHeight
+                else -> max((ratio * maxHeight).roundToInt(), minBarHeight)
+            }
+
+            val barView = View(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    18.dpToPx(),
+                    barHeight
+                ).apply {
+                    topMargin = 8.dpToPx()
+                    bottomMargin = 8.dpToPx()
+                }
+                setBackgroundResource(R.drawable.daily_sales_bar_background)
+                alpha = if (bucket.total > 0) 1f else 0.25f
+            }
+
+            val labelText = TextView(this).apply {
+                text = bucket.label()
+                textSize = 12f
+                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.muted_foreground))
+                setPadding(0, 4.dpToPx(), 0, 0)
+            }
+
+            columnLayout.addView(amountText)
+            columnLayout.addView(barView)
+            columnLayout.addView(labelText)
+
+            dailySalesChartContainer.addView(columnLayout)
+        }
+    }
+
+    private fun showDailySalesEmptyState(message: String? = null) {
+        dailySalesChartContainer.isVisible = false
+        dailySalesEmpty.isVisible = true
+        dailySalesEmpty.text = message ?: getString(R.string.daily_sales_empty)
+        dailySalesTodayAmount.text = formatCurrency(0.0)
+        dailySalesChange.text = getString(R.string.daily_sales_change_no_data)
+        applyTrendStyle(null)
+        dailySalesPeriodSummary.text = getString(R.string.daily_sales_period_summary_placeholder)
+    }
+
+    private fun formatCurrency(amount: Double): String {
+        val formatter = NumberFormat.getCurrencyInstance(Locale.getDefault())
+        val currencyCode = userCurrencyCode.ifBlank { "AUD" }
+        try {
+            formatter.currency = Currency.getInstance(currencyCode)
+        } catch (e: Exception) {
+            formatter.currency = Currency.getInstance("AUD")
+        }
+        return formatter.format(amount)
+    }
+
+    private fun populateDemoDailySales() {
+        latestTransactions = emptyList()
+        val today = LocalDate.now()
+        val zone = ZoneId.systemDefault()
+        val sampleAmounts = listOf(180.0, 220.0, 160.0, 240.0, 210.0, 260.0, 300.0)
+        val entries = sampleAmounts.mapIndexed { index, amount ->
+            val date = today.minusDays((sampleAmounts.size - 1 - index).toLong())
+            SalesEntry(date.atStartOfDay(zone).toInstant(), amount)
+        }
+        val summary = SalesAnalytics.calculateDailySales(entries, zone, today)
+        if (summary != null) {
+            renderDailySalesSummary(summary)
+        } else {
+            showDailySalesEmptyState()
+        }
     }
 
     private fun populateQuickActions(quickActions: List<com.cashpal.app.data.QuickAction>) {
@@ -1000,6 +1226,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showEmptyState() {
         android.util.Log.d("MainActivity", "Showing empty state - user not signed in or no data")
+        showDailySalesEmptyState()
         transactionsContainer.removeAllViews()
 
         val emptyStateCard = MaterialCardView(this).apply {
@@ -1032,6 +1259,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showEmptyTransactionsState() {
         android.util.Log.d("MainActivity", "Showing empty transactions state")
+        showDailySalesEmptyState()
 
         val emptyTransactionsCard = MaterialCardView(this).apply {
             layoutParams = LinearLayout.LayoutParams(
