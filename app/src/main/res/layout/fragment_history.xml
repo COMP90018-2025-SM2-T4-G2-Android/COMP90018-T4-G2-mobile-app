@@ -5,31 +5,70 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/app_background"
-    android:fillViewport="true"
-    android:padding="16dp">
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Summary Overview -->
+        <!-- Purple Header -->
+        <LinearLayout
+            android:id="@+id/header_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/pay_header_background"
+            android:elevation="0dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="24dp"
+            android:paddingTop="56dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="36dp">
+
+            <ImageView
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_history"
+                android:tint="@android:color/white" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="History"
+                android:textColor="@android:color/white"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Content Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="24dp"
-            android:weightSum="2">
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingTop="24dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="16dp">
 
-            <!-- Total Sent Card -->
-            <androidx.cardview.widget.CardView
+            <!-- Summary Overview -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="24dp"
+                android:weightSum="2">
+
+                <!-- Total Sent Card -->
+                <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
                 app:cardBackgroundColor="@color/sent_background"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="6dp">
+                    app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -79,17 +118,17 @@
                         android:textSize="22sp"
                         android:textStyle="bold"/>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                </com.google.android.material.card.MaterialCardView>
 
-            <!-- Total Received Card -->
-            <androidx.cardview.widget.CardView
+                <!-- Total Received Card -->
+                <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
                 app:cardBackgroundColor="@color/received_background"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="6dp">
+                    app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -139,82 +178,95 @@
                         android:textSize="22sp"
                         android:textStyle="bold"/>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
-        </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-        <!-- Search Bar -->
-        <EditText
-            android:id="@+id/et_search"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:hint="Search transactions"
-            android:paddingStart="40dp"
-            android:drawableStart="@drawable/ic_search"
-            android:drawablePadding="12dp"
-            android:background="@drawable/search_background"
-            android:textSize="14sp"
-            android:backgroundTint="@android:color/transparent"
-            android:layout_marginBottom="24dp"/>
+                <!-- Search Bar -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:boxBackgroundColor="@color/pay_soft_surface"
+                app:boxCornerRadiusBottomEnd="20dp"
+                app:boxCornerRadiusBottomStart="20dp"
+                app:boxCornerRadiusTopEnd="20dp"
+                app:boxCornerRadiusTopStart="20dp"
+                app:boxStrokeColor="@android:color/transparent"
+                app:boxStrokeWidth="0dp"
+                app:startIconDrawable="@drawable/ic_search">
 
-        <!-- Filter Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="2"
-            android:layout_marginBottom="24dp">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_search"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:hint="Search transactions"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:textColor="@color/foreground"
+                    android:textColorHint="@color/muted_foreground" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <Button
-                android:id="@+id/btn_filter_state"
-                android:layout_width="0dp"
+            <!-- Filter and Export -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:id="@+id/btn_filter_state"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Filter"
+                    android:textColor="@color/primary"
+                    android:textSize="14sp"
+                    android:drawableStart="@drawable/ic_filter"
+                    android:drawablePadding="8dp"
+                    android:drawableTint="@color/primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="start|center_vertical"/>
+
+                <TextView
+                    android:id="@+id/btn_download_csv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Export"
+                    android:textColor="@color/primary"
+                    android:textSize="14sp"
+                    android:drawableStart="@drawable/ic_download"
+                    android:drawablePadding="8dp"
+                    android:drawableTint="@color/primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="start|center_vertical"/>
+            </LinearLayout>
+
+            <!-- Tabs -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tab_layout"
+                android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Filter"
-                android:textColor="@color/primary"
-                android:drawableStart="@drawable/ic_filter"
-                android:drawablePadding="8dp"
-                android:drawableTint="@color/primary"
-                android:background="@drawable/filter_button_background"
-                style="@style/Widget.Material3.Button.OutlinedButton" />
+                android:layout_marginBottom="24dp"
+                app:tabIndicatorColor="@android:color/white"
+                app:tabSelectedTextColor="@android:color/white"
+                app:tabTextColor="@color/muted_foreground"
+                app:tabIndicator="@drawable/tab_indicator"
+                app:tabMode="fixed"
+                app:tabGravity="fill"
+                android:background="@drawable/tab_background"/>
 
-            <Button
-                android:id="@+id/btn_download_csv"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="Export"
-                android:textColor="@color/primary"
-                android:drawableStart="@drawable/ic_download"
-                android:drawablePadding="8dp"
-                android:drawableTint="@color/primary"
-                android:background="@drawable/filter_button_background"
-                style="@style/Widget.Material3.Button.OutlinedButton" />
-
-        </LinearLayout>
-
-        <!-- Tabs -->
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tab_layout"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginBottom="24dp"
-            app:tabIndicatorColor="@android:color/white"
-            app:tabSelectedTextColor="@android:color/white"
-            app:tabTextColor="@color/muted_foreground"
-            app:tabIndicator="@drawable/tab_indicator"
-            app:tabMode="fixed"
-            app:tabGravity="fill"
-            android:background="@drawable/tab_background"/>
-
-        <!-- Transaction List -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/card"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp">
+            <!-- Transaction List -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/card"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -239,6 +291,9 @@
                     android:paddingBottom="12dp"
                     android:nestedScrollingEnabled="false"/>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
