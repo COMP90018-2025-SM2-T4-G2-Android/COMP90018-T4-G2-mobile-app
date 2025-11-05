@@ -77,4 +77,15 @@
     <color name="home_balance_title_text">#DDD7FF</color>
     <color name="home_balance_primary_text">#F5F3FF</color>
     <color name="home_balance_secondary_text">#BFB8E6</color>
+    <color name="dialog_surface">#2A2442</color>
+    <color name="dialog_surface_variant">#312B4D</color>
+    <color name="dialog_card_background">#312B4D</color>
+    <color name="dialog_divider">#3E3758</color>
+    <color name="dialog_logo_background">#3A3261</color>
+    <color name="dialog_badge_primary_background">#1F3B2D</color>
+    <color name="sign_out_button_background">#3A2745</color>
+    <color name="sign_out_button_border">#FF8A99</color>
+    <color name="sign_out_button_text">#FFFFFF</color>
+    <color name="link_bank_button_text">#FFFFFF</color>
+    <color name="home_balance_card_background">#33264A</color>
 </resources>

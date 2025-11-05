@@ -1,6 +1,8 @@
 package com.cashpal.app.utils
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.view.View
@@ -40,7 +42,7 @@ class HeaderActionsController(
         darkModeButton.setOnClickListener {
             val enabled = !AppPreferences.isDarkModeEnabled()
             AppPreferences.setDarkModeEnabled(enabled)
-            applyDarkMode(enabled)
+            updateDarkModeButton(enabled)
             showShortToast(
                 if (enabled) R.string.dark_mode_enabled_message
                 else R.string.dark_mode_disabled_message
@@ -86,12 +88,23 @@ class HeaderActionsController(
     }
 
     private fun applyDarkMode(enabled: Boolean) {
+        val activity = findActivity(context)
+        val window = activity?.window
+        val previousAnimations = window?.attributes?.windowAnimations ?: 0
+        window?.setWindowAnimations(R.style.CashPalFadeTransition)
+
         val mode = if (enabled) {
             AppCompatDelegate.MODE_NIGHT_YES
         } else {
             AppCompatDelegate.MODE_NIGHT_NO
         }
         AppCompatDelegate.setDefaultNightMode(mode)
+
+        if (window != null) {
+            window.decorView.post {
+                window.setWindowAnimations(previousAnimations)
+            }
+        }
     }
 
     private fun updateDarkModeButton(enabled: Boolean) {
@@ -139,5 +152,16 @@ class HeaderActionsController(
 
     private fun showShortToast(messageRes: Int) {
         Toast.makeText(context, context.getString(messageRes), Toast.LENGTH_SHORT).show()
+    }
+
+    private fun findActivity(context: Context): Activity? {
+        var currentContext: Context? = context
+        while (currentContext is ContextWrapper) {
+            if (currentContext is Activity) {
+                return currentContext
+            }
+            currentContext = currentContext.baseContext
+        }
+        return null
     }
 }

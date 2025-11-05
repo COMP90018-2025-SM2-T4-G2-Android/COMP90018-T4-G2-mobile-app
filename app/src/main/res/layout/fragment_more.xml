@@ -1040,13 +1040,13 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:text="Sign Out"
-            android:textColor="@color/error"
+            android:textColor="@color/sign_out_button_text"
             android:textSize="16sp"
             android:textStyle="bold"
             android:background="@drawable/sign_out_button_background"
             android:drawableStart="@drawable/ic_logout"
             android:drawablePadding="12dp"
-            android:drawableTint="@color/error"
+            android:drawableTint="@color/sign_out_button_text"
             android:gravity="center" />
 
     </LinearLayout>
