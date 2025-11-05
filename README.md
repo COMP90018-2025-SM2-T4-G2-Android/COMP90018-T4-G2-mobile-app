@@ -7,7 +7,7 @@
 
 A modern Android mobile payment application built with Kotlin and Material 3 design.
 
-## 📋 Table of Contents
+## Table of Contents
 - [Features](#features)
 - [Getting Started](#getting-started)
 - [Contributing](#contributing)
@@ -15,7 +15,7 @@ A modern Android mobile payment application built with Kotlin and Material 3 des
 - [Project Structure](#project-structure)
 - [License](#license)
 
-## ✨ Features
+## Features
 - Modern Material 3 UI/UX
 - Payment card management
 - Secure card storage
@@ -23,7 +23,7 @@ A modern Android mobile payment application built with Kotlin and Material 3 des
 - Dark/Light theme support
 - Firebase integration
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -185,7 +185,7 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 - Firebase Setup: `docs/Firebase_Database_Guide.md`
 - Material 3 Compliance: `docs/Material3_Compliance.md`
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please read our [Contributing Guidelines](.github/CONTRIBUTING.md) before submitting PRs.
 
@@ -196,17 +196,17 @@ We welcome contributions! Please read our [Contributing Guidelines](.github/CONT
 - Write tests for new features
 - Follow Material 3 design guidelines
 
-## 🔄 CI/CD
+## CI/CD
 
 This project uses GitHub Actions for continuous integration:
-- ✅ Automated build checks on all PRs
-- ✅ Lint and test execution
-- ✅ APK artifact generation
-- ✅ Automatic PR status updates
+- Automated build checks on all PRs
+- Lint and test execution
+- APK artifact generation
+- Automatic PR status updates
 
 See [Workflow Documentation](.github/workflows/README.md) for more details.
 
-## 📁 Project Structure
+## Project Structure
 View in Code mode
 
 ```
