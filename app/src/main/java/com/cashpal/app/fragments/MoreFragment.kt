@@ -1,6 +1,7 @@
 package com.cashpal.app.fragments
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,6 +16,7 @@ import com.cashpal.app.auth.BiometricPasswordStore
 import com.cashpal.app.auth.SignInActivity
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.utils.BiometricPreferences
+import com.cashpal.app.utils.AppPreferences
 import kotlinx.coroutines.launch
 
 class MoreFragment : Fragment() {
@@ -24,6 +26,15 @@ class MoreFragment : Fragment() {
     private lateinit var darkModeSwitch: SwitchCompat
     private lateinit var biometricManager: BiometricAuthManager
     private lateinit var biometricPreferences: BiometricPreferences
+    private lateinit var appPreferences: AppPreferences
+    private val preferenceListener =
+        SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            when (key) {
+                AppPreferences.KEY_DARK_MODE_ENABLED -> syncDarkModeSwitch()
+                AppPreferences.KEY_NOTIFICATIONS_ENABLED -> syncNotificationSwitch()
+            }
+        }
+    private var isSyncingSwitches = false
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,10 +50,12 @@ class MoreFragment : Fragment() {
         // Initialize biometric components
         biometricManager = BiometricAuthManager(requireContext(), requireActivity())
         biometricPreferences = BiometricPreferences(requireContext())
+        appPreferences = AppPreferences.getInstance(requireContext())
         
         initViews()
         setupClickListeners()
         setupSwitches()
+        maybeOpenProfileFromArgs()
     }
     
     private fun initViews() {
@@ -124,9 +137,7 @@ class MoreFragment : Fragment() {
             biometricSwitch.isChecked = biometricPreferences.isBiometricEnabled()
         }
         
-        // Set other default states
-        notificationsSwitch.isChecked = true
-        darkModeSwitch.isChecked = false
+        syncPreferenceSwitches()
         
         // Handle biometric switch state changes
         biometricSwitch.setOnCheckedChangeListener { _, isChecked ->
@@ -147,12 +158,61 @@ class MoreFragment : Fragment() {
         }
         
         notificationsSwitch.setOnCheckedChangeListener { _, isChecked ->
-            showToast("Notifications: ${if (isChecked) "Enabled" else "Disabled"}")
+            if (isSyncingSwitches) return@setOnCheckedChangeListener
+            appPreferences.setNotificationsEnabled(isChecked)
+            val message = getString(
+                if (isChecked) R.string.header_action_notifications_on
+                else R.string.header_action_notifications_off
+            )
+            showToast(message)
         }
         
         darkModeSwitch.setOnCheckedChangeListener { _, isChecked ->
-            showToast("Dark Mode: ${if (isChecked) "Enabled" else "Disabled"}")
+            if (isSyncingSwitches) return@setOnCheckedChangeListener
+            appPreferences.setDarkModeEnabled(isChecked)
+            val message = getString(
+                if (isChecked) R.string.header_action_dark_mode_on
+                else R.string.header_action_dark_mode_off
+            )
+            showToast(message)
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (::appPreferences.isInitialized) {
+            appPreferences.registerListener(preferenceListener)
+            syncPreferenceSwitches()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (::appPreferences.isInitialized) {
+            appPreferences.unregisterListener(preferenceListener)
+        }
+    }
+
+    private fun syncPreferenceSwitches() {
+        if (!::appPreferences.isInitialized) return
+        isSyncingSwitches = true
+        darkModeSwitch.isChecked = appPreferences.isDarkModeEnabled()
+        notificationsSwitch.isChecked = appPreferences.isNotificationsEnabled()
+        isSyncingSwitches = false
+    }
+
+    private fun syncDarkModeSwitch() {
+        if (!::appPreferences.isInitialized) return
+        isSyncingSwitches = true
+        darkModeSwitch.isChecked = appPreferences.isDarkModeEnabled()
+        isSyncingSwitches = false
+    }
+
+    private fun syncNotificationSwitch() {
+        if (!::appPreferences.isInitialized) return
+        isSyncingSwitches = true
+        notificationsSwitch.isChecked = appPreferences.isNotificationsEnabled()
+        isSyncingSwitches = false
     }
     
     private fun showToast(message: String) {
@@ -167,6 +227,20 @@ class MoreFragment : Fragment() {
     private fun showPaymentMethodsDialog() {
         val paymentMethodsDialog = PaymentMethodsDialogFragment.newInstance()
         paymentMethodsDialog.show(childFragmentManager, PaymentMethodsDialogFragment.TAG)
+    }
+
+    private fun maybeOpenProfileFromArgs() {
+        if (arguments?.getBoolean(ARG_OPEN_PROFILE, false) == true) {
+            view?.post {
+                openProfileFromHeader()
+            }
+            arguments?.putBoolean(ARG_OPEN_PROFILE, false)
+        }
+    }
+
+    fun openProfileFromHeader() {
+        if (!isAdded) return
+        showProfileDialog()
     }
     
     private fun toggleDemoMode() {
@@ -209,6 +283,18 @@ class MoreFragment : Fragment() {
                 
             } catch (e: Exception) {
                 showToast("Failed to sign out: ${e.message}")
+            }
+        }
+    }
+
+    companion object {
+        private const val ARG_OPEN_PROFILE = "arg_open_profile"
+
+        fun newInstance(openProfile: Boolean = false): MoreFragment {
+            return MoreFragment().apply {
+                arguments = Bundle().apply {
+                    putBoolean(ARG_OPEN_PROFILE, openProfile)
+                }
             }
         }
     }

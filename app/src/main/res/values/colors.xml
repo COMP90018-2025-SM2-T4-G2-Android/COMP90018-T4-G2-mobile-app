@@ -63,6 +63,9 @@
 <color name= "hint_text">#A0A3B1</color>
     <color name="app_background">#FAFAFA</color>
 <color name="pay_header_end">#8A74FF</color>
+<color name="header_action_bg_default">#33FFFFFF</color>
+<color name="header_action_bg_active">#66FFFFFF</color>
+<color name="header_action_icon_inactive">#E1DBFF</color>
 <color name="pay_soft_surface">#F1ECFF</color>
 <color name="pay_option_border">#E2DBFF</color>
 <color name="pay_option_icon_surface">#EAE4FF</color>
