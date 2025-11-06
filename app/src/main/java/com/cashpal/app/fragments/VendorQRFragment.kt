@@ -21,15 +21,14 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.content.FileProvider
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.cashpal.app.R
 import com.cashpal.app.di.ServiceLocator
-import com.cashpal.app.models.QRPayload
-import com.cashpal.app.utils.UserProfileCache
+import com.cashpal.app.models.VendorQRPayload
 import com.cashpal.app.utils.QRCodeUtils
+import com.cashpal.app.utils.UserProfileCache
 import com.google.gson.Gson
 import java.io.File
 import java.io.FileOutputStream
@@ -41,17 +40,19 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class PersonalQRFragment : Fragment() {
+class VendorQRFragment : Fragment() {
 
     private val repository by lazy { ServiceLocator.getRepository() }
 
     private lateinit var qrImage: ImageView
-    private lateinit var txtName: TextView
-    private lateinit var txtPhone: TextView
-    private lateinit var amountInput: EditText
+    private lateinit var loadingOverlay: View
+    private lateinit var vendorName: TextView
+    private lateinit var vendorCategory: TextView
+    private lateinit var vendorLocation: TextView
+    private lateinit var vendorId: TextView
     private lateinit var amountBadge: LinearLayout
     private lateinit var amountValue: TextView
-    private lateinit var loadingOverlay: View
+    private lateinit var amountInput: EditText
 
     private lateinit var btnCopy: View
     private lateinit var btnShare: View
@@ -59,7 +60,7 @@ class PersonalQRFragment : Fragment() {
     private lateinit var btnBack: View
 
     private var lastQrBitmap: Bitmap? = null
-    private var basePayload: QRPayload? = null
+    private var vendorInfo: VendorInfo? = null
     private var currentAmount: Double? = null
     private var qrGenerationJob: Job? = null
 
@@ -68,32 +69,38 @@ class PersonalQRFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val view = inflater.inflate(R.layout.fragment_personal_qr, container, false)
+        val view = inflater.inflate(R.layout.fragment_vendor_qr, container, false)
         bindViews(view)
-        setupListeners()
-        loadUserData()
+        setupInteractions()
+        loadVendorInfo()
         return view
     }
 
     private fun bindViews(root: View) {
-        qrImage = root.findViewById(R.id.iv_personal_qr_code)
-        txtName = root.findViewById(R.id.tv_user_name)
-        txtPhone = root.findViewById(R.id.tv_user_phone)
-        amountInput = root.findViewById(R.id.et_amount_input)
-        amountBadge = root.findViewById(R.id.ll_amount_display)
-        amountValue = root.findViewById(R.id.tv_amount_value)
-        loadingOverlay = root.findViewById(R.id.fl_qr_loading)
+        qrImage = root.findViewById(R.id.iv_vendor_qr_code)
+        loadingOverlay = root.findViewById(R.id.fl_vendor_qr_loading)
+        vendorName = root.findViewById(R.id.tv_vendor_name)
+        vendorCategory = root.findViewById(R.id.tv_vendor_category)
+        vendorLocation = root.findViewById(R.id.tv_vendor_location)
+        vendorId = root.findViewById(R.id.tv_vendor_id)
+        amountBadge = root.findViewById(R.id.ll_vendor_amount_display)
+        amountValue = root.findViewById(R.id.tv_vendor_amount_value)
+        amountInput = root.findViewById(R.id.et_vendor_amount_input)
 
-        btnCopy = root.findViewById(R.id.btn_copy_qr)
-        btnShare = root.findViewById(R.id.btn_share_qr)
-        btnSave = root.findViewById(R.id.btn_save_qr)
+        btnCopy = root.findViewById(R.id.btn_copy_vendor_qr)
+        btnShare = root.findViewById(R.id.btn_share_vendor_qr)
+        btnSave = root.findViewById(R.id.btn_save_vendor_qr)
         btnBack = root.findViewById(R.id.btn_back)
 
         amountBadge.visibility = View.GONE
         loadingOverlay.visibility = View.GONE
     }
 
-    private fun setupListeners() {
+    private fun setupInteractions() {
+        btnBack.setOnClickListener {
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
+
         amountInput.addTextChangedListener { editable ->
             val amount = editable?.toString()?.trim()?.toDoubleOrNull()
             handleAmountChange(amount)
@@ -102,23 +109,23 @@ class PersonalQRFragment : Fragment() {
         btnCopy.setOnClickListener { copyQrToClipboard() }
         btnShare.setOnClickListener { shareQrImage() }
         btnSave.setOnClickListener { saveQrImage() }
-        btnBack.setOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
     }
 
-    private fun loadUserData() {
+    private fun loadVendorInfo() {
         val firebaseUser = repository.getCurrentUser()
+
         if (firebaseUser == null) {
-            applyPersonalInfo(
-                name = getString(R.string.personal_qr_default_name),
-                phone = getString(R.string.personal_qr_no_phone)
+            val fallbackInfo = VendorInfo(
+                id = "merchant_guest",
+                name = getString(R.string.vendor_qr_default_name),
+                category = getString(R.string.vendor_qr_default_category),
+                location = getString(R.string.vendor_qr_default_location),
+                merchantId = "MERCHANT-000000",
+                currency = "AUD",
+                contact = null
             )
-            basePayload = QRPayload(
-                id = "guest",
-                name = getString(R.string.personal_qr_default_name),
-                phone = getString(R.string.personal_qr_no_phone),
-                type = "personal",
-                amount = null
-            )
+            vendorInfo = fallbackInfo
+            applyVendorInfo(fallbackInfo)
             handleAmountChange(parseAmountInput())
             return
         }
@@ -127,29 +134,33 @@ class PersonalQRFragment : Fragment() {
             ?.takeIf { it.isNotBlank() }
             ?: firebaseUser.email?.substringBefore("@")?.replaceFirstChar { ch ->
                 if (ch.isLowerCase()) ch.titlecase(Locale.getDefault()) else ch.toString()
-            } ?: getString(R.string.personal_qr_default_name)
+            } ?: getString(R.string.vendor_qr_default_name)
 
-        val fallbackPhone = firebaseUser.phoneNumber
-            ?: firebaseUser.email
-            ?: getString(R.string.personal_qr_no_phone)
+        val fallbackContact = firebaseUser.phoneNumber ?: firebaseUser.email
+        val merchantId = buildMerchantId(firebaseUser.uid)
 
-        basePayload = QRPayload(
+        val initialInfo = VendorInfo(
             id = firebaseUser.uid,
             name = fallbackName,
-            phone = fallbackPhone,
-            type = "personal",
-            amount = null
+            category = getString(R.string.vendor_qr_default_category),
+            location = getString(R.string.vendor_qr_default_location),
+            merchantId = merchantId,
+            currency = "AUD",
+            contact = fallbackContact
         )
 
         val cachedProfile = UserProfileCache.get()?.takeIf { it.id == firebaseUser.uid }
-        if (cachedProfile != null) {
-            val cachedName = cachedProfile.displayName.ifBlank { fallbackName }
-            val cachedPhone = cachedProfile.phoneNumber ?: fallbackPhone
-            basePayload = basePayload?.copy(name = cachedName, phone = cachedPhone)
-            applyPersonalInfo(cachedName, cachedPhone)
+        val resolvedInfo = if (cachedProfile != null) {
+            initialInfo.copy(
+                name = cachedProfile.displayName.ifBlank { fallbackName },
+                contact = cachedProfile.phoneNumber ?: fallbackContact
+            )
         } else {
-            applyPersonalInfo(fallbackName, fallbackPhone)
+            initialInfo
         }
+
+        vendorInfo = resolvedInfo
+        applyVendorInfo(resolvedInfo)
         handleAmountChange(parseAmountInput())
 
         if (cachedProfile == null) {
@@ -158,18 +169,26 @@ class PersonalQRFragment : Fragment() {
                 profileResult?.getOrNull()?.let { user ->
                     UserProfileCache.update(user)
                     val name = user.displayName.ifBlank { fallbackName }
-                    val phone = user.phoneNumber ?: fallbackPhone
-                    basePayload = basePayload?.copy(name = name, phone = phone)
-                    applyPersonalInfo(name, phone)
-                    updateQRCode()
+                    val contact = user.phoneNumber ?: fallbackContact
+                    val updatedInfo = vendorInfo?.copy(
+                        name = name,
+                        contact = contact
+                    )
+                    vendorInfo = updatedInfo
+                    if (updatedInfo != null) {
+                        applyVendorInfo(updatedInfo)
+                        updateQRCode()
+                    }
                 }
             }
         }
     }
 
-    private fun applyPersonalInfo(name: String, phone: String) {
-        txtName.text = name
-        txtPhone.text = phone
+    private fun applyVendorInfo(info: VendorInfo) {
+        vendorName.text = info.name
+        vendorCategory.text = info.category
+        vendorLocation.text = info.location
+        vendorId.text = getString(R.string.vendor_qr_merchant_id_format, info.merchantId)
         updateQRCode()
     }
 
@@ -177,7 +196,11 @@ class PersonalQRFragment : Fragment() {
         currentAmount = amount?.takeIf { it > 0 }
         if (currentAmount != null) {
             amountBadge.visibility = View.VISIBLE
-            amountValue.text = String.format(Locale.getDefault(), "$%.2f", currentAmount!!)
+            amountValue.text = String.format(
+                Locale.getDefault(),
+                getString(R.string.vendor_qr_amount_format),
+                currentAmount!!
+            )
         } else {
             amountBadge.visibility = View.GONE
         }
@@ -189,16 +212,28 @@ class PersonalQRFragment : Fragment() {
     }
 
     private fun updateQRCode() {
-        val payload = basePayload?.copy(amount = currentAmount) ?: return
+        val info = vendorInfo ?: return
         qrGenerationJob?.cancel()
         loadingOverlay.visibility = View.VISIBLE
+
+        val payload = VendorQRPayload(
+            id = info.id,
+            name = info.name,
+            merchantId = info.merchantId,
+            category = info.category,
+            location = info.location,
+            contact = info.contact,
+            amount = currentAmount,
+            currency = info.currency,
+            timestamp = System.currentTimeMillis().toString()
+        )
 
         qrGenerationJob = viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
             val json = Gson().toJson(payload)
             val bitmap = QRCodeUtils.generateQRCode(
                 content = json,
                 size = 640,
-                foregroundColor = Color.parseColor("#6C5CE7"),
+                foregroundColor = Color.parseColor("#0F9D58"),
                 backgroundColor = Color.WHITE
             )
 
@@ -216,7 +251,7 @@ class PersonalQRFragment : Fragment() {
     private fun requireReadyBitmap(): Bitmap? {
         val bitmap = lastQrBitmap ?: (qrImage.drawable as? BitmapDrawable)?.bitmap
         if (bitmap == null) {
-            Toast.makeText(requireContext(), "QR code is not ready yet", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), R.string.vendor_qr_bitmap_missing, Toast.LENGTH_SHORT).show()
         }
         return bitmap
     }
@@ -227,16 +262,16 @@ class PersonalQRFragment : Fragment() {
             val uri = writePngToCache(requireContext(), bitmap)
             withContext(Dispatchers.Main) {
                 if (uri == null) {
-                    Toast.makeText(requireContext(), "Failed to copy QR", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), R.string.vendor_qr_copy_failed, Toast.LENGTH_SHORT).show()
                 } else {
                     val clip = ClipData.newUri(
                         requireContext().contentResolver,
-                        "CashPal QR",
+                        "CashPal Vendor QR",
                         uri
                     )
                     val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     clipboard.setPrimaryClip(clip)
-                    Toast.makeText(requireContext(), "QR image copied", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), R.string.vendor_qr_copy_success, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -248,14 +283,15 @@ class PersonalQRFragment : Fragment() {
             val uri = writePngToCache(requireContext(), bitmap)
             withContext(Dispatchers.Main) {
                 if (uri == null) {
-                    Toast.makeText(requireContext(), "Failed to prepare QR", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), R.string.vendor_qr_share_failed, Toast.LENGTH_SHORT).show()
                 } else {
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "image/png"
                         putExtra(Intent.EXTRA_STREAM, uri)
+                        putExtra(Intent.EXTRA_TEXT, getString(R.string.vendor_qr_share_message, vendorInfo?.name ?: getString(R.string.vendor_qr_default_name)))
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
-                    startActivity(Intent.createChooser(shareIntent, "Share QR code"))
+                    startActivity(Intent.createChooser(shareIntent, getString(R.string.vendor_qr_share_title)))
                 }
             }
         }
@@ -264,12 +300,12 @@ class PersonalQRFragment : Fragment() {
     private fun saveQrImage() {
         val bitmap = requireReadyBitmap() ?: return
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            val savedUri = savePngToPictures(requireContext(), bitmap)
+            val uri = savePngToPictures(requireContext(), bitmap)
             withContext(Dispatchers.Main) {
-                if (savedUri != null) {
-                    Toast.makeText(requireContext(), "Saved to Gallery", Toast.LENGTH_SHORT).show()
+                if (uri != null) {
+                    Toast.makeText(requireContext(), R.string.vendor_qr_save_success, Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(requireContext(), "Failed to save image", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), R.string.vendor_qr_save_failed, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -277,12 +313,12 @@ class PersonalQRFragment : Fragment() {
 
     private fun writePngToCache(context: Context, bitmap: Bitmap): Uri? {
         return try {
-            val dir = File(context.cacheDir, "images").apply { mkdirs() }
-            val file = File(dir, "cashpal_qr_${System.currentTimeMillis()}.png")
+            val dir = File(context.cacheDir, "vendor_qr").apply { mkdirs() }
+            val file = File(dir, "cashpal_vendor_qr_${System.currentTimeMillis()}.png")
             FileOutputStream(file).use { out ->
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
-            FileProvider.getUriForFile(
+            androidx.core.content.FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.fileprovider",
                 file
@@ -294,7 +330,7 @@ class PersonalQRFragment : Fragment() {
 
     private fun savePngToPictures(context: Context, bitmap: Bitmap): Uri? {
         return try {
-            val filename = "cashpal_qr_${System.currentTimeMillis()}.png"
+            val filename = "cashpal_vendor_qr_${System.currentTimeMillis()}.png"
             val resolver = context.contentResolver
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -336,6 +372,21 @@ class PersonalQRFragment : Fragment() {
             null
         }
     }
+
+    private fun buildMerchantId(uid: String): String {
+        val suffix = uid.takeLast(6).uppercase(Locale.getDefault())
+        return "MERCHANT-$suffix"
+    }
+
+    private data class VendorInfo(
+        val id: String,
+        val name: String,
+        val category: String,
+        val location: String,
+        val merchantId: String,
+        val currency: String,
+        val contact: String?
+    )
 
     override fun onDestroyView() {
         super.onDestroyView()

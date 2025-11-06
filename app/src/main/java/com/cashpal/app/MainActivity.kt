@@ -37,6 +37,7 @@ import android.os.Build
 import com.cashpal.app.services.FirebaseConfigService
 import com.cashpal.app.utils.NotificationService
 import kotlin.math.abs
+import com.cashpal.app.NotificationService
 
 class MainActivity : AppCompatActivity() {
 

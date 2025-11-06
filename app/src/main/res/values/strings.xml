@@ -120,6 +120,35 @@
     <string name="nfc_payment_disabled">Turn on NFC in your device settings to receive payments.</string>
     <string name="nfc_payment_icon_content_desc">Tap to pay icon</string>
     
+    <!-- Send Money (QR) -->
+    <string name="send_money_cta">Send</string>
+    <string name="send_money_cta_with_amount">Send %1$s</string>
+    <string name="send_money_amount_error">Enter an amount greater than zero.</string>
+    <string name="send_money_missing_recipient">We could not find the recipient information.</string>
+    <string name="send_money_default_note">Payment to %1$s</string>
+    <string name="send_money_failed_generic">Unable to process the payment. Please try again.</string>
+    <string name="send_money_success">Payment sent to %1$s.</string>
+    <string name="send_money_payment_method">CashPal Balance</string>
+    <string name="send_money_currency_format">$%.2f</string>
+    
+    <!-- Vendor QR -->
+    <string name="personal_qr_default_name">CashPal User</string>
+    <string name="personal_qr_no_phone">No phone on file</string>
+    <string name="vendor_qr_default_name">CashPal Merchant</string>
+    <string name="vendor_qr_default_category">Retail &amp; Services</string>
+    <string name="vendor_qr_default_location">Online Business</string>
+    <string name="vendor_qr_merchant_id_format">Merchant ID: %1$s</string>
+    <string name="vendor_qr_amount_format">$%.2f</string>
+    <string name="vendor_qr_bitmap_missing">QR code is not ready yet.</string>
+    <string name="vendor_qr_copy_failed">Failed to copy QR image.</string>
+    <string name="vendor_qr_copy_success">Vendor QR copied to clipboard.</string>
+    <string name="vendor_qr_share_failed">Unable to prepare QR for sharing.</string>
+    <string name="vendor_qr_share_message">Scan to pay %1$s</string>
+    <string name="vendor_qr_share_title">Share vendor QR code</string>
+    <string name="vendor_qr_save_success">Vendor QR saved to gallery.</string>
+    <string name="vendor_qr_save_failed">Unable to save QR image.</string>
+    <string name="notification_mock_timestamp">Just now</string>
+
     <!-- AI Chat -->
     <string name="send">Send</string>
 </resources>
