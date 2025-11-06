@@ -163,6 +163,36 @@ object NotificationService {
         post(context, id, notification)
     }
 
+    fun showFraudAlert(
+        context: Context,
+        reason: String
+    ) {
+        val id = notificationId++
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("openTab", "home")
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, id, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_sys_warning)
+            .setContentTitle("Security check required")
+            .setContentText(reason)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(reason))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setAutoCancel(true)
+            .setColor(ContextCompat.getColor(context, R.color.error))
+            .setContentIntent(pendingIntent)
+            .build()
+
+        post(context, id, notification)
+    }
+
     /** 
      * Demo helper to simulate a payment push inside the app.
      * Only works in debug builds - will be ignored in production.
