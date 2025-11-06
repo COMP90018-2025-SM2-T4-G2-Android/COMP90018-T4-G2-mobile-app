@@ -68,4 +68,9 @@
 <color name="pay_nfc_start">#F5F0FF</color>
 <color name="pay_nfc_end">#E9F1FF</color>
 
+    <!-- Payment dialog colors -->
+    <color name="dialog_divider">#E0E0E0</color>
+    <color name="dialog_card_background">@color/card</color>
+    <color name="link_bank_button_text">@color/primary</color>
+
 </resources>

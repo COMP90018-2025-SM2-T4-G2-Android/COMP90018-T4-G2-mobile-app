@@ -20,6 +20,7 @@ import com.cashpal.app.data.DataRepository
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.fragments.HistoryFragment
 import com.cashpal.app.fragments.MoreFragment
+import com.cashpal.app.fragments.DailySalesFragment
 import com.cashpal.app.fragments.PayFragment
 import com.cashpal.app.fragments.ScanFragment
 import com.cashpal.app.fragments.ReceiptFragment
@@ -27,13 +28,14 @@ import com.cashpal.app.fragments.NfcPaymentFragment
 import com.cashpal.app.utils.BiometricPreferences
 import com.cashpal.app.utils.GooglePlayServicesUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import com.cashpal.app.services.FirebaseConfigService
-import com.cashpal.app.NotificationService
+import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,6 +50,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewAllText: TextView
     private lateinit var scrollView: ScrollView
     private lateinit var bottomNavigationView: BottomNavigationView
+    private lateinit var dailySalesShortcutCard: MaterialCardView
+    private lateinit var dailySalesShortcutButton: MaterialButton
     private var isDemoMode = false
 
     override fun onResume() {
@@ -122,6 +126,8 @@ class MainActivity : AppCompatActivity() {
         viewAllText = findViewById(R.id.viewAllText)
         scrollView = findViewById(R.id.scrollView)
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
+        dailySalesShortcutCard = findViewById(R.id.cardDailySalesShortcut)
+        dailySalesShortcutButton = findViewById(R.id.btnDailySalesShortcut)
     }
 
     private fun setupBottomNavigation() {
@@ -158,6 +164,12 @@ class MainActivity : AppCompatActivity() {
         viewAllText.setOnClickListener {
             showFragment(HistoryFragment())
             updateBottomNavigationSelection(R.id.nav_history)
+        }
+        dailySalesShortcutCard.setOnClickListener {
+            openDailySales()
+        }
+        dailySalesShortcutButton.setOnClickListener {
+            openDailySales()
         }
     }
 
@@ -238,7 +250,7 @@ class MainActivity : AppCompatActivity() {
                                                 "Status: ${transaction.status} - From: ${transaction.fromUserId} - To: ${transaction.toUserId}"
                                     )
                                 }
-                                
+
                                 // Calculate balance from completed transactions
                                 val calculatedBalance = calculateBalanceFromTransactions(
                                     allTransactions,
@@ -370,7 +382,7 @@ class MainActivity : AppCompatActivity() {
             "MainActivity",
             "Populating balance: stored=${user.balance}, calculated=$calculatedBalance"
         )
-        
+
         // Priority: Use stored balance from Firestore first (most reliable)
         // If stored balance is 0 or invalid, use calculated balance from transactions
         val displayBalance = when {
@@ -536,6 +548,9 @@ class MainActivity : AppCompatActivity() {
             }
             "add_money" -> {
                 Toast.makeText(this, "Add Money clicked", Toast.LENGTH_SHORT).show()
+            }
+            else -> {
+                Toast.makeText(this, "Action not available yet", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -811,6 +826,7 @@ class MainActivity : AppCompatActivity() {
             "ic_send_money" -> R.drawable.ic_send_money
             "ic_qr_pay" -> R.drawable.ic_qr_pay
             "ic_nfc_pay" -> R.drawable.ic_nfc_pay
+            "ic_trending_up" -> R.drawable.ic_trending_up
             "ic_add_money" -> R.drawable.ic_add_money
             "ic_coffee_shop" -> R.drawable.ic_coffee_shop
             "ic_person" -> R.drawable.ic_person
@@ -854,6 +870,15 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, NfcPaymentFragment())
             .addToBackStack("nfcPayment")
+            .commit()
+    }
+    
+    fun openDailySales() {
+        updateBottomNavigationSelection(R.id.nav_home)
+        scrollView.visibility = View.GONE
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, DailySalesFragment())
+            .addToBackStack("dailySales")
             .commit()
     }
     
