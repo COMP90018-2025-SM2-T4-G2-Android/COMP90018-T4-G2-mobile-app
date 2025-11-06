@@ -156,32 +156,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    showHomeContent()
-                    true
-                }
-                R.id.nav_pay -> {
-                    showFragment(PayFragment())
-                    true
-                }
-                R.id.nav_scan -> {
-                    showFragment(ScanFragment())
-                    true
-                }
-                R.id.nav_history -> {
-                    showFragment(HistoryFragment())
-                    true
-                }
-                R.id.nav_more -> {
-                    showFragment(MoreFragment())
-                    true
-                }
-                else -> false
-            }
+            navigateToTab(item.itemId)
+            true
         }
 
-        bottomNavigationView.selectedItemId = R.id.nav_home
+        bottomNavigationView.selectedItemId = currentTabId
     }
 
     private fun setupClickListeners() {
@@ -194,6 +173,51 @@ class MainActivity : AppCompatActivity() {
         }
         dailySalesShortcutButton.setOnClickListener {
             openDailySales()
+        }
+    }
+
+    private fun restoreSelectedTab() {
+        if (!AppPreferences.isInitialized()) return
+
+        val savedTabId = AppPreferences.getLastSelectedTab(R.id.nav_home)
+        currentTabId = savedTabId
+
+        if (bottomNavigationView.selectedItemId != savedTabId) {
+            isRestoringBottomNavState = true
+            bottomNavigationView.selectedItemId = savedTabId
+            isRestoringBottomNavState = false
+        } else {
+            navigateToTab(savedTabId)
+        }
+    }
+
+    private fun navigateToTab(tabId: Int) {
+        val shouldOpenProfile = pendingOpenProfile && tabId == R.id.nav_more
+
+        if (tabId != R.id.nav_more) {
+            pendingOpenProfile = false
+        }
+
+        when (tabId) {
+            R.id.nav_home -> showHomeContent()
+            R.id.nav_pay -> showFragment(PayFragment())
+            R.id.nav_scan -> showFragment(ScanFragment())
+            R.id.nav_history -> showFragment(HistoryFragment())
+            R.id.nav_more -> {
+                showFragment(MoreFragment())
+                if (shouldOpenProfile) {
+                    supportFragmentManager.executePendingTransactions()
+                    (supportFragmentManager.findFragmentById(R.id.fragmentContainer) as? MoreFragment)
+                        ?.openProfileFromHeader()
+                    pendingOpenProfile = false
+                }
+            }
+            else -> showHomeContent()
+        }
+
+        currentTabId = tabId
+        if (!isRestoringBottomNavState) {
+            AppPreferences.setLastSelectedTab(tabId)
         }
     }
 
