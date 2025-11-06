@@ -1,86 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="16dp"
-    android:background="@color/card">
+    android:orientation="vertical"
+    android:background="@drawable/bg_notification_payment"
+    android:padding="16dp">
 
-    <!-- Icon -->
-    <FrameLayout
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:background="@drawable/circle_background"
-        android:backgroundTint="@color/received_color"
-        android:layout_marginEnd="16dp">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_trending_up"
-            android:rotation="225"
-            app:tint="@android:color/white" />
-
-    </FrameLayout>
-
-    <!-- Content -->
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="horizontal">
 
-        <!-- Title and Time -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Payment Received"
-                android:textColor="@color/foreground"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_notification_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Just now"
-                android:textColor="@color/muted_foreground"
-                android:textSize="12sp" />
-
-        </LinearLayout>
-
-        <!-- Sender -->
-        <TextView
-            android:id="@+id/tv_notification_sender"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="From Sarah Johnson"
-            android:textColor="@color/muted_foreground"
-            android:textSize="14sp"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Amount -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/bg_notification_icon">
 
             <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_send"
-                app:tint="@color/received_color"
-                android:layout_marginEnd="4dp" />
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_trending_up"
+                android:tint="@android:color/white" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/notification_payment_received_title"
+                    android:textColor="@color/foreground"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_notification_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/notification_mock_timestamp"
+                    android:textColor="@color/muted_foreground"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_notification_sender"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="From Sarah Johnson"
+                android:textColor="@color/muted_foreground"
+                android:textSize="14sp"
+                android:textStyle="normal"
+                android:layout_marginBottom="8dp" />
 
             <TextView
                 android:id="@+id/tv_notification_amount"
@@ -88,11 +72,24 @@
                 android:layout_height="wrap_content"
                 android:text="+$50.00"
                 android:textColor="@color/received_color"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
-
         </LinearLayout>
-
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:background="@color/notification_divider" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="@string/notification_payment_tap_hint"
+        android:textColor="@color/muted_foreground"
+        android:textSize="12sp" />
 
 </LinearLayout>

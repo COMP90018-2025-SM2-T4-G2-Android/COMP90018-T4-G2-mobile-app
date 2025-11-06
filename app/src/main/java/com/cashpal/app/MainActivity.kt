@@ -33,10 +33,18 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import com.cashpal.app.services.FirebaseConfigService
+import com.cashpal.app.NotificationService
+import com.cashpal.app.models.TransactionStatus
+import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Locale
 import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
@@ -59,10 +67,20 @@ class MainActivity : AppCompatActivity() {
     private var homeHeaderActionsController: HeaderActionsController? = null
     private var currentTabId: Int = R.id.nav_home
     private var isRestoringBottomNavState = false
+    private var transactionsListener: ListenerRegistration? = null
+    private var listenerUserId: String? = null
+    private val observedTransactionIds = mutableSetOf<String>()
+    private val userNameCache = mutableMapOf<String, String>()
+    private val notificationPrefs by lazy {
+        getSharedPreferences(PREF_NOTIFICATIONS, Context.MODE_PRIVATE)
+    }
+    private var lastSeenIncomingTimestamp = 0L
 
     companion object {
         private const val KEY_SELECTED_NAV_ITEM = "selected_nav_item"
         private const val KEY_IS_HOME_VISIBLE = "is_home_visible"
+        private const val PREF_NOTIFICATIONS = "notification_prefs"
+        private const val KEY_LAST_INCOMING_TIMESTAMP = "last_incoming_transaction_timestamp"
     }
 
     override fun onResume() {
@@ -239,6 +257,10 @@ class MainActivity : AppCompatActivity() {
         monthlyChange.text = "+$0.00"
         pendingAmount.text = "$0.00"
         reservedAmount.text = "$0.00"
+
+        if (!dataRepository.isUserSignedIn() || isDemoMode) {
+            stopTransactionListener()
+        }
         
         if (dataRepository.isUserSignedIn() && !isDemoMode) {
             loadFirebaseData()
@@ -257,6 +279,8 @@ class MainActivity : AppCompatActivity() {
             showEmptyState()
             return
         }
+
+        startTransactionListener(currentUserId)
 
         lifecycleScope.launch {
             try {
@@ -415,6 +439,130 @@ class MainActivity : AppCompatActivity() {
 
         // Quick actions are UI elements, load them statically (not from Firebase)
         populateQuickActions(getDefaultQuickActions())
+    }
+
+    private fun startTransactionListener(userId: String) {
+        if (listenerUserId == userId && transactionsListener != null) return
+
+        stopTransactionListener()
+
+        android.util.Log.d("MainActivity", "Starting transaction listener for user: $userId")
+        listenerUserId = userId
+        lastSeenIncomingTimestamp = notificationPrefs.getLong(KEY_LAST_INCOMING_TIMESTAMP, 0L)
+        if (lastSeenIncomingTimestamp == 0L) {
+            lastSeenIncomingTimestamp = System.currentTimeMillis()
+            persistLastSeenTimestamp(lastSeenIncomingTimestamp)
+        }
+        transactionsListener = firebaseRepository.listenToUserTransactions(userId) { transactions ->
+            handleRealtimeTransactions(userId, transactions)
+        }
+    }
+
+    private fun stopTransactionListener() {
+        transactionsListener?.remove()
+        transactionsListener = null
+        listenerUserId = null
+        observedTransactionIds.clear()
+        userNameCache.clear()
+    }
+
+    private fun handleRealtimeTransactions(
+        currentUserId: String,
+        transactions: List<com.cashpal.app.models.Transaction>
+    ) {
+        val incomingCompleted = transactions.filter {
+            it.toUserId == currentUserId && it.status == TransactionStatus.COMPLETED
+        }
+
+        if (incomingCompleted.isEmpty()) return
+
+        var updatedLastSeen = lastSeenIncomingTimestamp
+
+        incomingCompleted.sortedBy { eventTimestamp(it) }.forEach { transaction ->
+            val transactionId = transaction.id
+            if (transactionId.isBlank()) return@forEach
+
+            val eventTime = eventTimestamp(transaction)
+            val alreadyObserved = !observedTransactionIds.add(transactionId)
+            if (eventTime <= lastSeenIncomingTimestamp || alreadyObserved) {
+                if (eventTime > updatedLastSeen) {
+                    updatedLastSeen = eventTime
+                }
+                return@forEach
+            }
+
+            lifecycleScope.launch {
+                val senderName = resolveDisplayNameForUser(transaction)
+                val timestampText = formatNotificationTimestamp(transaction.completedAt ?: transaction.createdAt)
+                android.util.Log.d(
+                    "MainActivity",
+                    "New incoming transaction detected: $transactionId from ${transaction.fromUserId}"
+                )
+                NotificationService.showPaymentReceivedNotification(
+                    this@MainActivity,
+                    senderName = senderName,
+                    amount = transaction.amount,
+                    timestamp = timestampText
+                )
+            }
+
+            if (eventTime > updatedLastSeen) {
+                updatedLastSeen = eventTime
+            }
+        }
+
+        if (updatedLastSeen > lastSeenIncomingTimestamp) {
+            lastSeenIncomingTimestamp = updatedLastSeen
+            persistLastSeenTimestamp(updatedLastSeen)
+        }
+    }
+
+    private suspend fun resolveDisplayNameForUser(
+        transaction: com.cashpal.app.models.Transaction
+    ): String {
+        val metadataName = (transaction.metadata["senderName"] as? String)
+            ?: (transaction.metadata["fromUserName"] as? String)
+            ?: (transaction.metadata["fromUserDisplayName"] as? String)
+        return resolveDisplayNameForUser(transaction.fromUserId, metadataName)
+    }
+
+    private suspend fun resolveDisplayNameForUser(
+        userId: String,
+        metadataName: String?
+    ): String {
+        metadataName?.takeIf { it.isNotBlank() }?.let { return it }
+        userNameCache[userId]?.takeIf { it.isNotBlank() }?.let { return it }
+
+        val resolvedName = withContext(Dispatchers.IO) {
+            runCatching {
+                val result = firebaseRepository.getUserProfile(userId).first()
+                val user = result.getOrNull()
+                user?.displayName?.takeIf { it.isNotBlank() }
+                    ?: user?.phoneNumber?.takeIf { it.isNotBlank() }
+                    ?: user?.email?.takeIf { it.isNotBlank() }
+            }.getOrNull()
+        }
+
+        val name = resolvedName ?: getString(R.string.pay_unknown_contact)
+        userNameCache[userId] = name
+        return name
+    }
+
+    private fun eventTimestamp(transaction: com.cashpal.app.models.Transaction): Long {
+        return (transaction.completedAt ?: transaction.createdAt).toDate().time
+    }
+
+    private fun persistLastSeenTimestamp(value: Long) {
+        notificationPrefs.edit().putLong(KEY_LAST_INCOMING_TIMESTAMP, value).apply()
+    }
+
+    private fun formatNotificationTimestamp(timestamp: com.google.firebase.Timestamp): String {
+        return runCatching {
+            val formatter = SimpleDateFormat("h:mm a", Locale.getDefault())
+            formatter.format(timestamp.toDate())
+        }.getOrElse {
+            getString(R.string.notification_mock_timestamp)
+        }
     }
     
     private fun getDefaultQuickActions(): List<com.cashpal.app.data.QuickAction> {
@@ -901,6 +1049,11 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
             .commit()
+    }
+
+    override fun onDestroy() {
+        stopTransactionListener()
+        super.onDestroy()
     }
 
     fun refreshBalance() {
