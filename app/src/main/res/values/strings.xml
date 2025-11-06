@@ -147,7 +147,10 @@
     <string name="vendor_qr_share_title">Share vendor QR code</string>
     <string name="vendor_qr_save_success">Vendor QR saved to gallery.</string>
     <string name="vendor_qr_save_failed">Unable to save QR image.</string>
+    <string name="notification_payment_received_title">Payment Received</string>
+    <string name="notification_payment_sender_format">From &lt;b&gt;%1$s&lt;/b&gt;</string>
     <string name="notification_mock_timestamp">Just now</string>
+    <string name="notification_payment_tap_hint">Tap to view details</string>
 
     <!-- AI Chat -->
     <string name="send">Send</string>
