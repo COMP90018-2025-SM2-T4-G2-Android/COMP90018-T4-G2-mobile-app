@@ -61,34 +61,4 @@
     <color name="surface_container">#211F26</color>
     <color name="surface_container_high">#2B2930</color>
     <color name="surface_container_highest">#36343B</color>
-
-    <!-- Custom App Colors (Dark Mode Overrides) -->
-    <color name="app_background">#121212</color>
-    <color name="pay_header_end">#2F245C</color>
-    <color name="pay_soft_surface">#1F1A2F</color>
-    <color name="pay_option_border">#3D3554</color>
-    <color name="pay_option_icon_surface">#2A2340</color>
-    <color name="pay_nfc_start">#28213C</color>
-    <color name="pay_nfc_end">#1A2030</color>
-    <color name="menu_item_background">#25213C</color>
-    <color name="menu_icon_background">#3A3560</color>
-    <color name="tab_background">#221C34</color>
-    <color name="history_filter_background">#1F1A2F</color>
-    <color name="home_balance_title_text">#DDD7FF</color>
-    <color name="home_balance_primary_text">#F5F3FF</color>
-    <color name="home_balance_secondary_text">#BFB8E6</color>
-    <color name="dialog_surface">#2A2442</color>
-    <color name="dialog_surface_variant">#312B4D</color>
-    <color name="dialog_card_background">#312B4D</color>
-    <color name="dialog_divider">#3E3758</color>
-    <color name="dialog_logo_background">#3A3261</color>
-    <color name="dialog_badge_primary_background">#1F3B2D</color>
-    <color name="sign_out_button_background">#3A2745</color>
-    <color name="sign_out_button_border">#FF8A99</color>
-    <color name="sign_out_button_text">#FFFFFF</color>
-    <color name="link_bank_button_text">#FFFFFF</color>
-    <color name="home_balance_card_background">#33264A</color>
-    <color name="personal_qr_primary_text">#000000</color>
-    <color name="personal_qr_secondary_text">#000000</color>
-    <color name="personal_qr_icon">#000000</color>
 </resources>

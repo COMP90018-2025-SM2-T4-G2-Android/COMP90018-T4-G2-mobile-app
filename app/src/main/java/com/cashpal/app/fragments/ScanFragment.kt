@@ -42,6 +42,9 @@ class ScanFragment : Fragment() {
     private lateinit var cameraExecutor: ExecutorService
     private var hasScanned = false  // prevent multiple triggers
     private var headerActionsController: HeaderActionsController? = null
+    private var isScanningActive = false
+    private var pendingCameraStart = false
+    private var cameraProvider: ProcessCameraProvider? = null
     
     private val CAMERA_PERMISSION_REQUEST_CODE = 1001
 
@@ -69,8 +72,10 @@ class ScanFragment : Fragment() {
         // Start camera on button click or automatically if permissions granted
         startScanButton.setOnClickListener {
             if (hasCameraPermission()) {
+                isScanningActive = true
                 startCamera()
             } else {
+                pendingCameraStart = true
                 requestCameraPermission()
             }
         }
@@ -80,7 +85,7 @@ class ScanFragment : Fragment() {
         }
 
         vendorOption.setOnClickListener {
-            Toast.makeText(requireContext(), "Vendor Code option clicked", Toast.LENGTH_SHORT).show()
+            openVendorQR()
         }
 
         // RecyclerView setup
@@ -101,10 +106,7 @@ class ScanFragment : Fragment() {
         // Animate scanning line
         startScanningLineAnimation()
         
-        // Check and request camera permission, then start camera automatically
-        if (hasCameraPermission()) {
-            startCamera()
-        } else {
+        if (!hasCameraPermission()) {
             requestCameraPermission()
         }
     }
@@ -142,8 +144,11 @@ class ScanFragment : Fragment() {
         
         if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, start camera
-                startCamera()
+                if (pendingCameraStart) {
+                    pendingCameraStart = false
+                    isScanningActive = true
+                    startCamera()
+                }
             } else {
                 // Permission denied
                 Toast.makeText(
@@ -164,13 +169,14 @@ class ScanFragment : Fragment() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
 
         cameraProviderFuture.addListener({
-            // Check again before accessing view lifecycle owner
             if (!isAdded || view == null) {
                 return@addListener
             }
 
             try {
-                val cameraProvider = cameraProviderFuture.get()
+                val provider = cameraProviderFuture.get()
+                cameraProvider = provider
+                pendingCameraStart = false
 
                 val preview = Preview.Builder()
                     .build()
@@ -187,9 +193,10 @@ class ScanFragment : Fragment() {
                         it.setAnalyzer(cameraExecutor, QRCodeAnalyzerMLKit { qrText ->
                             if (!hasScanned && isAdded) {
                                 hasScanned = true
+                                isScanningActive = false
                                 requireActivity().runOnUiThread {
                                     if (isAdded) {
-                                        // Navigate to the Scan Result Fragment
+                                        stopCamera()
                                         val bundle = Bundle().apply {
                                             putString("qrData", qrText)
                                         }
@@ -208,17 +215,19 @@ class ScanFragment : Fragment() {
                         })
                     }
 
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
+                provider.unbindAll()
+                provider.bindToLifecycle(
                     viewLifecycleOwner,
                     cameraSelector,
                     preview,
                     imageAnalysis
                 )
-                
-                // Hide the start button and show camera is active
+
                 startScanButton.visibility = View.GONE
+                isScanningActive = true
             } catch (exc: Exception) {
+                isScanningActive = false
+                startScanButton.visibility = View.VISIBLE
                 exc.printStackTrace()
                 if (isAdded && context != null) {
                     Toast.makeText(
@@ -232,10 +241,25 @@ class ScanFragment : Fragment() {
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
+    private fun stopCamera() {
+        cameraProvider?.unbindAll()
+        isScanningActive = false
+        if (::startScanButton.isInitialized) {
+            startScanButton.visibility = View.VISIBLE
+        }
+    }
+
     private fun openPersonalQR() {
         parentFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, PersonalQRFragment())
             .addToBackStack("personal_qr")
+            .commit()
+    }
+
+    private fun openVendorQR() {
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, VendorQRFragment())
+            .addToBackStack("vendor_qr")
             .commit()
     }
 
@@ -254,9 +278,10 @@ class ScanFragment : Fragment() {
         super.onResume()
         // Reset scan flag when fragment resumes so user can scan again
         hasScanned = false
-        // Ensure camera is started if permission is granted
-        if (hasCameraPermission() && ::previewView.isInitialized) {
+        if (isScanningActive && hasCameraPermission() && ::previewView.isInitialized) {
             startCamera()
+        } else {
+            startScanButton.visibility = View.VISIBLE
         }
     }
 
@@ -264,6 +289,7 @@ class ScanFragment : Fragment() {
         headerActionsController?.detach()
         headerActionsController = null
         super.onDestroyView()
+        stopCamera()
         cameraExecutor.shutdown()
     }
 }

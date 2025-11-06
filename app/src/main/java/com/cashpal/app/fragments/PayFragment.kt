@@ -139,7 +139,7 @@ class PayFragment : Fragment() {
         phoneOptionView.setOnClickListener { showPhoneEntrySheet() }
         qrOptionView.setOnClickListener { navigateToScanner() }
         nfcCardView.setOnClickListener { navigateToNfcPayment() }
-        vendorOptionView.setOnClickListener { showMessage(getString(R.string.pay_vendor_not_available)) }
+        vendorOptionView.setOnClickListener { navigateToVendorCode() }
         sendPaymentButton.setOnClickListener { performTransfer() }
         root.findViewById<View>(R.id.btn_use_nfc).setOnClickListener { navigateToNfcPayment() }
         updateSelectedRecipientUI()
@@ -774,6 +774,13 @@ class PayFragment : Fragment() {
 
     private fun navigateToNfcPayment() {
         (activity as? com.cashpal.app.MainActivity)?.openNfcPayment()
+    }
+
+    private fun navigateToVendorCode() {
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, VendorQRFragment())
+            .addToBackStack("vendor_qr")
+            .commit()
     }
     
     /**

@@ -20,6 +20,7 @@ import com.cashpal.app.data.DataRepository
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.fragments.HistoryFragment
 import com.cashpal.app.fragments.MoreFragment
+import com.cashpal.app.fragments.DailySalesFragment
 import com.cashpal.app.fragments.PayFragment
 import com.cashpal.app.fragments.ScanFragment
 import com.cashpal.app.fragments.ReceiptFragment
@@ -29,13 +30,14 @@ import com.cashpal.app.utils.GooglePlayServicesUtils
 import com.cashpal.app.utils.AppPreferences
 import com.cashpal.app.utils.HeaderActionsController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import com.cashpal.app.services.FirebaseConfigService
-import com.cashpal.app.utils.NotificationService
+import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
 
@@ -50,10 +52,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewAllText: TextView
     private lateinit var scrollView: ScrollView
     private lateinit var bottomNavigationView: BottomNavigationView
+    private lateinit var dailySalesShortcutCard: MaterialCardView
+    private lateinit var dailySalesShortcutButton: MaterialButton
     private var isDemoMode = false
     private var pendingOpenProfile = false
     private var homeHeaderActionsController: HeaderActionsController? = null
     private var currentTabId: Int = R.id.nav_home
+    private var isRestoringBottomNavState = false
+
+    companion object {
+        private const val KEY_SELECTED_NAV_ITEM = "selected_nav_item"
+        private const val KEY_IS_HOME_VISIBLE = "is_home_visible"
+    }
 
     override fun onResume() {
         super.onResume()
@@ -115,6 +125,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        showHomeContent()
         openFromIntent(intent)
     }
     private fun initializeViews() {
@@ -129,6 +140,8 @@ class MainActivity : AppCompatActivity() {
         viewAllText = findViewById(R.id.viewAllText)
         scrollView = findViewById(R.id.scrollView)
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
+        dailySalesShortcutCard = findViewById(R.id.cardDailySalesShortcut)
+        dailySalesShortcutButton = findViewById(R.id.btnDailySalesShortcut)
     }
 
     private fun bindHomeHeaderActions() {
@@ -143,53 +156,44 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener { item ->
-            navigateToTab(item.itemId)
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    showHomeContent()
+                    true
+                }
+                R.id.nav_pay -> {
+                    showFragment(PayFragment())
+                    true
+                }
+                R.id.nav_scan -> {
+                    showFragment(ScanFragment())
+                    true
+                }
+                R.id.nav_history -> {
+                    showFragment(HistoryFragment())
+                    true
+                }
+                R.id.nav_more -> {
+                    showFragment(MoreFragment())
+                    true
+                }
+                else -> false
+            }
         }
-    }
 
-    private fun navigateToTab(itemId: Int): Boolean {
-        currentTabId = itemId
-        AppPreferences.setLastSelectedTab(itemId)
-
-        return when (itemId) {
-            R.id.nav_home -> {
-                showHomeContent()
-                true
-            }
-            R.id.nav_pay -> {
-                showFragment(PayFragment())
-                true
-            }
-            R.id.nav_scan -> {
-                showFragment(ScanFragment())
-                true
-            }
-            R.id.nav_history -> {
-                showFragment(HistoryFragment())
-                true
-            }
-            R.id.nav_more -> {
-                showFragment(MoreFragment.newInstance(pendingOpenProfile))
-                pendingOpenProfile = false
-                true
-            }
-            else -> false
-        }
-    }
-
-    private fun restoreSelectedTab() {
-        val lastTab = currentTabId
-        if (bottomNavigationView.selectedItemId == lastTab) {
-            navigateToTab(lastTab)
-        } else {
-            bottomNavigationView.selectedItemId = lastTab
-        }
+        bottomNavigationView.selectedItemId = R.id.nav_home
     }
 
     private fun setupClickListeners() {
         viewAllText.setOnClickListener {
             showFragment(HistoryFragment())
             updateBottomNavigationSelection(R.id.nav_history)
+        }
+        dailySalesShortcutCard.setOnClickListener {
+            openDailySales()
+        }
+        dailySalesShortcutButton.setOnClickListener {
+            openDailySales()
         }
     }
 
@@ -282,7 +286,7 @@ class MainActivity : AppCompatActivity() {
                                                 "Status: ${transaction.status} - From: ${transaction.fromUserId} - To: ${transaction.toUserId}"
                                     )
                                 }
-                                
+
                                 // Calculate balance from completed transactions
                                 val calculatedBalance = calculateBalanceFromTransactions(
                                     allTransactions,
@@ -414,7 +418,7 @@ class MainActivity : AppCompatActivity() {
             "MainActivity",
             "Populating balance: stored=${user.balance}, calculated=$calculatedBalance"
         )
-        
+
         // Priority: Use stored balance from Firestore first (most reliable)
         // If stored balance is 0 or invalid, use calculated balance from transactions
         val displayBalance = when {
@@ -580,6 +584,9 @@ class MainActivity : AppCompatActivity() {
             }
             "add_money" -> {
                 Toast.makeText(this, "Add Money clicked", Toast.LENGTH_SHORT).show()
+            }
+            else -> {
+                Toast.makeText(this, "Action not available yet", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -855,6 +862,7 @@ class MainActivity : AppCompatActivity() {
             "ic_send_money" -> R.drawable.ic_send_money
             "ic_qr_pay" -> R.drawable.ic_qr_pay
             "ic_nfc_pay" -> R.drawable.ic_nfc_pay
+            "ic_trending_up" -> R.drawable.ic_trending_up
             "ic_add_money" -> R.drawable.ic_add_money
             "ic_coffee_shop" -> R.drawable.ic_coffee_shop
             "ic_person" -> R.drawable.ic_person
@@ -898,6 +906,15 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, NfcPaymentFragment())
             .addToBackStack("nfcPayment")
+            .commit()
+    }
+    
+    fun openDailySales() {
+        updateBottomNavigationSelection(R.id.nav_home)
+        scrollView.visibility = View.GONE
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, DailySalesFragment())
+            .addToBackStack("dailySales")
             .commit()
     }
     

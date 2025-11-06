@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.material.color.DynamicColors
 import com.google.firebase.FirebaseApp
 import com.cashpal.app.di.ServiceLocator
+import com.cashpal.app.utils.UserProfileCache
+import java.io.File
 import com.cashpal.app.utils.AppPreferences
 
 class CashPalApp : Application() {
@@ -28,4 +30,5 @@ class CashPalApp : Application() {
         ServiceLocator.initialize(this)
     }
 }
+
 
