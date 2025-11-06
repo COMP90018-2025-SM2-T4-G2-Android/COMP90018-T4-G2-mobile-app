@@ -35,7 +35,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import com.cashpal.app.services.FirebaseConfigService
-import com.cashpal.app.utils.NotificationService
 import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {

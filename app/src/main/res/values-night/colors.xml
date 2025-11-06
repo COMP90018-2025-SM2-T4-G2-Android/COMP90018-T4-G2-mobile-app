@@ -55,5 +55,9 @@
     <color name="surface_container">#211F26</color>
     <color name="surface_container_high">#2B2930</color>
     <color name="surface_container_highest">#36343B</color>
-</resources>
 
+    <!-- Payment dialog colors -->
+    <color name="dialog_divider">#3A3642</color>
+    <color name="dialog_card_background">@color/card</color>
+    <color name="link_bank_button_text">@color/primary</color>
+</resources>
