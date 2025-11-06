@@ -187,6 +187,78 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardDailySalesShortcut"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="@color/card"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="24dp">
+
+                    <FrameLayout
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:background="@drawable/pay_option_icon_background">
+
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_trending_up"
+                            android:tint="@color/primary" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/dailySalesShortcutTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/daily_sales_cta_title"
+                            android:textColor="@color/foreground"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/dailySalesShortcutSubtitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/daily_sales_cta_subtitle"
+                            android:textColor="@color/muted_foreground"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDailySalesShortcut"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="20dp"
+                        android:text="@string/daily_sales_cta_button"
+                        android:textAllCaps="false"
+                        android:textColor="@color/primary"
+                        app:strokeColor="@color/primary" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Quick Actions Section -->
             <TextView
                 android:layout_width="wrap_content"
