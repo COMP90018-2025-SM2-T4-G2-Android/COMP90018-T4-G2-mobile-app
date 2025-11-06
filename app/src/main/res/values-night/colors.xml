@@ -88,4 +88,7 @@
     <color name="sign_out_button_text">#FFFFFF</color>
     <color name="link_bank_button_text">#FFFFFF</color>
     <color name="home_balance_card_background">#33264A</color>
+    <color name="personal_qr_primary_text">#000000</color>
+    <color name="personal_qr_secondary_text">#000000</color>
+    <color name="personal_qr_icon">#000000</color>
 </resources>

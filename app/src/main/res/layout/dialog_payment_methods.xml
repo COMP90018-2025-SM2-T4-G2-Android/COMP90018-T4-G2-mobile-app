@@ -376,13 +376,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:text="Link Bank"
-                    android:textColor="@color/primary"
+                    android:textColor="@color/link_bank_button_text"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:background="@drawable/link_bank_button_background"
                     android:drawableStart="@drawable/ic_bank"
                     android:drawablePadding="8dp"
-                    android:drawableTint="@color/primary"
+                    android:drawableTint="@color/link_bank_button_text"
                     android:gravity="center" />
 
             </LinearLayout>

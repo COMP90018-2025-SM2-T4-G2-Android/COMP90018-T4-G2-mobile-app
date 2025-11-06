@@ -86,5 +86,8 @@
 <color name="sign_out_button_text">@color/error</color>
 <color name="link_bank_button_text">@color/primary</color>
 <color name="home_balance_card_background">@color/primary</color>
+<color name="personal_qr_primary_text">@color/foreground</color>
+<color name="personal_qr_secondary_text">@color/muted_foreground</color>
+<color name="personal_qr_icon">@color/foreground</color>
 
 </resources>
