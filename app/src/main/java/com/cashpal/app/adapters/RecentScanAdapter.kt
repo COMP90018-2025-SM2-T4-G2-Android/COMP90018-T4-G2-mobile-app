@@ -11,7 +11,7 @@ import com.cashpal.app.R
 import com.cashpal.app.models.RecentScan
 
 class RecentScanAdapter(
-    private val scans: List<RecentScan>,
+    private var scans: List<RecentScan>,
     private val onScanAgainClick: (RecentScan) -> Unit
 ) : RecyclerView.Adapter<RecentScanAdapter.ViewHolder>() {
 
@@ -19,7 +19,7 @@ class RecentScanAdapter(
         val icon: ImageView = view.findViewById(R.id.iv_scan_icon)
         val vendor: TextView = view.findViewById(R.id.tv_vendor)
         val location: TextView = view.findViewById(R.id.tv_location)
-        val time: TextView = view.findViewById(R.id.tv_time)
+        val date: TextView = view.findViewById(R.id.tv_date)
         val amount: TextView = view.findViewById(R.id.tv_amount)
         val scanAgainButton: Button = view.findViewById(R.id.btn_scan_again)
         val container: View = view.findViewById(R.id.container_scan)
@@ -36,7 +36,7 @@ class RecentScanAdapter(
 
         holder.vendor.text = scan.vendor
         holder.location.text = scan.location
-        holder.time.text = scan.time
+        holder.date.text = scan.date
         holder.amount.text = scan.amount
 
         holder.scanAgainButton.setOnClickListener {
@@ -49,4 +49,9 @@ class RecentScanAdapter(
     }
 
     override fun getItemCount() = scans.size
+
+    fun updateScans(newScans: List<RecentScan>) {
+        scans = newScans
+        notifyDataSetChanged()
+    }
 }

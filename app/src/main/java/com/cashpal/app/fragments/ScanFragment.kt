@@ -22,6 +22,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.cashpal.app.R
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -85,11 +88,17 @@ class ScanFragment : Fragment() {
         }
 
         // RecyclerView setup
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val today = Calendar.getInstance()
+
         val sampleScans = List(20) { i ->
+            val scanDate = (today.clone() as Calendar).apply {
+                add(Calendar.DAY_OF_YEAR, -i)
+            }
             RecentScan(
                 vendor = "Vendor #$i",
                 location = "Melbourne",
-                time = "10:${i}0 AM",
+                date = dateFormat.format(scanDate.time),
                 amount = "$${(i + 1) * 5}.00"
             )
         }
