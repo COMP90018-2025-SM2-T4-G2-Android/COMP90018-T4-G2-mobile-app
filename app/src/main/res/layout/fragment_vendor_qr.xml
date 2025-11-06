@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/received_background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="96dp"
+        android:orientation="vertical"
+        android:paddingTop="16dp">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:src="@drawable/ic_arrow_back"
+                android:contentDescription="@string/back"
+                app:tint="@color/foreground"
+                android:layout_marginEnd="16dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Vendor QR Code"
+                    android:textColor="@color/foreground"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Display this code to accept payments"
+                    android:textColor="@color/muted_foreground"
+                    android:textSize="14sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- QR Display -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="@color/card"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="32dp"
+                android:gravity="center">
+
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_qr_container"
+                    android:backgroundTint="@android:color/white"
+                    android:padding="32dp"
+                    android:layout_marginBottom="32dp"
+                    android:elevation="8dp">
+
+                    <ImageView
+                        android:id="@+id/iv_vendor_qr_code"
+                        android:layout_width="224dp"
+                        android:layout_height="224dp"
+                        android:scaleType="centerCrop"
+                        android:contentDescription="Vendor QR Code" />
+
+                    <FrameLayout
+                        android:id="@+id/fl_vendor_qr_loading"
+                        android:layout_width="224dp"
+                        android:layout_height="224dp"
+                        android:background="@color/muted"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_store"
+                            android:alpha="0.4"
+                            app:tint="@color/muted_foreground" />
+                    </FrameLayout>
+                </FrameLayout>
+
+                <!-- Vendor Info -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_marginBottom="32dp">
+
+                    <TextView
+                        android:id="@+id/tv_vendor_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Your Business"
+                        android:textColor="@color/foreground"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_vendor_category"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cafe &amp; Bakery"
+                        android:textColor="@color/muted_foreground"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tv_vendor_location"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Downtown Flagship"
+                        android:textColor="@color/muted_foreground"
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_vendor_id"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Merchant ID: MERCHANT-67890"
+                        android:textColor="@color/muted_foreground"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="8dp" />
+
+                    <LinearLayout
+                        android:id="@+id/ll_vendor_amount_display"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/scan_option_background"
+                        android:backgroundTint="@color/success"
+                        android:alpha="0.12"
+                        android:padding="12dp"
+                        android:gravity="center"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/tv_vendor_amount_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="$0.00"
+                            android:textColor="@color/success"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="AUD"
+                            android:textColor="@color/success"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:background="@drawable/scan_option_background"
+                            android:backgroundTint="@color/success"
+                            android:alpha="0.2"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Actions -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
+
+                    <LinearLayout
+                        android:id="@+id/btn_copy_vendor_qr"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/scan_option_background"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_copy"
+                            app:tint="@color/foreground"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Copy"
+                            android:textColor="@color/foreground"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/btn_share_vendor_qr"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="4dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/scan_option_background"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_share"
+                            app:tint="@color/foreground"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Share"
+                            android:textColor="@color/foreground"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/btn_save_vendor_qr"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@drawable/scan_option_background"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_download"
+                            app:tint="@color/foreground"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Save"
+                            android:textColor="@color/foreground"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Amount Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="@color/card"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Set Payment Amount (Optional)"
+                    android:textColor="@color/muted_foreground"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="24dp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$"
+                        android:textColor="@color/success"
+                        android:textSize="32sp"
+                        android:textStyle="bold"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginEnd="4dp" />
+
+                    <EditText
+                        android:id="@+id/et_vendor_amount_input"
+                        android:layout_width="192dp"
+                        android:layout_height="64dp"
+                        android:background="@android:color/transparent"
+                        android:hint="0.00"
+                        android:textColorHint="@color/muted_foreground"
+                        android:textColor="@color/success"
+                        android:textSize="32sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:inputType="numberDecimal"
+                        android:maxLength="10" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Leave as 0.00 to let customers enter the amount"
+                    android:textColor="@color/muted_foreground"
+                    android:textSize="12sp"
+                    android:layout_gravity="center" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Instructions -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/card"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            android:alpha="0.95">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <View
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:background="@drawable/circle_background"
+                        android:backgroundTint="@color/success"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Business tips"
+                        android:textColor="@color/foreground"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp">
+
+                        <View
+                            android:layout_width="6dp"
+                            android:layout_height="6dp"
+                            android:background="@drawable/circle_background"
+                            android:backgroundTint="@color/success"
+                            android:alpha="0.6"
+                            android:layout_marginTop="6dp"
+                            android:layout_marginEnd="12dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Print and place this QR code near your checkout counter"
+                            android:textColor="@color/muted_foreground"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp">
+
+                        <View
+                            android:layout_width="6dp"
+                            android:layout_height="6dp"
+                            android:background="@drawable/circle_background"
+                            android:backgroundTint="@color/success"
+                            android:alpha="0.6"
+                            android:layout_marginTop="6dp"
+                            android:layout_marginEnd="12dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Customers can scan to pay instantly with their CashPal app"
+                            android:textColor="@color/muted_foreground"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp">
+
+                        <View
+                            android:layout_width="6dp"
+                            android:layout_height="6dp"
+                            android:background="@drawable/circle_background"
+                            android:backgroundTint="@color/success"
+                            android:alpha="0.6"
+                            android:layout_marginTop="6dp"
+                            android:layout_marginEnd="12dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Set an amount above for fixed-price items like coffee or tickets"
+                            android:textColor="@color/muted_foreground"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="6dp"
+                            android:layout_height="6dp"
+                            android:background="@drawable/circle_background"
+                            android:backgroundTint="@color/success"
+                            android:alpha="0.6"
+                            android:layout_marginTop="6dp"
+                            android:layout_marginEnd="12dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Track every sale instantly inside your CashPal merchant dashboard"
+                            android:textColor="@color/muted_foreground"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+</ScrollView>
