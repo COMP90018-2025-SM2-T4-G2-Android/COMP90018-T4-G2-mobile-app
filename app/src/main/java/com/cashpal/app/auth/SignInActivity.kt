@@ -23,7 +23,7 @@ import com.cashpal.app.dialogs.ForgotPasswordDialog
 import com.cashpal.app.utils.BiometricPreferences
 import com.cashpal.app.utils.LocationHelper
 import com.cashpal.app.utils.LocationRisk
-import com.cashpal.app.utils.NotificationService
+import com.cashpal.app.NotificationService
 import kotlinx.coroutines.launch
 
 class SignInActivity : AppCompatActivity() {

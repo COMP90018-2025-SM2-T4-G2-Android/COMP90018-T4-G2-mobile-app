@@ -36,6 +36,7 @@
 <color name="received_color">#22C55E</color>
 <color name="sent_background">#FEF2F2</color>
 <color name="received_background">#F0FDF4</color>
+<color name="notification_divider">#CCEBD9</color>
 
 <!-- Scanner Colors -->
 <color name="scanner_background">#1F2937</color>
@@ -67,5 +68,10 @@
 <color name="pay_option_icon_surface">#EAE4FF</color>
 <color name="pay_nfc_start">#F5F0FF</color>
 <color name="pay_nfc_end">#E9F1FF</color>
+
+    <!-- Payment dialog colors -->
+    <color name="dialog_divider">#E0E0E0</color>
+    <color name="dialog_card_background">@color/card</color>
+    <color name="link_bank_button_text">@color/primary</color>
 
 </resources>

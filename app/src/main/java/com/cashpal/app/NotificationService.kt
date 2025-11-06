@@ -9,11 +9,14 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.widget.RemoteViews
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.text.HtmlCompat
 import java.util.Locale
 import android.annotation.SuppressLint
 
@@ -23,6 +26,7 @@ object NotificationService {
     private const val CHANNEL_ID = "cashpal_payments"
     private const val CHANNEL_NAME = "Payment Notifications"
     private const val CHANNEL_DESCRIPTION = "Notifications for received payments"
+    private const val AUTO_DISMISS_DURATION_MS = 6000L
 
     private var notificationId = 1000
 
@@ -68,18 +72,34 @@ object NotificationService {
         )
 
         // Custom layout
-        val notificationLayout = RemoteViews(context.packageName, R.layout.notification_payment_received).apply {
-            setTextViewText(R.id.tv_notification_sender, "From $senderName")
-            setTextViewText(
-                R.id.tv_notification_amount,
-                "+$${String.format(Locale.US, "%.2f", amount)}"
-            )
-            setTextViewText(R.id.tv_notification_time, timestamp)
-        }
+        val notificationLayout = createPaymentReceivedRemoteViews(
+            context,
+            R.layout.notification_payment_received,
+            senderName,
+            amount,
+            timestamp
+        )
+        val headsUpLayout = createPaymentReceivedRemoteViews(
+            context,
+            R.layout.notification_payment_received,
+            senderName,
+            amount,
+            timestamp
+        )
+        val expandedLayout = createPaymentReceivedRemoteViews(
+            context,
+            R.layout.notification_payment_received,
+            senderName,
+            amount,
+            timestamp
+        )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_trending_up)
             .setCustomContentView(notificationLayout)
+            .setCustomHeadsUpContentView(headsUpLayout)
+            .setCustomBigContentView(expandedLayout)
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setContentTitle("Payment Received")
             .setContentText(
                 "From $senderName: +$${String.format(Locale.US, "%.2f", amount)}"
@@ -87,13 +107,15 @@ object NotificationService {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setTimeoutAfter(AUTO_DISMISS_DURATION_MS)
             .setContentIntent(pendingIntent)
             .setColor(ContextCompat.getColor(context, R.color.received_color))
             .setVibrate(longArrayOf(0, 250, 250, 250))
             .setLights(ContextCompat.getColor(context, R.color.received_color), 1000, 3000)
             .build()
 
-        post(context, id, notification)
+        post(context, id, notification, AUTO_DISMISS_DURATION_MS)
     }
 
     fun showPaymentSentNotification(
@@ -163,6 +185,36 @@ object NotificationService {
         post(context, id, notification)
     }
 
+    fun showFraudAlert(
+        context: Context,
+        reason: String
+    ) {
+        val id = notificationId++
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("openTab", "home")
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, id, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_sys_warning)
+            .setContentTitle("Security check required")
+            .setContentText(reason)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(reason))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setAutoCancel(true)
+            .setColor(ContextCompat.getColor(context, R.color.error))
+            .setContentIntent(pendingIntent)
+            .build()
+
+        post(context, id, notification)
+    }
+
     /** 
      * Demo helper to simulate a payment push inside the app.
      * Only works in debug builds - will be ignored in production.
@@ -200,14 +252,46 @@ object NotificationService {
         } else true
     }
 
+    private fun createPaymentReceivedRemoteViews(
+        context: Context,
+        layoutId: Int,
+        senderName: String,
+        amount: Double,
+        timestamp: String
+    ): RemoteViews {
+        return RemoteViews(context.packageName, layoutId).apply {
+            val senderText = HtmlCompat.fromHtml(
+                context.getString(R.string.notification_payment_sender_format, senderName),
+                HtmlCompat.FROM_HTML_MODE_LEGACY
+            )
+            setTextViewText(R.id.tv_notification_sender, senderText)
+            setTextViewText(
+                R.id.tv_notification_amount,
+                "+$${String.format(Locale.US, "%.2f", amount)}"
+            )
+            setTextViewText(R.id.tv_notification_time, timestamp)
+        }
+    }
+
     @SuppressLint("MissingPermission")
-    private fun post(context: Context, id: Int, notification: android.app.Notification) {
+    private fun post(
+        context: Context,
+        id: Int,
+        notification: android.app.Notification,
+        autoCancelDelayMs: Long? = null
+    ) {
         // Runtime guard – if user denied POST_NOTIFICATIONS on API 33+, do nothing
         if (!canPostNotifications(context)) return
 
         try {
-            NotificationManagerCompat.from(context)
-                .notify(id, notification)
+            val notificationManager = NotificationManagerCompat.from(context)
+            notificationManager.notify(id, notification)
+
+            if (autoCancelDelayMs != null) {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    runCatching { notificationManager.cancel(id) }
+                }, autoCancelDelayMs)
+            }
         } catch (se: SecurityException) {
             // Extra safety on odd OEMs
         }
