@@ -1,0 +1,421 @@
+=== GIT COMMIT LOG SUMMARY ===
+Project: CashPal Mobile Payment App
+Repository: COMP90018-T4-G2-mobile-app
+Export Date: Fri Nov  7 15:04:25 AEDT 2025
+
+=== SUMMARY STATISTICS ===
+Total Commits: 101
+Total Authors: 6
+
+Authors:
+     1	Emily-GitHub
+     2	JENNYZ0329
+     3	John Kim
+     4	MeteorLake
+     5	lir23o
+     6	lluu0080
+
+=== COMMIT LOG (Full History) ===
+
+[c447af6] John Kim - 2025-11-07
+    Add project documentation and assessment files (#23)
+
+
+[8fad0ef] lir23o - 2025-11-06
+    receive payment notification pop up
+
+
+[60c8bcc] lluu0080 - 2025-11-06
+    Bug fix scan date - rebased from Tina's branch (#28)
+
+
+[e276c84] lluu0080 - 2025-11-06
+    Preserve bottom navigation state on activity restore (#27)
+
+
+[a36e9e7] MeteorLake - 2025-11-06
+    Vendor POS Dashboard (#26)
+
+
+[fc2c111] lir23o - 2025-11-06
+    update vendor code (#25)
+
+
+[20a7408] John Kim - 2025-11-05
+    Add duplicate payment alert before processing transfers (#22)
+
+
+[c17d58c] John Kim - 2025-11-05
+    Merge pull request #24 from COMP90018-2025-SM2-T4-G2-Android/feature/update-logo
+
+
+[2c6e51b] John Kim - 2025-11-05
+    Fix History page layout: improve transaction item design and add distinct backgrounds for search/filter/export
+
+
+[e3de006] John Kim - 2025-11-05
+    Sync design
+
+
+[6447132] John Kim - 2025-11-05
+    Fix bug pressing qr pay crashes app
+
+
+[58e1e04] John Kim - 2025-11-05
+    Improve Signin design
+
+
+[d73cebb] John Kim - 2025-11-05
+    Add new CashPal logo in the login page
+
+
+[63072b1] JENNYZ0329 - 2025-11-04
+    Add duplicate payment alert before processing transfers
+
+
+[be96704] MeteorLake - 2025-11-04
+    Revert Merge Main To Dev (#20)
+
+
+[51d6cb2] lir23o - 2025-11-04
+    Merge branch 'main' into dev
+
+
+[689e95e] John Kim - 2025-11-02
+    Feature enhancement - Backend, history, activate camera, exports, UI, permission, balance history, AI, etc. Merge pull request #18 from COMP90018-2025-SM2-T4-G2-Android/feature/design-update-
+
+
+[156325e] John Kim - 2025-11-02
+    Refresh balance after payment and improve logging
+
+
+[7dd6608] John Kim - 2025-11-02
+    Improve contact handling and auto-create contacts after transactions
+
+
+[959204c] John Kim - 2025-11-02
+    Add camera permission handling to ScanFragment
+
+
+[7124ed7] John Kim - 2025-11-02
+    Add export to CSV and PDF in transaction history
+
+
+[6c9d936] John Kim - 2025-11-02
+    Add month filter and improve transaction filtering
+
+
+[403644a] John Kim - 2025-11-02
+    Add phone number support to sign up and payments
+
+
+[8fa6c25] John Kim - 2025-11-02
+    Improve balance sync and transaction handling
+
+
+[fcb549f] John Kim - 2025-11-02
+    Merge pull request #17 from COMP90018-2025-SM2-T4-G2-Android/feature/ai-assistance
+
+
+[a57e245] John Kim - 2025-11-02
+    Add chat recommendations UI to AIChatActivity
+
+
+[eb95020] John Kim - 2025-11-02
+    Refine API key loading and improve GeminiService logging
+
+
+[db82c01] John Kim - 2025-11-02
+    Remove java setup
+
+
+[b59fc1c] John Kim - 2025-11-02
+    Add secure API key management and Firebase Remote Config
+
+
+[5955359] John Kim - 2025-11-02
+    Improve GeminiService model fallback and update API key loading
+
+
+[6d16a10] John Kim - 2025-11-02
+    Integrate Gemini Pro API for AI Assistant responses
+
+
+[5572d56] John Kim - 2025-11-02
+    Add AI chat assistant feature to app
+
+
+[9b7f2f4] John Kim - 2025-11-02
+    Merge pull request #16 from COMP90018-2025-SM2-T4-G2-Android/CP-53-UI-2
+
+
+[ac42c95] John Kim - 2025-11-02
+    Added sound back that Emily created
+
+
+[62fc094] John Kim - 2025-11-02
+    Add NFC permission and feature declaration to manifest
+
+
+[f642406] MeteorLake - 2025-10-28
+    Add NFC payment receive flow and UI
+
+
+[329efb2] MeteorLake - 2025-10-28
+    Add recipient selection and send payment UI to PayFragment
+
+
+[fe23c29] MeteorLake - 2025-10-28
+    Add contact selection and payment UI to PayFragment
+
+
+[fc38812] John Kim - 2025-11-02
+    Qr code generation and pop up notification (#15)
+
+
+[517cbb3] John Kim - 2025-11-02
+    Fix build.gradle
+
+
+[2093c8b] John Kim - 2025-11-02
+    Added notification ID for mutli and safeguard for spamming
+
+
+[a99b005] lir23o - 2025-10-20
+    add pop up receive live notifications
+
+
+[aaf55f8] lir23o - 2025-10-19
+    error fix
+
+
+[a97d306] lir23o - 2025-10-06
+    add scan result page
+
+
+[f9012c2] lir23o - 2025-10-06
+    UIUX fixed
+
+
+[5b60167] lir23o - 2025-09-25
+    generate person QR code
+
+
+[c378c38] John Kim - 2025-11-02
+    Merge pull request #14 from COMP90018-2025-SM2-T4-G2-Android/features/login-authentication
+
+
+[48a9d13] John Kim - 2025-11-02
+    Fix codex issues
+
+
+[a7fa37c] JENNYZ0329 - 2025-10-30
+    Fix PR workflow permissions for comment step
+
+
+[16ed908] JENNYZ0329 - 2025-10-30
+    Implement login auth (WIP)
+
+
+[6dfc8c8] JENNYZ0329 - 2025-10-30
+    Fix CI by configuring Android SDK path
+
+
+[8353836] JENNYZ0329 - 2025-10-30
+    implement gps-based fraud detection and mfa for sensitive action
+
+
+[26eb581] JENNYZ0329 - 2025-10-26
+    authentication for sensitive action
+
+
+[e72623e] JENNYZ0329 - 2025-10-20
+    fingerprint authentication
+
+
+[58379cf] Emily-GitHub - 2025-11-02
+    Sounds and animations for payment (#13)
+
+
+[9e83a3c] lir23o - 2025-10-31
+    alert notification done
+
+
+[ec6f4aa] JENNYZ0329 - 2025-10-30
+    Fix PR workflow permissions for comment step
+
+
+[a7ae4fe] JENNYZ0329 - 2025-10-30
+    Implement login auth (WIP)
+
+
+[528ee96] JENNYZ0329 - 2025-10-30
+    Fix CI by configuring Android SDK path
+
+
+[dc61a99] JENNYZ0329 - 2025-10-30
+    implement gps-based fraud detection and mfa for sensitive action
+
+
+[8368ad6] MeteorLake - 2025-10-28
+    Update v3 to v4
+
+
+[00b71f6] JENNYZ0329 - 2025-10-26
+    authentication for sensitive action
+
+
+[b12c608] lir23o - 2025-10-20
+    add pop up receive live notifications
+
+
+[3dff0cb] lir23o - 2025-10-19
+    error fix
+
+
+[9aae86c] lir23o - 2025-10-06
+    add scan result page
+
+
+[c7cf7cc] lir23o - 2025-10-06
+    UIUX fixed
+
+
+[cbef973] lir23o - 2025-09-25
+    generate person QR code
+
+
+[82e8f41] JENNYZ0329 - 2025-10-20
+    fingerprint authentication
+
+
+[5ecfb61] John Kim - 2025-10-17
+    Feature/firebase backend init (#9)
+
+
+[bb1ec3c] John Kim - 2025-10-13
+    Setup defualt github configurations PR/CI Pipeline/git messages (#12)
+
+
+[17dea31] John Kim - 2025-10-13
+    Fix popup bar/cardscan (#11)
+
+
+[12aad82] John Kim - 2025-10-13
+    Feature/menu section UI/ux (#10)
+
+
+[c4ec075] JENNYZ0329 - 2025-09-23
+    transaction page
+
+
+[4b69383] JENNYZ0329 - 2025-09-23
+    Scan Qr-code UI
+
+
+[9e285ba] JENNYZ0329 - 2025-09-23
+    Merge branch 'dev' of https://github.com/COMP90018-2025-SM2-T4-G2-Android/COMP90018-T4-G2-mobile-app into feature/qr-code
+
+
+[d3190b3] MeteorLake - 2025-09-22
+    Implement Standard Payments Page (#8)
+
+
+[f485724] JENNYZ0329 - 2025-09-22
+    QR-code scanning function
+
+
+[30a9acb] JENNYZ0329 - 2025-09-20
+    Qr-code
+
+
+[3cf48ac] John Kim - 2025-09-17
+    Implement transaction history with filtering and export (#7)
+
+
+[b318396] John Kim - 2025-09-16
+    Feature/project setup (#6)
+
+
+[30bab22] John Kim - 2025-09-12
+    Feature/splash (#5)
+
+
+[dfa5571] MeteorLake - 2025-09-08
+    Move Directory For GHA Workflows
+
+
+[e277c2c] MeteorLake - 2025-09-08
+    GHA Workflows
+
+
+[1deeb47] John Kim - 2025-09-08
+    Merge pull request #4 from COMP90018-2025-SM2-T4-G2-Android/feature/cicd
+
+
+[bfa92b9] John Kim - 2025-09-08
+    Add CICD
+
+
+[73a487b] JENNYZ0329 - 2025-08-25
+    Merge pull request #2 from COMP90018-2025-SM2-T4-G2-Android/feature/add-ai-feature
+
+
+[0ecc6d6] John Kim - 2025-08-25
+    Change the package name to cashpal
+
+
+[9b9fbbc] John Kim - 2025-08-25
+    Added google services libarary for basis of gpt
+
+
+[3397f51] John Kim - 2025-08-25
+    Change name of the application to CashPal
+
+
+[c7ce66a] John Kim - 2025-08-25
+    setup library for llm implementation
+
+
+[c7a23bb] John Kim - 2025-08-25
+    Update suggested structure
+
+
+[7717004] John Kim - 2025-08-18
+    fix error
+
+
+[f25dbb8] John Kim - 2025-08-18
+    Simple design
+
+
+[fdb49c9] MeteorLake - 2025-08-18
+    Move docs folder to root
+
+
+[14e58a6] MeteorLake - 2025-08-18
+    Create docs folder and decision document
+
+
+[e306133] MeteorLake - 2025-08-18
+    Update README.md
+
+
+[d2c1e87] John Kim - 2025-08-18
+    Merge pull request #1 from COMP90018-2025-SM2-T4-G2-Android/feature/init-project
+
+
+[c6339e2] MeteorLake - 2025-08-18
+    Update README.md
+
+
+[18d029f] MeteorLake - 2025-08-18
+    Update README.md
+
+
+[dd95d20] John Kim - 2025-08-18
+    Iniitalise hello world project
+
+
+[ef1f642] John Kim - 2025-08-05
+    Initial commit
