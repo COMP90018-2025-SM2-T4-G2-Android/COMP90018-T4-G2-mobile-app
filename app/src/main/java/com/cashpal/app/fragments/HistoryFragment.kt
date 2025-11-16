@@ -17,10 +17,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.cashpal.app.MainActivity
 import com.cashpal.app.R
 import com.cashpal.app.adapters.TransactionHistoryAdapter
 import com.cashpal.app.data.DataRepository
 import com.cashpal.app.di.ServiceLocator
+import com.cashpal.app.utils.HeaderActionsController
 import com.cashpal.app.models.TransactionHistory
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.launch
@@ -52,6 +54,7 @@ class HistoryFragment : Fragment() {
     
     private lateinit var repository: com.cashpal.app.repository.CashPalRepository
     private lateinit var dataRepository: DataRepository
+    private var headerActionsController: HeaderActionsController? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -66,10 +69,17 @@ class HistoryFragment : Fragment() {
         dataRepository = DataRepository(requireContext(), repository)
 
         initViews()
+        bindHeaderActions(view)
         setupData()
         setupSearch()
         setupTabs()
         setupButtons()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        headerActionsController?.unbind()
+        headerActionsController = null
     }
 
     private fun initViews() {
@@ -86,6 +96,15 @@ class HistoryFragment : Fragment() {
             openReceipt(tx)
         }
         transactionsRecyclerView.adapter = transactionAdapter
+    }
+
+    private fun bindHeaderActions(root: View) {
+        val headerView = root.findViewById<View?>(R.id.header_actions_history) ?: return
+        headerActionsController = HeaderActionsController(requireContext()) {
+            (activity as? MainActivity)?.openProfileShortcut()
+        }.also { controller ->
+            controller.bind(headerView)
+        }
     }
 
     private fun setupData() {

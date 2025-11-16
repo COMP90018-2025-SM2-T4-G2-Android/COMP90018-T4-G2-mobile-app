@@ -28,8 +28,10 @@ import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import com.google.mlkit.vision.barcode.common.Barcode
+import com.cashpal.app.MainActivity
 import com.cashpal.app.adapters.RecentScanAdapter
 import com.cashpal.app.models.RecentScan
+import com.cashpal.app.utils.HeaderActionsController
 
 class ScanFragment : Fragment() {
 
@@ -39,6 +41,7 @@ class ScanFragment : Fragment() {
     private lateinit var recentScans: RecyclerView
     private lateinit var previewView: PreviewView
     private lateinit var scanningLine: View
+    private var headerActionsController: HeaderActionsController? = null
 
     private lateinit var cameraExecutor: ExecutorService
     private var hasScanned = false  // prevent multiple triggers
@@ -65,6 +68,7 @@ class ScanFragment : Fragment() {
         recentScans = view.findViewById(R.id.rv_recent_scans)
         previewView = view.findViewById(R.id.previewView)
         scanningLine = view.findViewById(R.id.scanningLine)
+        bindHeaderActions(view)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -284,6 +288,17 @@ class ScanFragment : Fragment() {
         super.onDestroyView()
         stopCamera()
         cameraExecutor.shutdown()
+        headerActionsController?.unbind()
+        headerActionsController = null
+    }
+
+    private fun bindHeaderActions(root: View) {
+        val headerView = root.findViewById<View?>(R.id.header_actions_scan) ?: return
+        headerActionsController = HeaderActionsController(requireContext()) {
+            (activity as? MainActivity)?.openProfileShortcut()
+        }.also { controller ->
+            controller.bind(headerView)
+        }
     }
 }
 

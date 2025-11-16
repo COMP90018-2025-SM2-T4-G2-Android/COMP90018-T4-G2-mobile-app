@@ -4,6 +4,7 @@ import android.app.Application
 import com.google.android.material.color.DynamicColors
 import com.google.firebase.FirebaseApp
 import com.cashpal.app.di.ServiceLocator
+import com.cashpal.app.utils.AppPreferences
 import com.cashpal.app.utils.UserProfileCache
 import android.content.ComponentCallbacks2
 import java.io.File
@@ -17,6 +18,7 @@ class CashPalApp : Application() {
     override fun onCreate() {
         super.onCreate()
         DynamicColors.applyToActivitiesIfAvailable(this)
+        AppPreferences.init(this)
         
         // Initialize Firebase
         FirebaseApp.initializeApp(this)

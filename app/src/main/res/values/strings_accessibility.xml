@@ -44,6 +44,10 @@
     <string name="cd_help_icon">Help</string>
     <string name="cd_info_icon">Information</string>
     <string name="cd_bot_icon">AI assistant</string>
+    <string name="cd_header_dark_mode_on">Dark mode enabled</string>
+    <string name="cd_header_dark_mode_off">Dark mode disabled</string>
+    <string name="cd_header_notifications_on">Notifications enabled</string>
+    <string name="cd_header_notifications_off">Notifications disabled</string>
     
     <!-- Navigation -->
     <string name="cd_navigate_forward">Navigate forward</string>
@@ -59,4 +63,3 @@
     <string name="cd_button_hint">Double tap to activate</string>
     <string name="cd_toggle_hint">Double tap to toggle</string>
 </resources>
-

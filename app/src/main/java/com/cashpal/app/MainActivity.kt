@@ -26,6 +26,7 @@ import com.cashpal.app.fragments.ScanFragment
 import com.cashpal.app.fragments.ReceiptFragment
 import com.cashpal.app.fragments.NfcPaymentFragment
 import com.cashpal.app.utils.BiometricPreferences
+import com.cashpal.app.utils.HeaderActionsController
 import com.cashpal.app.utils.GooglePlayServicesUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
@@ -60,6 +61,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bottomNavigationView: BottomNavigationView
     private lateinit var dailySalesShortcutCard: MaterialCardView
     private lateinit var dailySalesShortcutButton: MaterialButton
+    private var homeHeaderActionsController: HeaderActionsController? = null
     private var isDemoMode = false
     private var isRestoringBottomNavState = false
     private var transactionsListener: ListenerRegistration? = null
@@ -124,6 +126,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         initializeViews()
+        bindHomeHeaderActions()
         setupBottomNavigation()
         setupClickListeners()
         loadData()
@@ -177,6 +180,15 @@ class MainActivity : AppCompatActivity() {
         dailySalesShortcutButton = findViewById(R.id.btnDailySalesShortcut)
     }
 
+    private fun bindHomeHeaderActions() {
+        val headerActionsView = findViewById<View?>(R.id.header_actions_home) ?: return
+        homeHeaderActionsController = HeaderActionsController(this) {
+            openProfileShortcut()
+        }.also { controller ->
+            controller.bind(headerActionsView)
+        }
+    }
+
     private fun setupBottomNavigation() {
         bottomNavigationView.setOnItemSelectedListener { item ->
             if (isRestoringBottomNavState) {
@@ -200,7 +212,7 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_more -> {
-                    showFragment(MoreFragment())
+                    openMoreTab()
                     true
                 }
                 else -> false
@@ -1023,6 +1035,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         stopTransactionListener()
+        homeHeaderActionsController?.unbind()
+        homeHeaderActionsController = null
         super.onDestroy()
     }
 
@@ -1047,6 +1061,10 @@ class MainActivity : AppCompatActivity() {
         updateBottomNavigationSelection(R.id.nav_scan)
     }
 
+    fun openProfileShortcut() {
+        openMoreTab(openProfile = true)
+    }
+
     fun openNfcPayment() {
         updateBottomNavigationSelection(R.id.nav_pay)
         scrollView.visibility = View.GONE
@@ -1064,9 +1082,28 @@ class MainActivity : AppCompatActivity() {
             .addToBackStack("dailySales")
             .commit()
     }
+
+    private fun openMoreTab(openProfile: Boolean = false) {
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+        if (currentFragment is MoreFragment) {
+            scrollView.visibility = View.GONE
+            if (openProfile) {
+                currentFragment.openProfileFromHeader()
+            }
+        } else {
+            showFragment(MoreFragment.newInstance(openProfile))
+        }
+        updateBottomNavigationSelection(R.id.nav_more)
+    }
     
     private fun updateBottomNavigationSelection(selectedItemId: Int) {
+        if (!::bottomNavigationView.isInitialized) return
+        if (bottomNavigationView.selectedItemId == selectedItemId && !isRestoringBottomNavState) {
+            return
+        }
+        isRestoringBottomNavState = true
         bottomNavigationView.selectedItemId = selectedItemId
+        isRestoringBottomNavState = false
     }
 
     private fun Int.dpToPx(): Int {

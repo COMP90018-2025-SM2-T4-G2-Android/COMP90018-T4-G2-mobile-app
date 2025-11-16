@@ -60,6 +60,11 @@
     <string name="accessibility_toggle_theme">Toggle theme</string>
     <string name="accessibility_notifications">Notifications</string>
     <string name="accessibility_profile">Profile</string>
+    <string name="header_action_dark_mode_on">Dark mode on</string>
+    <string name="header_action_dark_mode_off">Dark mode off</string>
+    <string name="header_action_notifications_on">Notifications on</string>
+    <string name="header_action_notifications_off">Notifications off</string>
+    <string name="header_action_profile_open">Opening profile</string>
     <string name="pay_header_tagline">Manage your payments with ease</string>
     <string name="pay_send_options">Send Options</string>
     <string name="pay_option_contact">Contact</string>
