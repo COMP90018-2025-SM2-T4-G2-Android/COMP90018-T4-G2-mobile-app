@@ -7,7 +7,6 @@
     android:background="@drawable/profile_dialog_background"
     android:padding="24dp">
 
-    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -50,7 +49,6 @@
 
     </LinearLayout>
 
-    <!-- Divider -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
@@ -67,20 +65,18 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Payment Cards List -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:layout_marginBottom="20dp">
 
-                <!-- Visa Card -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/card_visa"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    app:cardBackgroundColor="@android:color/white"
+                    app:cardBackgroundColor="@color/dialog_card_background"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="2dp"
                     android:clickable="true"
@@ -93,7 +89,6 @@
                         android:orientation="vertical"
                         android:padding="16dp">
 
-                        <!-- Card Header -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -101,7 +96,6 @@
                             android:gravity="center_vertical"
                             android:layout_marginBottom="12dp">
 
-                            <!-- Card Logo -->
                             <LinearLayout
                                 android:layout_width="48dp"
                                 android:layout_height="48dp"
@@ -115,7 +109,6 @@
 
                             </LinearLayout>
 
-                            <!-- Card Info -->
                             <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -141,7 +134,6 @@
 
                             </LinearLayout>
 
-                            <!-- Primary Badge -->
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -155,11 +147,10 @@
 
                         </LinearLayout>
 
-                        <!-- Card Actions -->
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:background="#F0F0F0"
+                            android:background="@color/dialog_divider"
                             android:layout_marginBottom="8dp" />
 
                         <LinearLayout
@@ -186,7 +177,7 @@
                             <View
                                 android:layout_width="1dp"
                                 android:layout_height="20dp"
-                                android:background="#E0E0E0" />
+                                android:background="@color/dialog_divider" />
 
                             <TextView
                                 android:id="@+id/btn_remove_visa"
@@ -209,13 +200,12 @@
 
                 </androidx.cardview.widget.CardView>
 
-                <!-- Mastercard Card -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/card_mastercard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    app:cardBackgroundColor="@android:color/white"
+                    app:cardBackgroundColor="@color/dialog_card_background"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="2dp"
                     android:clickable="true"
@@ -228,7 +218,6 @@
                         android:orientation="vertical"
                         android:padding="16dp">
 
-                        <!-- Card Header -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -236,7 +225,6 @@
                             android:gravity="center_vertical"
                             android:layout_marginBottom="12dp">
 
-                            <!-- Card Logo -->
                             <LinearLayout
                                 android:layout_width="48dp"
                                 android:layout_height="48dp"
@@ -250,7 +238,6 @@
 
                             </LinearLayout>
 
-                            <!-- Card Info -->
                             <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -276,13 +263,12 @@
 
                             </LinearLayout>
 
-                            <!-- Set Primary Button -->
                             <Button
                                 android:id="@+id/btn_set_primary_mastercard"
                                 android:layout_width="wrap_content"
                                 android:layout_height="32dp"
                                 android:text="Set Primary"
-                                android:textColor="@color/primary"
+                                android:textColor="@android:color/white"
                                 android:textSize="12sp"
                                 android:textStyle="bold"
                                 android:background="@drawable/set_primary_button_background"
@@ -292,11 +278,10 @@
 
                         </LinearLayout>
 
-                        <!-- Card Actions -->
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:background="#F0F0F0"
+                            android:background="@color/dialog_divider"
                             android:layout_marginBottom="8dp" />
 
                         <LinearLayout
@@ -323,7 +308,7 @@
                             <View
                                 android:layout_width="1dp"
                                 android:layout_height="20dp"
-                                android:background="#E0E0E0" />
+                                android:background="@color/dialog_divider" />
 
                             <TextView
                                 android:id="@+id/btn_remove_mastercard"
@@ -348,13 +333,11 @@
 
             </LinearLayout>
 
-            <!-- Action Buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Add New Card Button -->
                 <Button
                     android:id="@+id/btn_add_new_card"
                     android:layout_width="match_parent"
@@ -370,7 +353,6 @@
                     android:gravity="center"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Link Bank Button -->
                 <Button
                     android:id="@+id/btn_link_bank"
                     android:layout_width="match_parent"

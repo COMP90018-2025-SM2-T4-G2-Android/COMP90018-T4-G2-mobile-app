@@ -69,9 +69,26 @@
 <color name="pay_nfc_start">#F5F0FF</color>
 <color name="pay_nfc_end">#E9F1FF</color>
 
-    <!-- Payment dialog colors -->
-    <color name="dialog_divider">#E0E0E0</color>
-    <color name="dialog_card_background">@color/card</color>
-    <color name="link_bank_button_text">@color/primary</color>
+<color name="menu_item_background">#F8F9FA</color>
+<color name="menu_icon_background">#E8E6FF</color>
+<color name="tab_background">#F2F3F5</color>
+<color name="history_filter_background">#F2F3F5</color>
+<color name="home_balance_title_text">#FFFFFFFF</color>
+<color name="home_balance_primary_text">#FFFFFFFF</color>
+<color name="home_balance_secondary_text">#E6FFFFFF</color>
+<color name="dialog_surface">#FFFFFF</color>
+<color name="dialog_surface_variant">#F7F8FA</color>
+<color name="dialog_card_background">#FFFFFF</color>
+<color name="dialog_divider">#E0E0E0</color>
+<color name="dialog_logo_background">#F0F1FA</color>
+<color name="dialog_badge_primary_background">#F0FDF4</color>
+<color name="sign_out_button_background">#FFFFFF</color>
+<color name="sign_out_button_border">@color/error</color>
+<color name="sign_out_button_text">@color/error</color>
+<color name="link_bank_button_text">@color/primary</color>
+<color name="home_balance_card_background">@color/primary</color>
+<color name="personal_qr_primary_text">@color/foreground</color>
+<color name="personal_qr_secondary_text">@color/muted_foreground</color>
+<color name="personal_qr_icon">@color/foreground</color>
 
 </resources>

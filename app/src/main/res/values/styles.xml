@@ -34,4 +34,9 @@
         <item name="android:paddingEnd">20dp</item>
     </style>
 
+    <style name="CashPalFadeTransition" parent="@android:style/Animation.Activity">
+        <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:windowExitAnimation">@android:anim/fade_out</item>
+    </style>
+
 </resources>

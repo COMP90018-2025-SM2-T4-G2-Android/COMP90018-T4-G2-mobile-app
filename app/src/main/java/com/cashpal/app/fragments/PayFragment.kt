@@ -20,7 +20,9 @@ import com.cashpal.app.data.Contact as GuardContact
 import com.cashpal.app.data.PaymentRequest as GuardPaymentRequest
 import com.cashpal.app.di.ServiceLocator
 import com.cashpal.app.models.Contact
+import com.cashpal.app.MainActivity
 import com.cashpal.app.utils.DuplicatePaymentGuard
+import com.cashpal.app.utils.HeaderActionsController
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -66,6 +68,7 @@ class PayFragment : Fragment() {
     private var cachedContacts: List<Contact> = emptyList()
     private var hasLoadedContacts = false
     private var selectedRecipient: PayContactItem? = null
+    private var headerActionsController: HeaderActionsController? = null
 
     private val colorPalette = listOf(
         "#6C5CE7",
@@ -90,6 +93,7 @@ class PayFragment : Fragment() {
 
         rootView = view
         initViews(view)
+        bindHeaderActions(view)
 
         currentUserId = repository.getCurrentUser()?.uid
         if (currentUserId.isNullOrBlank()) {
@@ -104,6 +108,8 @@ class PayFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         contactsJob?.cancel()
+        headerActionsController?.detach()
+        headerActionsController = null
         rootView = null
     }
 
@@ -161,6 +167,16 @@ class PayFragment : Fragment() {
         recentContactsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = recentContactsAdapter
+        }
+    }
+
+    private fun bindHeaderActions(root: View) {
+        val headerActionsView = root.findViewById<View>(R.id.header_actions) ?: return
+        headerActionsController = HeaderActionsController(
+            headerActionsView,
+            requireContext()
+        ) {
+            (activity as? MainActivity)?.openMoreTab(showProfile = true)
         }
     }
 

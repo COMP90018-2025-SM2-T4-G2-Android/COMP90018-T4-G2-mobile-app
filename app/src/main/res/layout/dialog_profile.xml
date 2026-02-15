@@ -54,7 +54,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#E0E0E0"
+        android:background="@color/dialog_divider"
         android:layout_marginVertical="16dp" />
 
     <!-- Profile Photo Section -->
@@ -70,6 +70,7 @@
             android:layout_height="100dp"
             app:cardCornerRadius="50dp"
             app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/dialog_card_background"
             android:layout_marginBottom="12dp">
 
             <FrameLayout
@@ -329,4 +330,3 @@
         android:gravity="center" />
 
 </LinearLayout>
-

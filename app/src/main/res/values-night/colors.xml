@@ -30,6 +30,12 @@
     <color name="warning">#FFB870</color>
     <color name="error">#FFB4AB</color>
     <color name="accent">#FFD8A8</color>
+
+    <!-- Transaction Overrides -->
+    <color name="sent_color">#F87171</color>
+    <color name="received_color">#34D399</color>
+    <color name="sent_background">#3B1F25</color>
+    <color name="received_background">#1F3528</color>
     
     <!-- Material 3 Surface Colors (Dark) -->
     <color name="surface_variant">#49454F</color>
@@ -55,9 +61,4 @@
     <color name="surface_container">#211F26</color>
     <color name="surface_container_high">#2B2930</color>
     <color name="surface_container_highest">#36343B</color>
-
-    <!-- Payment dialog colors -->
-    <color name="dialog_divider">#3A3642</color>
-    <color name="dialog_card_background">@color/card</color>
-    <color name="link_bank_button_text">@color/primary</color>
 </resources>
